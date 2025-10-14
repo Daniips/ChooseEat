@@ -1,35 +1,58 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useMemo, useState } from "react";
+import { RESTAURANTS } from "./data/restaurants";
+import { useArrows } from "./hooks/useArrows";
+import Header from "./components/Header";
+import Card from "./components/Card";
+import Summary from "./components/Summary";
+import "./index.css";
 
-function App() {
-  const [count, setCount] = useState(0)
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+export default function App() {
+const [index, setIndex] = useState(0);
+const [yesIds, setYesIds] = useState([]);
+const [, setNoIds] = useState([]);
+const [keySwipe, setKeySwipe] = useState(null);
+
+
+const current = RESTAURANTS[index] || null;
+const finished = !current;
+
+
+function vote(choice) {
+if (!current) return;
+if (choice === "yes") setYesIds((s) => [...s, current.id]);
+else setNoIds((s) => [...s, current.id]);
+setIndex((i) => i + 1);
 }
 
-export default App
+
+useArrows({ left: () => setKeySwipe('left'), right: () => setKeySwipe('right') }, [index]);
+
+
+const liked = useMemo(() => RESTAURANTS.filter(x => yesIds.includes(x.id)), [yesIds]);
+
+
+return (
+<div className="wrap">
+    <Header />
+    {!finished ? (
+        <div className="stage">
+            <Card 
+                key={current.id}
+                r={current} 
+                onNo={() => vote("no")} 
+                onYes={() => vote("yes")} 
+                keySwipe={keySwipe}
+                onKeyHandled={() => setKeySwipe(null)} 
+            />
+            <div className="actions-bar">
+                <button className="fab fab--no" onClick={() => setKeySwipe('left')} aria-label="No">×</button>
+                <button className="fab fab--yes" onClick={() => setKeySwipe('right')} aria-label="Sí">✓</button>
+            </div>
+        </div>
+    ) : (
+        <Summary liked={liked} onRestart={() => { setIndex(0); setYesIds([]); setNoIds([]); }} />
+    )}
+</div>
+);
+}
