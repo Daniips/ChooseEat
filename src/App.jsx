@@ -71,8 +71,8 @@ export default function App() {
                             onKeyHandled={() => setKeySwipe(null)}
                         />
                         <div className="actions-bar">
-                            <button className=".btn-circle .btn-circle--no" onClick={() => setKeySwipe("left")} aria-label="No">×</button>
-                            <button className=".btn-circle .btn-circle--yes" onClick={() => setKeySwipe("right")} aria-label="Sí">✓</button>
+                            <button type="button" className="btn-circle btn-circle--no" onClick={() => setKeySwipe("left")} aria-label="No">×</button>
+                            <button type="button" className="btn-circle btn-circle--yes" onClick={() => setKeySwipe("right")} aria-label="Sí">✓</button>
                         </div>
                     </div>
                 ) : (
