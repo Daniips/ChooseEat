@@ -1,3 +1,4 @@
+// apps/web/src/components/Toast.jsx
 import React, { useEffect } from "react";
 
 export default function Toast({ open, onClose, variant = "ok", duration = 2500, children }) {

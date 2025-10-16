@@ -1,3 +1,4 @@
+// apps/web/src/components/Card.jsx
 import React, { useEffect, useRef, useState } from "react";
 
 const THRESHOLD = 120;           

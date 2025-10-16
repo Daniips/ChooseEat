@@ -1,0 +1,83 @@
+import React, { useMemo, useState } from "react";
+import Header from "../components/Header";
+import Card from "../components/Card";
+import Summary from "../components/Summary";
+import InviteBar from "../components/InviteBar";
+import { useArrows } from "../hooks/useArrows";
+import { useSession } from "../context/SessionContext";
+
+export default function Vote() {
+    const { session } = useSession();
+
+    const [index, setIndex] = useState(0);
+    const [yesIds, setYesIds] = useState([]);
+    const [, setNoIds] = useState([]);
+    const [keySwipe, setKeySwipe] = useState(null);
+
+    const list = useMemo(() => {
+        return Array.isArray(session?.restaurants) ? session.restaurants : [];
+    }, [session?.restaurants]);
+
+    const current = list[index] || null;
+    const finished = !current;
+
+    function vote(choice) {
+        if (!current) return;
+        if (choice === "yes") setYesIds(s => [...s, current.id]);
+        else setNoIds(s => [...s, current.id]);
+        setIndex(i => i + 1);
+    }
+
+    useArrows({ left: () => setKeySwipe("left"), right: () => setKeySwipe("right") }, [index]);
+
+    const liked = useMemo(() => list.filter(x => yesIds.includes(x.id)), [yesIds, list]);
+    const inviteUrl = `${window.location.origin}${session.invitePath || `/s/${session.id}`}`;
+
+    return (
+        <div className="wrap">
+            <Header />
+
+            <InviteBar inviteUrl={inviteUrl} />
+
+            {!finished ? (
+                <div className="stage">
+                    <Card
+                        key={current.id}
+                        r={current}
+                        onNo={() => vote("no")}
+                        onYes={() => vote("yes")}
+                        keySwipe={keySwipe}
+                        onKeyHandled={() => setKeySwipe(null)}
+                    />
+                    <div className="actions-bar">
+                        <button
+                            type="button"
+                            className="btn-circle btn-circle--no"
+                            onClick={() => setKeySwipe("left")}
+                            aria-label="No"
+                        >
+                            ×
+                        </button>
+                        <button
+                            type="button"
+                            className="btn-circle btn-circle--yes"
+                            onClick={() => setKeySwipe("right")}
+                            aria-label="Sí"
+                        >
+                            ✓
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <Summary
+                    liked={liked}
+                    onRestart={() => {
+                        setIndex(0);
+                        setYesIds([]);
+                        setNoIds([]);
+                    }}
+                />
+            )}
+        </div>
+    );
+}

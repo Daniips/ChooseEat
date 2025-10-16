@@ -1,3 +1,4 @@
+// apps/web/src/components/Summary.jsx
 import React from "react";
 import Button from "./Button";
 export default function Summary({ liked, onRestart }) {

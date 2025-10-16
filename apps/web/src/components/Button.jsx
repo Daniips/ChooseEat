@@ -1,3 +1,4 @@
+// apps/web/src/components/Button.jsx
 import React from "react";
 export default function Button({ children, variant = "primary", ...rest }) {
 const className = [

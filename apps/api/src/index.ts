@@ -58,7 +58,9 @@ app.post("/api/sessions", async (req, reply) => {
         threshold,
         status: "open",
         restaurants: items,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        participants: {},
+        votes: {}
     };
     sessions.set(sessionId, session);
 
@@ -87,4 +89,30 @@ app.get("/api/sessions/:id", async (req, reply) => {
 const port = Number(process.env.PORT || 4000);
 app.listen({ port, host: "0.0.0.0" }).then(() => {
     app.log.info(`API on http://localhost:${port}`);
+});
+
+app.post("/api/sessions/:id/join", async (req, reply) => {
+    const { id } = (req.params as any);
+    const body = (req.body as any) ?? {};
+    const name = String(body.name || "").trim() || "Invitado";
+
+    const s = sessions.get(id);
+    if (!s) return reply.code(404).send({ error: "Session not found" });
+
+    const pid = "p_" + Math.random().toString(36).slice(2, 10);
+    s.participants[pid] = { id: pid, name, joinedAt: new Date().toISOString() };
+
+    return reply.send({
+        sessionId: id,
+        participant: { id: pid, name },
+        invitePath: `/s/${id}`,
+        session: {
+            id: s.id,
+            area: s.area,
+            filters: s.filters,
+            threshold: s.threshold,
+            status: "voting"
+        },
+        restaurants: s.restaurants
+    });
 });

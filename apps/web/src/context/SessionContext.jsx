@@ -2,79 +2,87 @@ import React, { createContext, useContext, useMemo, useState } from "react";
 
 const SessionContext = createContext(null);
 
+// OJO: constante interna, sin exportarla
+const INITIAL_SESSION = {
+    id: "s_local",
+    status: "lobby", // 'lobby' | 'voting' | 'matched' | 'finished'
+    area: {
+        type: "host",
+        center: null,
+        radiusKm: 1.5,
+        label: ""
+    },
+    filters: {
+        price: [1, 2, 3, 4],
+        cuisines: [],
+        openNow: false,
+        minRating: 0
+    },
+    deckSeed: "seed_demo",
+    candidates: [],
+    threshold: { type: "absolute", value: 2, participants: 2 },
+    invitePath: null,
+    winner: null
+};
+
 export function SessionProvider({ children }) {
-    const [session, setSession] = useState({
-        id: null,                       
-        sessionId: null,                
-        status: "lobby",                
-        area: {
-            radiusKm: 1.5
-        },
-        filters: {
-            price: [],                  
-            cuisines: [],
-            openNow: false,
-            minRating: 0
-        },
+    const [session, setSession] = useState(INITIAL_SESSION);
 
-        threshold: {
-            type: "absolute",
-            value: 2,
-            participants: 2
-        },
+    const setArea = (patch) =>
+        setSession((s) => ({ ...s, area: { ...s.area, ...patch } }));
 
-        restaurants: [],                
-        winner: null                   
-    });
+    const setFilters = (patch) =>
+        setSession((s) => ({ ...s, filters: { ...s.filters, ...patch } }));
 
-    function setArea(patch) {
-        setSession(s => ({ ...s, area: { ...s.area, ...patch } }));
-    }
+    const setThreshold = (patch) =>
+        setSession((s) => ({ ...s, threshold: { ...s.threshold, ...patch } }));
 
-    function setFilters(patch) {
-        setSession(s => ({ ...s, filters: { ...s.filters, ...patch } }));
-    }
-
-    function setThreshold(patch) {
-        setSession(s => ({ ...s, threshold: { ...s.threshold, ...patch } }));
-    }
-
-    /**
-     * startVoting
-     * Se llama tras POST /api/sessions
-     * @param {string} sessionId 
-     * @param {Array} restaurants
-     */
-    function startVoting(sessionId, restaurants) {
-        setSession(s => ({
+    function startVoting(sessionId, restaurants, invitePath) {
+        setSession((s) => ({
             ...s,
+            id: sessionId ?? s.id,
             status: "voting",
-            sessionId: sessionId ?? s.sessionId,
-            id: sessionId ?? s.id, // opcional: mantener s.id sincronizado
-            restaurants: Array.isArray(restaurants) ? restaurants : []
+            invitePath: invitePath ?? s.invitePath,
+            restaurants: Array.isArray(restaurants) ? restaurants : s.restaurants
         }));
     }
 
-    // (Opcional) Reiniciar a lobby
-    function resetToLobby() {
-        setSession(s => ({
-            ...s,
-            status: "lobby",
-            sessionId: null,
-            id: null,
-            restaurants: [],
+    function hydrateFromJoin(payload) {
+        const { session: s, restaurants, invitePath, participant } = payload;
+
+        setSession((prev) => ({
+            ...prev,
+            id: s.id,
+            status: "voting",
+            area: s.area,
+            filters: s.filters,
+            threshold: s.threshold,
+            invitePath,
+            restaurants: Array.isArray(restaurants) ? restaurants : [],
+            candidates: Array.isArray(restaurants) ? restaurants.map((r) => r.id) : [],
             winner: null
         }));
+
+        try {
+            localStorage.setItem("ce_participant", JSON.stringify(participant));
+            localStorage.setItem("ce_sessionId", s.id);
+        } catch {
+            //nada
+        }
     }
 
-    const value = useMemo(() => ({
-        session,
-        setArea,
-        setFilters,
-        setThreshold,
-        startVoting,
-        resetToLobby
-    }), [session]);
+
+    const value = useMemo(
+        () => ({
+            session,
+            setArea,
+            setFilters,
+            setThreshold,
+            startVoting,
+            hydrateFromJoin
+        }),
+        [session]
+    );
 
     return (
         <SessionContext.Provider value={value}>
@@ -83,7 +91,6 @@ export function SessionProvider({ children }) {
     );
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
 export function useSession() {
     const ctx = useContext(SessionContext);
     if (!ctx) throw new Error("useSession must be used within SessionProvider");
