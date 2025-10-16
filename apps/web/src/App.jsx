@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from "react";
-import { RESTAURANTS } from "./data/restaurants";
 import { useArrows } from "./hooks/useArrows";
 import Header from "./components/Header";
 import Card from "./components/Card";
@@ -27,12 +26,9 @@ export default function App() {
         const [keySwipe, setKeySwipe] = useState(null);
 
         const list = useMemo(() => {
-            if (session?.candidates?.length) {
-                const byId = new Map(RESTAURANTS.map(r => [r.id, r]));
-                return session.candidates.map(id => byId.get(id)).filter(Boolean);
-            }
-            return RESTAURANTS;
-        }, [session?.candidates]);
+            return Array.isArray(session?.restaurants) ? session.restaurants : [];
+        }, [session?.restaurants]);
+
 
         const current = list[index] || null;
         const finished = !current;

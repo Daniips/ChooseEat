@@ -1,82 +1,70 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
-import { RESTAURANTS } from "../data/restaurants";
-
-function haversineKm(a, b) {
-    const R = 6371;
-    const dLat = (b.lat - a.lat) * Math.PI / 180;
-    const dLng = (b.lng - a.lng) * Math.PI / 180;
-    const s1 = Math.sin(dLat / 2) ** 2;
-    const s2 = Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * (Math.sin(dLng / 2) ** 2);
-    return 2 * R * Math.asin(Math.sqrt(s1 + s2));
-}
-
-function djb2(str) {
-    let h = 5381;
-    for (let i = 0; i < str.length; i++) h = ((h << 5) + h) + str.charCodeAt(i);
-    return h >>> 0;
-}
 
 const SessionContext = createContext(null);
 
 export function SessionProvider({ children }) {
     const [session, setSession] = useState({
-        id: "s_demo",
-        status: "lobby", // 'lobby' | 'voting' | 'matched' | 'finished'
+        id: null,                       
+        sessionId: null,                
+        status: "lobby",                
         area: {
-            type: "host",
-            center: { lat: 40.4168, lng: -3.7038 }, // Madrid centro
-            radiusKm: 1.5,
-            label: "Centro"
+            radiusKm: 1.5
         },
         filters: {
-            price: [1, 2, 3, 4],
+            price: [],                  
             cuisines: [],
             openNow: false,
             minRating: 0
         },
-        deckSeed: "seed_demo",
-        candidates: [],
-        threshold: { type: "absolute", value: 2 },
-        winner: null
+
+        threshold: {
+            type: "absolute",
+            value: 2,
+            participants: 2
+        },
+
+        restaurants: [],                
+        winner: null                   
     });
 
-    // Setters sencillos
-    const setArea = (patch) => setSession(s => ({ ...s, area: { ...s.area, ...patch } }));
-    const setFilters = (patch) => setSession(s => ({ ...s, filters: { ...s.filters, ...patch } }));
-    const setThreshold = (patch) => setSession(s => ({ ...s, threshold: { ...s.threshold, ...patch } }));
-
-
-    function buildDeck(all, s) {
-        const inRadius = all.filter(p => (typeof p.distanceKm === "number")
-            ? p.distanceKm <= s.area.radiusKm
-            : true 
-        );
-
- 
-        const byFilters = inRadius.filter(p => {
-            const okPrice = s.filters.price.length ? s.filters.price.includes(p.price) : true;
-            const okCuisine = s.filters.cuisines.length
-                ? p.cuisine.some(c => s.filters.cuisines.includes(c))
-                : true;
-            const okOpen = s.filters.openNow ? p.openNow : true;
-            const okRating = p.rating >= (s.filters.minRating || 0);
-            return okPrice && okCuisine && okOpen && okRating;
-        });
-
-        const ranked = byFilters
-            .map(p => ({ id: p.id, rank: djb2(`${s.id}:${s.deckSeed}:${p.id}`) }))
-            .sort((a, b) => a.rank - b.rank)
-            .map(x => x.id);
-
-
-        return ranked.slice(0, 30);
+    function setArea(patch) {
+        setSession(s => ({ ...s, area: { ...s.area, ...patch } }));
     }
 
-    function startVoting() {
-        setSession(s => {
-            const candidates = buildDeck(RESTAURANTS, s);
-            return { ...s, candidates, status: "voting" };
-        });
+    function setFilters(patch) {
+        setSession(s => ({ ...s, filters: { ...s.filters, ...patch } }));
+    }
+
+    function setThreshold(patch) {
+        setSession(s => ({ ...s, threshold: { ...s.threshold, ...patch } }));
+    }
+
+    /**
+     * startVoting
+     * Se llama tras POST /api/sessions
+     * @param {string} sessionId 
+     * @param {Array} restaurants
+     */
+    function startVoting(sessionId, restaurants) {
+        setSession(s => ({
+            ...s,
+            status: "voting",
+            sessionId: sessionId ?? s.sessionId,
+            id: sessionId ?? s.id, // opcional: mantener s.id sincronizado
+            restaurants: Array.isArray(restaurants) ? restaurants : []
+        }));
+    }
+
+    // (Opcional) Reiniciar a lobby
+    function resetToLobby() {
+        setSession(s => ({
+            ...s,
+            status: "lobby",
+            sessionId: null,
+            id: null,
+            restaurants: [],
+            winner: null
+        }));
     }
 
     const value = useMemo(() => ({
@@ -84,7 +72,8 @@ export function SessionProvider({ children }) {
         setArea,
         setFilters,
         setThreshold,
-        startVoting
+        startVoting,
+        resetToLobby
     }), [session]);
 
     return (
@@ -94,6 +83,7 @@ export function SessionProvider({ children }) {
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useSession() {
     const ctx = useContext(SessionContext);
     if (!ctx) throw new Error("useSession must be used within SessionProvider");

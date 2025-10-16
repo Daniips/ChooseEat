@@ -1,6 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useSession } from "../context/SessionContext";
-import { RESTAURANTS } from "../data/restaurants"; // Cuando mockee se quita
 import Toast from "./Toast";
 import { CUISINES } from "../data/cuisines";
 
@@ -42,30 +41,70 @@ export default function Lobby() {
         setPrice(ps => ps.includes(n) ? ps.filter(x => x !== n) : [...ps, n]);
     }
 
-    function computeCandidateCount() {
-        const inRadius = RESTAURANTS.filter(p =>
-            typeof p.distanceKm === "number" ? p.distanceKm <= radiusKm : true
-        );
-        const byFilters = inRadius.filter(p => {
-            const okPrice = price.length ? price.includes(p.price) : true;
-            const okCuisine = p.cuisine.some(c => selectedCuisines.includes(c));
-            const okOpen = openNow ? p.openNow : true;
-            const okRating = p.rating >= (minRating || 0);
-            return okPrice && okCuisine && okOpen && okRating;
-        });
-        return byFilters.length;
+    // NUEVO: previsualiza contra el backend
+    async function previewFromApi() {
+        if (!cuisinesValid) {
+            setPreviewCount(0);
+            setToastOpen(true);
+            return;
+        }
+
+        const qs = new URLSearchParams();
+        qs.set("radiusKm", String(radiusKm));
+        if (selectedCuisines.length > 0) qs.set("cuisines", selectedCuisines.join(","));
+        if (price.length > 0) qs.set("price", price.join(","));
+        if (openNow) qs.set("openNow", "true");
+        if (minRating) qs.set("minRating", String(minRating));
+
+        try {
+            const res = await fetch(`/api/restaurants?${qs.toString()}`);
+            if (!res.ok) throw new Error("Bad response");
+            const data = await res.json();
+            setPreviewCount(data.count);
+        } catch (e) {
+            console.error(e);
+            setPreviewCount(0);
+        } finally {
+            setToastOpen(true);
+        }
     }
 
     const thresholdValid = people >= 2 && (people === 2 ? true : (requiredYes >= 2 && requiredYes <= people));
 
-    function applyAndStart() {
-        setArea({ radiusKm });
-        setFilters({ cuisines: selectedCuisines, price, openNow, minRating });
+  
+    async function applyAndStart() {
+        if (!cuisinesValid) return;
 
-        const finalRequired = people <= 2 ? 2 : Math.max(2, Math.min(people, Number(requiredYes) || 2));
-        setThreshold({ type: "absolute", value: finalRequired, participants: Number(people) });
+        const area = { radiusKm };
+        const filters = { cuisines: selectedCuisines, price, openNow, minRating };
+        const threshold = {
+            type: "absolute",
+            value: people <= 2 ? 2 : Math.max(2, Math.min(people, Number(requiredYes) || 2)),
+            participants: Number(people)
+        };
 
-        startVoting();
+        try {
+            const res = await fetch("/api/sessions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ area, filters, threshold })
+            });
+            if (!res.ok) {
+                console.error("Error creando sesión");
+                return;
+            }
+            const data = await res.json();
+            // data: { sessionId, invitePath, count, session, restaurants }
+
+            // Guarda en tu contexto lo que ya guardabas
+            setArea(area);
+            setFilters(filters);
+            setThreshold(threshold);
+
+            startVoting(data.sessionId, data.restaurants);
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     return (
@@ -257,11 +296,7 @@ export default function Lobby() {
                     <button
                         type="button"
                         className="btn btn--ghost"
-                        onClick={() => {
-                            const count = computeCandidateCount();
-                            setPreviewCount(count);
-                            setToastOpen(true);
-                        }}
+                        onClick={previewFromApi}
                         disabled={!cuisinesValid}
                         title={!cuisinesValid ? "Selecciona al menos 1 cocina" : undefined}
                     >

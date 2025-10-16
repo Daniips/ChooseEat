@@ -1,0 +1,20 @@
+{
+    "name": "@chooseeat/api",
+    "private": true,
+    "type": "module",
+    "main": "dist/index.js",
+    "scripts": {
+        "dev": "tsx watch src/index.ts",
+        "build": "tsc -p tsconfig.json",
+        "start": "node dist/index.js"
+    },
+    "dependencies": {
+        "@fastify/cors": "^10.1.0",
+        "fastify": "^5.6.1"
+    },
+    "devDependencies": {
+        "@types/node": "^20.11.0",
+        "tsx": "^4.17.0",
+        "typescript": "^5.4.0"
+    }
+}
