@@ -20,7 +20,7 @@ export function SessionProvider({ children }) {
   const setArea = (patch)     => setSession(s => ({ ...s, area: { ...s.area, ...patch }}));
   const setFilters = (patch)  => setSession(s => ({ ...s, filters: { ...s.filters, ...patch }}));
   const setThreshold = (patch)=> setSession(s => ({ ...s, threshold: { ...s.threshold, ...patch }}));
-  const setWinner = (winner) => setSession(s => ({ ...s, winner, status: "matched" }));
+  const setWinner = (winner) => setSession(s => ({ ...s, winner }));
 
   function bootSession(payload) {
     const { id, invitePath, area, filters, threshold, restaurants } = payload;

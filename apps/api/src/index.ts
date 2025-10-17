@@ -30,16 +30,17 @@ type VoteBuckets = {
 type SessionStatus = "open" | "voting" | "matched" | "finished";
 
 type Session = {
-    id: string;
-    area: Area;
-    filters: Filters;
-    threshold: { type: "absolute"; value: number; participants: number };
-    status: SessionStatus;
-    restaurants: Restaurant[];
-    createdAt: string;
-    participants: Record<string, Participant>;
-    votes: Record<string, VoteBuckets>;
-    winner?: Restaurant;
+  id: string;
+  area: Area;
+  filters: Filters;
+  threshold: { type: "absolute"; value: number; participants: number };
+  status: "open" | "voting" | "matched" | "finished";
+  restaurants: Restaurant[];
+  createdAt: string;
+  participants: Record<string, Participant>;
+  votes: Record<string, VoteBuckets>;
+  matchedIds: Set<string>;    
+  winners?: Restaurant[];               
 };
 
 const app = Fastify({ logger: true });
@@ -96,7 +97,9 @@ app.post("/api/sessions", async (req, reply) => {
         restaurants: items,
         createdAt: new Date().toISOString(),
         participants: {},
-        votes: {}
+        votes: {},
+        matchedIds: new Set(), 
+        winners: []
     };
     sessions.set(sessionId, session);
 
@@ -116,45 +119,45 @@ app.post("/api/sessions", async (req, reply) => {
 });
 
 app.post("/api/sessions/:id/join", async (req, reply) => {
-    const { id } = req.params as any;
-    const body = (req.body as any) ?? {};
-    const name = String(body.name || "").trim() || "Invitado";
+  const { id } = req.params as any;
+  const body = (req.body as any) ?? {};
+  const name = String(body.name || "").trim() || "Invitado";
 
-    const s = sessions.get(id);
-    if (!s) return reply.code(404).send({ error: "Session not found" });
+  const s = sessions.get(id);
+  if (!s) return reply.code(404).send({ error: "Session not found" });
 
-    const pid = "p_" + Math.random().toString(36).slice(2, 10);
-    const participant: Participant = { id: pid, name, joinedAt: new Date().toISOString() };
-    s.participants[pid] = participant;
+  const pid = "p_" + Math.random().toString(36).slice(2, 10);
+  const participant: Participant = { id: pid, name, joinedAt: new Date().toISOString() };
+  s.participants[pid] = participant;
 
+  if (s.status === "open") s.status = "voting";
 
-    if (s.status === "open") s.status = "voting";
-
-    try {
-        app.io.to(id).emit("participant:joined", {
-            sessionId: id,
-            participant: { id: pid, name },
-            participants: Object.values(s.participants)
-        });
-    } catch {
-        // noop
-    }
-
-    return reply.send({
-        sessionId: id,
-        participant: { id: pid, name },
-        invitePath: `/s/${id}`,
-        session: {
-            id: s.id,
-            area: s.area,
-            filters: s.filters,
-            threshold: s.threshold,
-            status: s.status
-        },
-        restaurants: s.restaurants,
-        winner: s.winner ?? null
+  try {
+    app.io.to(id).emit("participant:joined", {
+      sessionId: id,
+      participant: { id: pid, name },
+      participants: Object.values(s.participants)
     });
+  } catch {
+    // noop
+  }
+
+  return reply.send({
+    sessionId: id,
+    participant: { id: pid, name },
+    invitePath: `/s/${id}`,
+    session: {
+      id: s.id,
+      area: s.area,
+      filters: s.filters,
+      threshold: s.threshold,
+      status: s.status
+    },
+    restaurants: s.restaurants,
+    winnerIds: Array.from(s.matchedIds),
+  });
 });
+
 
 
 app.get("/api/sessions/:id", async (req, reply) => {
@@ -170,7 +173,7 @@ app.post("/api/sessions/:id/votes", async (req, reply) => {
   const { participantId, restaurantId, choice } = (req.body as any) as {
     participantId?: string;
     restaurantId?: string;
-    choice?: Choice;
+    choice?: "yes" | "no";
   };
 
   const s = sessions.get(id);
@@ -185,19 +188,26 @@ app.post("/api/sessions/:id/votes", async (req, reply) => {
   const bucket: VoteBuckets = s.votes[restaurantId] ?? { yes: new Set<string>(), no: new Set<string>() };
   s.votes[restaurantId] = bucket;
 
+  // un solo estado por participante
   bucket.yes.delete(participantId);
   bucket.no.delete(participantId);
   (choice === "yes" ? bucket.yes : bucket.no).add(participantId);
 
   const yesCount = bucket.yes.size;
   const needed = s.threshold?.value ?? 2;
-  const matched = yesCount >= needed;
 
-  if (matched && s.status !== "matched") {
+  const isNewlyMatched = yesCount >= needed && !s.matchedIds.has(restaurantId);
+
+  if (isNewlyMatched) {
+    s.matchedIds.add(restaurantId);
+
     const winner = s.restaurants.find(r => r.id === restaurantId);
     if (winner) {
-      s.status = "matched";
-      s.winner = winner; 
+      if (s.status !== "matched") s.status = "matched";
+
+      if (!s.winners) s.winners = [];
+      if (!s.winners.some(w => w.id === restaurantId)) s.winners.push(winner);
+
       try {
         app.io.to(id).emit("session:matched", { sessionId: id, winner });
       } catch {}
@@ -208,12 +218,17 @@ app.post("/api/sessions/:id/votes", async (req, reply) => {
 
   return reply.send({
     ok: true,
-    matched: s.status === "matched",
-    winner: s.winner ?? null,
+    matched: isNewlyMatched,           
+    alreadyMatched: s.matchedIds.size > 0,
+    winner: isNewlyMatched
+      ? (s.winners?.find(w => w.id === restaurantId) ?? null)
+      : null,
     yesCount,
     needed
   });
 });
+
+
 
 
 app.ready().then(() => {
@@ -248,6 +263,7 @@ app.ready().then(() => {
         return;
       }
 
+
       const bucket = s.votes[restaurantId] ?? { yes: new Set<string>(), no: new Set<string>() };
       s.votes[restaurantId] = bucket;
 
@@ -257,21 +273,27 @@ app.ready().then(() => {
 
       const yesCount = bucket.yes.size;
       const needed = s.threshold?.value ?? 2;
-      const matched = yesCount >= needed;
 
       app.io.to(s.id).emit("session:vote", { participantId, restaurantId, choice, yesCount, needed });
 
-      if (matched && s.status !== "matched") {
+      const isNewlyMatched = yesCount >= needed && !s.matchedIds.has(restaurantId);
+      if (isNewlyMatched) {
+        s.matchedIds.add(restaurantId);
+
+        if (s.status === "voting") s.status = "matched";
+
         const winner = s.restaurants.find(r => r.id === restaurantId);
         if (winner) {
-          s.status = "matched";
-          s.winner = winner;
+          if (!s.winners) s.winners = [];
+          if (!s.winners.some(w => w.id === restaurantId)) s.winners.push(winner);
+
           app.io.to(s.id).emit("session:matched", { sessionId: s.id, winner });
         } else {
           app.log.warn({ id: restaurantId }, "winner restaurant not found in session");
         }
       }
     });
+
 
     socket.on("disconnect", () => {
       app.log.info({ id: socket.id }, "socket disconnected");
@@ -285,31 +307,91 @@ app.listen({ port, host: "0.0.0.0" }).then(() => {
 });
 
 function computeResults(s: Session) {
-  const results = s.restaurants.map(r => {
+  const totalParticipants = Object.keys(s.participants || {}).length;
+  const needed = s.threshold?.value ?? 2;
+
+  const rows = s.restaurants.map(r => {
     const b = s.votes[r.id] ?? { yes: new Set<string>(), no: new Set<string>() };
     const yes = b.yes.size;
     const no  = b.no.size;
+    const pending = Math.max(0, totalParticipants - yes - no);
+
     return {
-      restaurantId: r.id,
+      id: r.id,
       name: r.name,
       img: (r as any).img,
+      cuisine: r.cuisine,
+      price: r.price,
+      rating: r.rating,
       yes,
       no,
-      total: yes + no
+      pending,
+      total: yes + no,
     };
-  }).sort((a, b) => b.yes - a.yes);
+  }).sort((a, b) => {
+    if (b.yes !== a.yes) return b.yes - a.yes;
+    return a.no - b.no;
+  });
+
+  const winnerIds = rows.filter(x => x.yes >= needed).map(x => x.id);
+  const winners = s.winners && s.winners.length
+    ? s.winners
+    : s.restaurants.filter(r => s.matchedIds.has(r.id));
 
   return {
     sessionId: s.id,
     status: s.status,
-    winner: s.winner ?? null,
-    results
+    needed,
+    totalParticipants,
+    winnerIds,
+    winners,
+    results: rows,           
   };
 }
+
 
 app.get("/api/sessions/:id/results", async (req, reply) => {
   const { id } = req.params as any;
   const s = sessions.get(id);
   if (!s) return reply.code(404).send({ error: "Session not found" });
-  return reply.send(computeResults(s));
+
+  const totalParticipants = Object.keys(s.participants || {}).length;
+  const needed = s.threshold?.value ?? 2;
+
+  const results = s.restaurants
+    .map(r => {
+      const b = s.votes[r.id] ?? { yes: new Set<string>(), no: new Set<string>() };
+      const yes = b.yes.size;
+      const no  = b.no.size;
+      const pending = Math.max(0, totalParticipants - yes - no);
+      return {
+        id: r.id,
+        name: r.name,
+        img: r.img,
+        cuisine: r.cuisine,
+        price: r.price,
+        rating: r.rating,
+        yes,
+        no,
+        pending,
+        total: yes + no,
+      };
+    })
+    
+    .sort((a, b) => (b.yes - a.yes) || (a.no - b.no));
+
+  const winnerIds = results.filter(x => x.yes >= needed).map(x => x.id);
+  const winners = (s.winners && s.winners.length)
+    ? s.winners
+    : s.restaurants.filter(r => s.matchedIds.has(r.id));
+
+  return reply.send({
+    sessionId: id,
+    status: s.status,
+    needed,
+    totalParticipants,
+    winnerIds,
+    winners,
+    results,
+  });
 });

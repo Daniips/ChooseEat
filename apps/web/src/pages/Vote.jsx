@@ -6,6 +6,7 @@ import InviteBar from "../components/InviteBar";
 import { useArrows } from "../hooks/useArrows";
 import { useSession } from "../context/SessionContext";
 import { io } from "socket.io-client";
+import MatchOverlay from "../components/MatchOverlay";
 
 export default function Vote() {
   const { session, setWinner } = useSession();
@@ -14,25 +15,44 @@ export default function Vote() {
   const [yesIds, setYesIds] = useState([]);
   const [, setNoIds] = useState([]);
   const [keySwipe, setKeySwipe] = useState(null);
-  const winner = session.winner;
 
+  const winner = session.winner;
   const socketRef = useRef(null);
   const [participants, setParticipants] = useState([]);
   const [results, setResults] = useState(null);
 
+  // --- Overlay control independiente de `winner`
+  const [showOverlay, setShowOverlay] = useState(false);
+  const overlayTimerRef = useRef(null);
+  const triggerMatchFlash = () => {
+    setShowOverlay(true);
+    if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
+    overlayTimerRef.current = setTimeout(() => setShowOverlay(false), 1600);
+  };
+  useEffect(() => {
+    return () => {
+      if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
+    };
+  }, []);
+
+  // Lista de restaurantes de la sesión
   const list = useMemo(
     () => (Array.isArray(session?.restaurants) ? session.restaurants : []),
     [session?.restaurants]
   );
-  const current = list[index] || null;
-  const finished = !!winner || !current;
 
-  
+  const current = list[index] || null;
+
+  // NO saltar a resumen por match: solo cuando se acabe el mazo
+  const finishedByDeck = !current;
+  const finished = finishedByDeck;
+
+  // Asegurar host como participante
   useEffect(() => {
     (async () => {
       try {
         const saved = JSON.parse(localStorage.getItem("ce_participant") || "null");
-        if (saved?.id) return; // ya está dentro
+        if (saved?.id) return;
         if (!session?.id) return;
 
         const res = await fetch(`/api/sessions/${session.id}/join`, {
@@ -51,7 +71,7 @@ export default function Vote() {
     })();
   }, [session?.id]);
 
-  
+  // Socket: participantes / match en vivo
   useEffect(() => {
     if (!session?.id) return;
 
@@ -59,15 +79,16 @@ export default function Vote() {
     const socket = io(url, { transports: ["websocket"], autoConnect: true });
     socketRef.current = socket;
 
-    
-    const onParticipants = ({ participants }) => {
-      setParticipants(participants || []);
-    };
+    const onParticipants = ({ participants }) => setParticipants(participants || []);
     const onVote = () => {
-      
+      // opcional: contadores en vivo
     };
-    const onMatched = ({ winner }) => {
-      if (winner) setWinner(winner);
+    const onMatched = (evt) => {
+      // evt: { sessionId, winner }
+      if (evt?.winner) {
+        setWinner(evt.winner);      // mantiene coherencia para resultados
+        triggerMatchFlash();        // dispara visual
+      }
     };
 
     socket.emit("session:join", { sessionId: session.id });
@@ -75,7 +96,6 @@ export default function Vote() {
     socket.on("participant:joined", onParticipants);
     socket.on("session:vote", onVote);
     socket.on("session:matched", onMatched);
-
 
     return () => {
       socket.off("session:participants", onParticipants);
@@ -87,30 +107,32 @@ export default function Vote() {
     };
   }, [session?.id, setWinner]);
 
+  // Cargar resultados cuando: se acaba el mazo o hay algún winner
   useEffect(() => {
-  if (!session?.id) return;
-  if (!winner && current) return;
+    if (!session?.id) return;
+    if (!finished && !winner) return;
 
-  (async () => {
-    try {
-      const res = await fetch(`/api/sessions/${session.id}/results`);
-      if (res.ok) {
+    let aborted = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/sessions/${session.id}/results`);
+        if (!res.ok) return;
         const data = await res.json();
-        setResults(data);
+        if (!aborted) setResults(data);
+      } catch {
+        // noop
       }
-    } catch {
-      // nada
-    }
-  })();
-}, [session?.id, winner, current]);
+    })();
 
+    return () => { aborted = true; };
+  }, [session?.id, finished, winner]);
 
   useArrows({ left: () => setKeySwipe("left"), right: () => setKeySwipe("right") }, [index]);
 
   const liked = useMemo(() => list.filter((x) => yesIds.includes(x.id)), [yesIds, list]);
   const inviteUrl = `${window.location.origin}${session.invitePath || `/s/${session.id}`}`;
 
-  // Enviar voto al backend y avanzar (optimista)
+  // Enviar voto (optimista) y avanzar
   async function vote(choice) {
     if (!current || !session?.id) return;
 
@@ -133,9 +155,11 @@ export default function Vote() {
       });
 
       if (res.ok) {
-        const data = await res.json();
-        if (data.matched && data.winner) {
-          setWinner(data.winner);
+        const data = await res.json(); // { matched, winner, ... }
+        if (data.matched) {
+          // overlay SIEMPRE que este voto produjo un match nuevo
+          triggerMatchFlash();
+          if (data.winner) setWinner(data.winner);
         }
       }
     } catch {
@@ -148,10 +172,13 @@ export default function Vote() {
       <Header />
       <InviteBar inviteUrl={inviteUrl} connectedCount={participants.length} />
 
+      {/* Overlay “¡Match!” (solo efecto visual) */}
+      <MatchOverlay visible={showOverlay} onDone={() => setShowOverlay(false)} />
+
       {!finished ? (
         <div className="stage">
           <Card
-            key={current.id}
+            key={current?.id || "end"}
             r={current}
             onNo={() => vote("no")}
             onYes={() => vote("yes")}
@@ -179,14 +206,16 @@ export default function Vote() {
         </div>
       ) : (
         <Summary
-          liked={winner ? [winner] : liked}
+          liked={liked}
           scores={results?.results}
-          winnerId={results?.winner?.id}
+          winnerIds={results?.winnerIds}
+          needed={results?.needed}
           onRestart={() => {
             setIndex(0);
             setYesIds([]);
             setNoIds([]);
             setWinner(null);
+            setResults(null);
           }}
         />
       )}

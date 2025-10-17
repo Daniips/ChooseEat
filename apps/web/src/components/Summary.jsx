@@ -1,65 +1,60 @@
-// apps/web/src/components/Summary.jsx
 import React from "react";
 import Button from "./Button";
 
-export default function Summary({
-  liked = [],
-  onRestart,
-  scores = [],            
-  winnerId = null
-}) {
+export default function Summary({ liked = [], scores = [], winnerIds = [], needed, onRestart }) {
   const hasScores = Array.isArray(scores) && scores.length > 0;
-
-  const winnerRow = hasScores && winnerId
-    ? scores.find(r => r.restaurantId === winnerId)
-    : null;
-
-  const otherRows = hasScores
-    ? scores.filter(r => r.restaurantId !== winnerId)
-    : [];
 
   return (
     <div className="summary">
-      <h2>{hasScores ? "Resultados de la sesión" : "¡Has terminado!"}</h2>
+      <h2>¡Has terminado!</h2>
 
+      {/* Ganadores (si los hay) */}
+      {hasScores && winnerIds?.length > 0 && (
+        <>
+          <p className="muted">✅ Se alcanzó el umbral (≥ {needed}) en:</p>
+          <ul className="list" style={{ marginBottom: 16 }}>
+            {scores
+              .filter(r => winnerIds.includes(r.id))
+              .map(r => (
+                <li key={r.id} className="list__item" style={{ borderLeft: "4px solid var(--accent)" }}>
+                  <img src={r.img} alt="" />
+                  <div>
+                    <div className="name">{r.name}</div>
+                    <div className="small">
+                      {Array.isArray(r.cuisine) ? r.cuisine.join(" · ") : null}
+                      {r.price ? ` · ${"$".repeat(r.price)}` : null}
+                      {typeof r.rating === "number" ? ` · ⭐ ${r.rating.toFixed(1)}` : null}
+                    </div>
+                    <div className="small">Sí: {r.yes} · No: {r.no} · Pendiente: {r.pending}</div>
+                  </div>
+                </li>
+              ))}
+          </ul>
+        </>
+      )}
+
+      {/* Ranking completo */}
       {hasScores ? (
         <>
-          {winnerRow && (
-            <>
-              <p className="muted" style={{ marginTop: 0 }}>Ganador</p>
-              <ul className="list" style={{ marginTop: 8 }}>
-                <li className="list__item" key={winnerRow.restaurantId}>
-                  {winnerRow.img && (
-                    <img src={winnerRow.img} alt={`Foto de ${winnerRow.name}`} />
-                  )}
-                  <div style={{ flex: 1 }}>
+          <p className="muted">Recuento final:</p>
+          <ul className="list">
+            {scores.map(r => {
+              const isWinner = winnerIds.includes(r.id);
+              return (
+                <li key={r.id} className="list__item" style={{ opacity: 1 }}>
+                  <img src={r.img} alt="" />
+                  <div>
                     <div className="name">
-                      {winnerRow.name} <span aria-hidden="true">🏆</span>
+                      {r.name} {isWinner && <span aria-label="Ganador" title="Ganador">🏆</span>}
                     </div>
                     <div className="small">
-                      Sí: {winnerRow.yes} · No: {winnerRow.no} · Total: {winnerRow.total}
+                      Sí: {r.yes} · No: {r.no} · Pendiente: {r.pending}
+                      {typeof needed === "number" ? ` · Umbral: ${needed}` : ""}
                     </div>
                   </div>
                 </li>
-              </ul>
-            </>
-          )}
-
-          <p className="muted" style={{ marginTop: 16 }}>Resto de candidatos</p>
-          <ul className="list">
-            {otherRows.map(row => (
-              <li key={row.restaurantId} className="list__item">
-                {row.img && (
-                  <img src={row.img} alt={`Foto de ${row.name}`} />
-                )}
-                <div style={{ flex: 1 }}>
-                  <div className="name">{row.name}</div>
-                  <div className="small">
-                    Sí: {row.yes} · No: {row.no} · Total: {row.total}
-                  </div>
-                </div>
-              </li>
-            ))}
+              );
+            })}
           </ul>
         </>
       ) : (
@@ -70,11 +65,11 @@ export default function Summary({
               <ul className="list">
                 {liked.map(x => (
                   <li key={x.id} className="list__item">
-                    {x.img && <img src={x.img} alt={`Foto de ${x.name}`} />}
+                    <img src={x.img} alt="" />
                     <div>
                       <div className="name">{x.name}</div>
                       <div className="small">
-                        {x.cuisine?.join(" · ") || "—"} · {"$".repeat(x.price || 0)} · ⭐ {x.rating?.toFixed?.(1) ?? "—"}
+                        {x.cuisine.join(" · ")} · {"$".repeat(x.price)} · ⭐ {x.rating.toFixed(1)}
                       </div>
                     </div>
                   </li>
@@ -87,7 +82,7 @@ export default function Summary({
         </>
       )}
 
-      <div className="summary__actions" style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+      <div className="summary__actions">
         <Button variant="ghost" onClick={onRestart}>Reiniciar</Button>
       </div>
     </div>
