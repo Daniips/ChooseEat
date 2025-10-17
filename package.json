@@ -1,12 +1,15 @@
 {
     "private": true,
-    "workspaces": ["apps/*", "packages/*"],
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ],
     "scripts": {
         "dev": "concurrently -n api,web -c magenta,cyan \"npm:dev -w apps/api\" \"npm:dev -w apps/web\"",
         "build": "npm run -w apps/api build && npm run -w apps/web build",
         "start": "npm run -w apps/api start && npm run -w apps/web start"
     },
     "devDependencies": {
-        "concurrently": "^9.0.0"
+        "concurrently": "^9.2.1"
     }
 }

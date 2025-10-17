@@ -7,7 +7,7 @@ import Header from "../components/Header";
 
 export default function Lobby() {
     const navigate = useNavigate();
-    const { startVoting } = useSession();
+    const { hydrateFromJoin } = useSession();
 
     const allCuisines = useMemo(() => CUISINES.map(c => c.label), []);
 
@@ -75,10 +75,22 @@ export default function Lobby() {
             alert("No se pudo crear la sesión");
             return;
         }
-        const data = await res.json();
-        startVoting(data.sessionId, data.restaurants, data.invitePath);
+        const created = await res.json();
+
+        const joinRes = await fetch(`/api/sessions/${created.sessionId}/join`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: "Host" })
+        });
+        if (!joinRes.ok) {
+            alert("No se pudo unir el host a la sesión");
+            return;
+        }
+        const joined = await joinRes.json();
+        hydrateFromJoin(joined);
         navigate("/vote");
     }
+
 
 
     return (
