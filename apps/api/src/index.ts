@@ -20,6 +20,7 @@ type Participant = {
     id: string;
     name: string;
     joinedAt: string;
+    done?: boolean; 
 };
 
 type VoteBuckets = {
@@ -121,42 +122,52 @@ app.post("/api/sessions", async (req, reply) => {
 app.post("/api/sessions/:id/join", async (req, reply) => {
   const { id } = req.params as any;
   const body = (req.body as any) ?? {};
+  const candidatePid = body.participantId ? String(body.participantId) : undefined;
   const name = String(body.name || "").trim() || "Invitado";
 
   const s = sessions.get(id);
   if (!s) return reply.code(404).send({ error: "Session not found" });
 
-  const pid = "p_" + Math.random().toString(36).slice(2, 10);
-  const participant: Participant = { id: pid, name, joinedAt: new Date().toISOString() };
-  s.participants[pid] = participant;
+  let pid: string;
+  let created = false;
 
-  if (s.status === "open") s.status = "voting";
+  if (candidatePid && s.participants[candidatePid]) {
+    pid = candidatePid;
+    if (name && s.participants[pid].name !== name) {
+      s.participants[pid].name = name;
+    }
+  } else {
+    pid = "p_" + Math.random().toString(36).slice(2, 10);
+    s.participants[pid] = { id: pid, name, joinedAt: new Date().toISOString() };
+    created = true;
+    if (s.status === "open") s.status = "voting";
+  }
 
-  try {
-    app.io.to(id).emit("participant:joined", {
-      sessionId: id,
-      participant: { id: pid, name },
-      participants: Object.values(s.participants)
-    });
-  } catch {
-    // noop
+  if (created) {
+    try {
+      app.io.to(id).emit("participant:joined", {
+        sessionId: id,
+        participant: { id: pid, name: s.participants[pid].name },
+        participants: Object.values(s.participants),
+      });
+    } catch {}
   }
 
   return reply.send({
     sessionId: id,
-    participant: { id: pid, name },
+    participant: s.participants[pid],
     invitePath: `/s/${id}`,
     session: {
       id: s.id,
       area: s.area,
       filters: s.filters,
       threshold: s.threshold,
-      status: s.status
+      status: s.status,
     },
     restaurants: s.restaurants,
-    winnerIds: Array.from(s.matchedIds),
   });
 });
+
 
 
 
@@ -188,7 +199,8 @@ app.post("/api/sessions/:id/votes", async (req, reply) => {
   const bucket: VoteBuckets = s.votes[restaurantId] ?? { yes: new Set<string>(), no: new Set<string>() };
   s.votes[restaurantId] = bucket;
 
-  // un solo estado por participante
+  const wasAlreadyMatched = s.matchedIds.has(restaurantId);
+
   bucket.yes.delete(participantId);
   bucket.no.delete(participantId);
   (choice === "yes" ? bucket.yes : bucket.no).add(participantId);
@@ -196,33 +208,29 @@ app.post("/api/sessions/:id/votes", async (req, reply) => {
   const yesCount = bucket.yes.size;
   const needed = s.threshold?.value ?? 2;
 
-  const isNewlyMatched = yesCount >= needed && !s.matchedIds.has(restaurantId);
+  const isNewlyMatched = yesCount >= needed && !wasAlreadyMatched;
 
   if (isNewlyMatched) {
     s.matchedIds.add(restaurantId);
-
-    const winner = s.restaurants.find(r => r.id === restaurantId);
-    if (winner) {
-      if (s.status !== "matched") s.status = "matched";
-
+    if (s.status !== "matched") s.status = "matched";
+    const w = s.restaurants.find(r => r.id === restaurantId);
+    if (w) {
       if (!s.winners) s.winners = [];
-      if (!s.winners.some(w => w.id === restaurantId)) s.winners.push(winner);
-
-      try {
-        app.io.to(id).emit("session:matched", { sessionId: id, winner });
-      } catch {}
-    } else {
-      app.log.warn({ id: restaurantId }, "winner restaurant not found in session");
+      if (!s.winners.some(x => x.id === w.id)) s.winners.push(w);
+      try { app.io.to(id).emit("session:matched", { sessionId: id, winner: w }); } catch {}
     }
   }
 
+  const winnerObj =
+    yesCount >= needed
+      ? (s.restaurants.find(r => r.id === restaurantId) ?? null)
+      : null;
+
   return reply.send({
     ok: true,
-    matched: isNewlyMatched,           
-    alreadyMatched: s.matchedIds.size > 0,
-    winner: isNewlyMatched
-      ? (s.winners?.find(w => w.id === restaurantId) ?? null)
-      : null,
+    matched: isNewlyMatched,          
+    wasAlreadyMatched,                
+    winner: winnerObj,                
     yesCount,
     needed
   });
@@ -395,3 +403,26 @@ app.get("/api/sessions/:id/results", async (req, reply) => {
     results,
   });
 });
+
+app.post("/api/sessions/:id/done", async (req, reply) => {
+  const { id } = req.params as any;
+  const { participantId } = (req.body as any) ?? {};
+
+  const s = sessions.get(id);
+  if (!s) return reply.code(404).send({ error: "Session not found" });
+  const p = participantId ? s.participants?.[participantId] : null;
+  if (!p) return reply.code(403).send({ error: "Unknown participant" });
+
+  p.done = true;
+
+  const min = s.threshold?.participants ?? Object.keys(s.participants || {}).length;
+  const doneCount = Object.values(s.participants).filter(x => x.done).length;
+
+  if (doneCount >= min && s.status !== "finished") {
+    s.status = "finished";
+    try { app.io.to(id).emit("session:finished", { sessionId: id }); } catch {}
+  }
+
+  return reply.send({ ok: true, status: s.status, doneCount, min });
+});
+

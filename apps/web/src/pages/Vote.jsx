@@ -7,6 +7,8 @@ import { useArrows } from "../hooks/useArrows";
 import { useSession } from "../context/SessionContext";
 import { io } from "socket.io-client";
 import MatchOverlay from "../components/MatchOverlay";
+import { getParticipantId, getParticipant, setParticipant, migrateFromLegacy } from "../lib/participant";
+
 
 export default function Vote() {
   const { session, setWinner } = useSession();
@@ -21,7 +23,8 @@ export default function Vote() {
   const [participants, setParticipants] = useState([]);
   const [results, setResults] = useState(null);
 
-  // --- Overlay control independiente de `winner`
+  const [forceFinished, setForceFinished] = useState(false);
+
   const [showOverlay, setShowOverlay] = useState(false);
   const overlayTimerRef = useRef(null);
   const triggerMatchFlash = () => {
@@ -29,13 +32,13 @@ export default function Vote() {
     if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
     overlayTimerRef.current = setTimeout(() => setShowOverlay(false), 1600);
   };
+
   useEffect(() => {
     return () => {
       if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
     };
   }, []);
 
-  // Lista de restaurantes de la sesión
   const list = useMemo(
     () => (Array.isArray(session?.restaurants) ? session.restaurants : []),
     [session?.restaurants]
@@ -43,27 +46,29 @@ export default function Vote() {
 
   const current = list[index] || null;
 
-  // NO saltar a resumen por match: solo cuando se acabe el mazo
   const finishedByDeck = !current;
-  const finished = finishedByDeck;
+  const finished = finishedByDeck || forceFinished;
 
-  // Asegurar host como participante
   useEffect(() => {
     (async () => {
       try {
-        const saved = JSON.parse(localStorage.getItem("ce_participant") || "null");
-        if (saved?.id) return;
         if (!session?.id) return;
 
+        migrateFromLegacy(session.id);
+
+        const existingId = getParticipantId(session.id);
+        if (existingId) {
+          return;
+        }
         const res = await fetch(`/api/sessions/${session.id}/join`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: "Host" })
+          body: JSON.stringify({ name: "Host" }),
         });
+
         if (res.ok) {
           const data = await res.json();
-          localStorage.setItem("ce_participant", JSON.stringify(data.participant));
-          localStorage.setItem("ce_sessionId", data.sessionId);
+          setParticipant(session.id, data.participant);
         }
       } catch {
         // noop
@@ -71,7 +76,25 @@ export default function Vote() {
     })();
   }, [session?.id]);
 
-  // Socket: participantes / match en vivo
+
+  useEffect(() => {
+    (async () => {
+      if (!session?.id) return;
+      try {
+        const res = await fetch(`/api/sessions/${session.id}`);
+        if (!res.ok) return;
+        const s = await res.json();
+        const me = getParticipant(session.id);
+        const iAmDone = me?.id && s.participants?.[me.id]?.done;
+        if (s.status === "finished" || iAmDone) {
+          setForceFinished(true);
+        }
+      } catch {
+        // noop
+      }
+    })();
+  }, [session?.id]);
+
   useEffect(() => {
     if (!session?.id) return;
 
@@ -80,15 +103,15 @@ export default function Vote() {
     socketRef.current = socket;
 
     const onParticipants = ({ participants }) => setParticipants(participants || []);
-    const onVote = () => {
-      // opcional: contadores en vivo
-    };
+    const onVote = () => { /* contador en vivo? */ };
     const onMatched = (evt) => {
-      // evt: { sessionId, winner }
       if (evt?.winner) {
-        setWinner(evt.winner);      // mantiene coherencia para resultados
-        triggerMatchFlash();        // dispara visual
+        setWinner(evt.winner);
       }
+    };
+
+    const onFinished = () => {
+      setForceFinished(true);
     };
 
     socket.emit("session:join", { sessionId: session.id });
@@ -96,18 +119,39 @@ export default function Vote() {
     socket.on("participant:joined", onParticipants);
     socket.on("session:vote", onVote);
     socket.on("session:matched", onMatched);
+    socket.on("session:finished", onFinished);
 
     return () => {
       socket.off("session:participants", onParticipants);
       socket.off("participant:joined", onParticipants);
       socket.off("session:vote", onVote);
       socket.off("session:matched", onMatched);
+      socket.off("session:finished", onFinished);
       socket.disconnect();
       socketRef.current = null;
     };
   }, [session?.id, setWinner]);
 
-  // Cargar resultados cuando: se acaba el mazo o hay algún winner
+  useEffect(() => {
+    if (!finishedByDeck || !session?.id) return;
+
+    (async () => {
+      try {
+        const me = getParticipant(session.id);
+        if (me?.id) {
+          await fetch(`/api/sessions/${session.id}/done`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ participantId: me.id })
+          });
+        }
+      } catch {
+        // noop
+      }
+      setForceFinished(true);
+    })();
+  }, [finishedByDeck, session?.id]);
+
   useEffect(() => {
     if (!session?.id) return;
     if (!finished && !winner) return;
@@ -120,7 +164,7 @@ export default function Vote() {
         const data = await res.json();
         if (!aborted) setResults(data);
       } catch {
-        // noop
+        //noop
       }
     })();
 
@@ -132,7 +176,6 @@ export default function Vote() {
   const liked = useMemo(() => list.filter((x) => yesIds.includes(x.id)), [yesIds, list]);
   const inviteUrl = `${window.location.origin}${session.invitePath || `/s/${session.id}`}`;
 
-  // Enviar voto (optimista) y avanzar
   async function vote(choice) {
     if (!current || !session?.id) return;
 
@@ -141,30 +184,31 @@ export default function Vote() {
     setIndex((i) => i + 1);
 
     try {
-      const p = JSON.parse(localStorage.getItem("ce_participant") || "null");
-      if (!p?.id) return;
+      const me = getParticipant(session.id); // <— helper
+      if (!me?.id) return;
 
       const res = await fetch(`/api/sessions/${session.id}/votes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          participantId: p.id,
+          participantId: me.id,
           restaurantId: current.id,
           choice
         })
       });
 
       if (res.ok) {
-        const data = await res.json(); // { matched, winner, ... }
-        if (data.matched) {
-          // overlay SIEMPRE que este voto produjo un match nuevo
+        const data = await res.json(); 
+        if (
+          choice === "yes" &&
+          (data.matched === true || data.wasAlreadyMatched === true)
+        ) {
           triggerMatchFlash();
-          if (data.winner) setWinner(data.winner);
         }
+
+        if (data.winner) setWinner(data.winner);
       }
-    } catch {
-      /* noop */
-    }
+    } catch { /* noop */ }
   }
 
   return (
@@ -172,7 +216,6 @@ export default function Vote() {
       <Header />
       <InviteBar inviteUrl={inviteUrl} connectedCount={participants.length} />
 
-      {/* Overlay “¡Match!” (solo efecto visual) */}
       <MatchOverlay visible={showOverlay} onDone={() => setShowOverlay(false)} />
 
       {!finished ? (
@@ -216,6 +259,7 @@ export default function Vote() {
             setNoIds([]);
             setWinner(null);
             setResults(null);
+            setForceFinished(false);
           }}
         />
       )}

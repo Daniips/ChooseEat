@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import Header from "../components/Header";
 import { useSession } from "../context/SessionContext";
 import { api } from "../lib/api";
+import { getParticipantId, setParticipant, migrateFromLegacy } from "../lib/participant";
+
 
 export default function JoinSession() {
     const { id } = useParams();
@@ -21,19 +23,28 @@ export default function JoinSession() {
         }
 
         try {
+            migrateFromLegacy(id);
+
+            const existingId = getParticipantId(id);
+            const body = existingId
+            ? { participantId: existingId, name }
+            : { name };
+
             const data = await api(`/api/sessions/${id}/join`, {
-                method: "POST",
-                body: JSON.stringify({ name })
+            method: "POST",
+            body: JSON.stringify(body)
             });
+
+            setParticipant(id, data.participant);
+
             hydrateFromJoin(data);
             navigate("/vote");
         } catch (err) {
-            // Muestra el detalle (status + msg del backend si lo hay)
             console.error("join error:", err);
             setError("No se pudo unir a la sesión. " + (err?.message || ""));
-            // opcional: alert(error);
         }
     }
+
 
     return (
         <div className="wrap">
