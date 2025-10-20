@@ -4,6 +4,7 @@ import { useSession } from "../context/SessionContext";
 import Toast from "../components/Toast";
 import { CUISINES } from "../data/cuisines";
 import Header from "../components/Header";
+import { setParticipant } from "../lib/participant";    
 
 export default function Lobby() {
     const navigate = useNavigate();
@@ -16,6 +17,7 @@ export default function Lobby() {
     const [price, setPrice] = useState([]);
     const [openNow, setOpenNow] = useState(false);
     const [minRating, setMinRating] = useState(0);
+    const [hostName, setHostName] = useState("");
 
     const [people, setPeople] = useState(2);
     const [requiredYes, setRequiredYes] = useState(2);
@@ -87,6 +89,7 @@ export default function Lobby() {
             return;
         }
         const joined = await joinRes.json();
+        setParticipant(created.sessionId, joined.participant, created.invitePath);
         hydrateFromJoin(joined);
         navigate("/vote");
     }
@@ -103,7 +106,18 @@ export default function Lobby() {
                 onSubmit={applyAndStart}
             >
                 <h2>Crear sesión</h2>
-
+                <label htmlFor="host-name" style={{ marginTop: 8 }}>
+                    <div className="small">Tu nombre (host)</div>
+                    <input
+                        id="host-name"
+                        className="input"
+                        value={hostName}
+                        onChange={(e) => setHostName(e.target.value)}
+                        placeholder="Ej. Dani"
+                        required
+                        style={{ maxWidth: 320 }}
+                    />
+                </label>
                 <div className="next" role="status" aria-live="polite">
                     {previewCount === null
                         ? "Pulsa Previsualizar para ver cuántos sitios hay con estos filtros."

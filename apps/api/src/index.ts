@@ -122,49 +122,57 @@ app.post("/api/sessions", async (req, reply) => {
 app.post("/api/sessions/:id/join", async (req, reply) => {
   const { id } = req.params as any;
   const body = (req.body as any) ?? {};
-  const candidatePid = body.participantId ? String(body.participantId) : undefined;
-  const name = String(body.name || "").trim() || "Invitado";
+  const { participantId, name } = body;
 
   const s = sessions.get(id);
   if (!s) return reply.code(404).send({ error: "Session not found" });
 
-  let pid: string;
-  let created = false;
+  if (participantId && s.participants[participantId]) {
+    const p = s.participants[participantId];
 
-  if (candidatePid && s.participants[candidatePid]) {
-    pid = candidatePid;
-    if (name && s.participants[pid].name !== name) {
-      s.participants[pid].name = name;
-    }
-  } else {
-    pid = "p_" + Math.random().toString(36).slice(2, 10);
-    s.participants[pid] = { id: pid, name, joinedAt: new Date().toISOString() };
-    created = true;
     if (s.status === "open") s.status = "voting";
+
+    return reply.send({
+      sessionId: id,
+      participant: { id: p.id, name: p.name },
+      invitePath: `/s/${id}`,
+      session: {
+        id: s.id,
+        area: s.area,
+        filters: s.filters,
+        threshold: s.threshold,
+        status: s.status
+      },
+      restaurants: s.restaurants
+    });
   }
 
-  if (created) {
-    try {
-      app.io.to(id).emit("participant:joined", {
-        sessionId: id,
-        participant: { id: pid, name: s.participants[pid].name },
-        participants: Object.values(s.participants),
-      });
-    } catch {}
-  }
+  const display = String(name || "").trim() || "Invitado";
+  const pid = "p_" + Math.random().toString(36).slice(2, 10);
+  s.participants[pid] = { id: pid, name: display, joinedAt: new Date().toISOString() };
+
+  if (s.status === "open") s.status = "voting";
+
+  try {
+    app.io.to(id).emit("participant:joined", {
+      sessionId: id,
+      participant: { id: pid, name: display },
+      participants: Object.values(s.participants)
+    });
+  } catch {}
 
   return reply.send({
     sessionId: id,
-    participant: s.participants[pid],
+    participant: { id: pid, name: display },
     invitePath: `/s/${id}`,
     session: {
       id: s.id,
       area: s.area,
       filters: s.filters,
       threshold: s.threshold,
-      status: s.status,
+      status: s.status
     },
-    restaurants: s.restaurants,
+    restaurants: s.restaurants
   });
 });
 
