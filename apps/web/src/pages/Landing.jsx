@@ -1,74 +1,147 @@
-import React, { useState } from "react";
+// apps/web/src/pages/Landing.jsx
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Header from "../components/Header";
+import { listRememberedSessions, forgetSession } from "../lib/participant";
+import { pruneParticipants } from "../lib/participant";
 
-function extractSessionId(input) {
-  if (!input) return null;
-  const s = String(input).trim();
-  const m = s.match(/\/s\/([a-zA-Z0-9_-]+)/);
-  if (m && m[1]) return m[1];
-  if (/^s_[a-z0-9]+$/i.test(s)) return s;
-  return null;
-}
+
 
 export default function Landing() {
   const navigate = useNavigate();
-  const [joinInput, setJoinInput] = useState("");
-  const [error, setError] = useState("");
+  const [recent, setRecent] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    pruneParticipants({ maxItems: 100, maxAgeDays: 90 });
+  }, []);
 
-  const goCreate = () => navigate("/create");
-
-  const onJoinSubmit = (e) => {
-    e.preventDefault();
-    setError("");
-    const id = extractSessionId(joinInput);
-    if (!id) {
-      setError("Introduce un enlace /s/<id> o un ID de sesión válido (p. ej., s_abcd1234).");
-      return;
-    }
-    navigate(`/s/${id}`);
-  };
+  useEffect(() => {
+    let aborted = false;
+    (async () => {
+      try {
+        const base = listRememberedSessions();
+        if (base.length === 0) {
+          if (!aborted) { setRecent([]); setLoading(false); }
+          return;
+        }
+        const enriched = await Promise.all(
+          base.map(async (s) => {
+            try {
+              const res = await fetch(`/api/sessions/${s.id}/results`);
+              if (!res.ok) throw new Error("no results");
+              const data = await res.json();
+              const top = Array.isArray(data.results) && data.results[0] ? data.results[0] : null;
+              return {
+                ...s,
+                needed: data.needed,
+                winners: data.winnerIds || [],
+                topName: top?.name || null,
+                topYes: top?.yes ?? null,
+              };
+            } catch {
+              return { ...s, error: true };
+            }
+          })
+        );
+        if (!aborted) {
+          enriched.sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0));
+          setRecent(enriched);
+          setLoading(false);
+        }
+      } catch {
+        if (!aborted) { setRecent([]); setLoading(false); }
+      }
+    })();
+    return () => { aborted = true; };
+  }, []);
 
   return (
-    <div className="landing">
-      <main className="landing__container">
-        <section className="landing__hero">
-          <h1>ChooseEat</h1>
-          <p className="muted">
-            Decide rápido dónde comer con tu grupo. Crea una sesión o únete con un enlace.
-          </p>
+    <div className="wrap">
+      <Header />
 
-          <div className="landing__cta">
-            <button className="btn btn--primary" style={{ marginTop:50 }} onClick={goCreate}>
-              ✨ Crear sesión
-            </button>
-          </div>
-        </section>
+      <section className="summary" style={{ maxWidth: 720, margin: "24px auto" }}>
+        <h2 style={{ marginTop: 0 }}>Elige restaurante sin discusiones</h2>
+        <p className="muted" style={{ marginTop: 8 }}>
+          Crea una sesión, comparte el enlace y votad hasta encontrar el match perfecto.
+        </p>
 
-        <section className="landing__join card-soft">
-          <h3 style={{ margin: 0 }}>Unirme a una sesión</h3>
-          <p className="muted" style={{ marginTop: 6 }}>
-            Pega el enlace que te han pasado o escribe el ID de sesión.
-          </p>
+        <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
+          <button className="btn btn--primary" onClick={() => navigate("/create")}>
+            Crear sesión
+          </button>
+          <button className="btn btn--ghost" onClick={() => {
+            const url = prompt("Pega el enlace de invitación (o id de sesión):");
+            if (!url) return;
+            const m = String(url).match(/\/s\/([^/?#\s]+)/);
+            const id = m ? m[1] : String(url).trim();
+            if (id) navigate(`/s/${id}`);
+          }}>
+            Unirme con enlace
+          </button>
+        </div>
+      </section>
 
-          <form onSubmit={onJoinSubmit} className="join-input">
-            <input
-              className="input"
-              placeholder="Ej. s_abcd1234"
-              value={joinInput}
-              onChange={(e) => setJoinInput(e.target.value)}
-            />
-            <button type="submit" className="btn btn--ghost">
-              Unirme
-            </button>
-          </form>
-
-          {error && (
-            <div className="form-error" role="alert" style={{ marginTop: 8 }}>
-              {error}
-            </div>
+      <section className="summary" style={{ maxWidth: 960, margin: "24px auto" }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+          <h3 style={{ margin: 0 }}>Tus sesiones recientes</h3>
+          {!loading && recent.length > 0 && (
+            <span className="small muted">{recent.length} guardada{recent.length === 1 ? "" : "s"}</span>
           )}
-        </section>
-      </main>
+        </div>
+
+        {loading ? (
+          <div className="muted" style={{ marginTop: 12 }}>Cargando…</div>
+        ) : recent.length === 0 ? (
+          <div className="muted" style={{ marginTop: 12 }}>
+            Aún no tienes sesiones guardadas. Crea una y aparecerá aquí.
+          </div>
+        ) : (
+          <ul className="list" style={{ marginTop: 12 }}>
+            {recent.map((s) => (
+              <li key={s.id} className="list__item" style={{ alignItems: "center" }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="name" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {s.id}
+                  </div>
+                  <div className="small muted" style={{ marginTop: 4 }}>
+                    {s.error
+                      ? "No disponible ahora mismo"
+                      : s.winners && s.winners.length > 0
+                        ? `Con ganador${s.winners.length > 1 ? "es" : ""} · umbral ${s.needed}`
+                        : s.topName
+                          ? `Top: ${s.topName}${typeof s.topYes === "number" ? ` (${s.topYes} ✅)` : ""}`
+                          : "Sin datos todavía"}
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    className="btn btn--ghost"
+                    onClick={() => navigate(`/s/${s.id}`)}
+                    title="Abrir sesión"
+                  >
+                    Ver
+                  </button>
+                  <button
+                    className="btn btn--ghost"
+                    onClick={() => {
+                      if (!confirm("¿Quitar esta sesión de tu lista?")) return;
+                      forgetSession(s.id, { removeParticipant: false });
+                      // refrescar vista
+                      const next = recent.filter(x => x.id !== s.id);
+                      setRecent(next);
+                    }}
+                    title="Olvidar"
+                  >
+                    Quitar
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }
