@@ -92,7 +92,7 @@ export default function JoinSession() {
             className="input"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Ej. Dani"
+            placeholder="Introduce tu nombre"
             required
           />
         </label>
