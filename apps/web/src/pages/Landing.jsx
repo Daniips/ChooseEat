@@ -6,7 +6,6 @@ import { listRememberedSessions, forgetSession } from "../lib/participant";
 import { pruneParticipants } from "../lib/participant";
 
 
-
 export default function Landing() {
   const navigate = useNavigate();
   const [recent, setRecent] = useState([]);
@@ -63,7 +62,7 @@ export default function Landing() {
       <section className="summary" style={{ maxWidth: 720, margin: "24px auto" }}>
         <h2 style={{ marginTop: 0 }}>Elige restaurante sin discusiones</h2>
         <p className="muted" style={{ marginTop: 8 }}>
-          Crea una sesión, comparte el enlace y votad hasta encontrar el match perfecto.
+          Crea una sesión, comparte el enlace y votad hasta encontrar el restaurante perfecto.
         </p>
 
         <div style={{ display: "flex", gap: 12, marginTop: 16 }}>

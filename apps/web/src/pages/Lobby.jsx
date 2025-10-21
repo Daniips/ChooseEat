@@ -12,7 +12,6 @@ export default function Lobby() {
 
   const allCuisines = useMemo(() => CUISINES.map(c => c.label), []);
 
-  // Estado
   const [tab, setTab] = useState("filtros");
 
   const [hostName, setHostName] = useState("");
@@ -28,7 +27,6 @@ export default function Lobby() {
   const [previewCount, setPreviewCount] = useState(null);
   const [toastOpen, setToastOpen] = useState(false);
 
-  // Validaciones
   const cuisinesValid = selectedCuisines.length > 0;
   const thresholdValid =
     people >= 2 && (people === 2 ? true : requiredYes >= 2 && requiredYes <= people);
@@ -132,12 +130,12 @@ export default function Lobby() {
             borderBottom: "1px solid var(--line)"
           }}
         >
-            <button
-                type="button"
-                className="btn btn--ghost"
-                onClick={() => navigate("/")}
-                title="Volver a inicio"
-            >
+          <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={() => navigate("/")}
+              title="Volver a inicio"
+          >
             ← Inicio
           </button>
           <h2 style={{ margin: 0, fontSize: 24, position: "absolute",   left: "50%", transform: "translateX(-50%)"}}>Crear sesión</h2>

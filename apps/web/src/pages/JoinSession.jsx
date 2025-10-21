@@ -71,9 +71,25 @@ export default function JoinSession() {
     return (
       <div className="wrap">
         <Header />
-        <div className="summary" style={{ maxWidth: 520, margin: "24px auto" }}>
+        <div style={{ maxWidth: 520, margin: "12px auto 0" }}>
+          <button
+            type="button"
+            className="btn btn--ghost"
+            onClick={() => navigate("/")}
+            title="Volver a inicio"
+          >
+            ← Inicio
+          </button>
+        </div>
+
+        <div className="summary" style={{ maxWidth: 520, margin: "12px auto" }}>
           <h2>Reanudando…</h2>
           <p className="muted">Comprobando tu sesión previa…</p>
+          {error && (
+            <div className="form-error" role="alert" style={{ marginTop: 8 }}>
+              {error}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -82,7 +98,19 @@ export default function JoinSession() {
   return (
     <div className="wrap">
       <Header />
-      <form className="summary" style={{ maxWidth: 520, margin: "24px auto" }} onSubmit={handleJoin}>
+
+      <div style={{ maxWidth: 520, margin: "12px auto 0" }}>
+        <button
+          type="button"
+          className="btn btn--ghost"
+          onClick={() => navigate("/")}
+          title="Volver a inicio"
+        >
+          ← Inicio
+        </button>
+      </div>
+
+      <form className="summary" style={{ maxWidth: 520, margin: "12px auto" }} onSubmit={handleJoin}>
         <h2>Unirse a sesión</h2>
 
         <label htmlFor="name">
