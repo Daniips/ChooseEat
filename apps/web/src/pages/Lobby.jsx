@@ -9,9 +9,7 @@ import { setParticipant } from "../lib/participant";
 export default function Lobby() {
   const navigate = useNavigate();
   const { hydrateFromJoin } = useSession();
-
   const allCuisines = useMemo(() => CUISINES.map(c => c.label), []);
-
   const [tab, setTab] = useState("filtros");
 
   const [hostName, setHostName] = useState("");
@@ -28,8 +26,7 @@ export default function Lobby() {
   const [toastOpen, setToastOpen] = useState(false);
 
   const cuisinesValid = selectedCuisines.length > 0;
-  const thresholdValid =
-    people >= 2 && (people === 2 ? true : requiredYes >= 2 && requiredYes <= people);
+  const thresholdValid = people >= 2 && (people === 2 ? true : (requiredYes >= 2 && requiredYes <= people));
 
   useEffect(() => {
     if (people <= 2) setRequiredYes(2);
@@ -64,8 +61,7 @@ export default function Lobby() {
 
     const area = { radiusKm };
     const filters = { cuisines: selectedCuisines, price, openNow, minRating };
-    const finalRequired =
-      people <= 2 ? 2 : Math.max(2, Math.min(people, Number(requiredYes) || 2));
+    const finalRequired = people <= 2 ? 2 : Math.max(2, Math.min(people, Number(requiredYes) || 2));
     const threshold = { type: "absolute", value: finalRequired, participants: Number(people) };
 
     const res = await fetch("/api/sessions", {
@@ -73,10 +69,7 @@ export default function Lobby() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ area, filters, threshold })
     });
-    if (!res.ok) {
-      alert("No se pudo crear la sesión");
-      return;
-    }
+    if (!res.ok) { alert("No se pudo crear la sesión"); return; }
     const created = await res.json();
 
     const joinRes = await fetch(`/api/sessions/${created.sessionId}/join`, {
@@ -84,10 +77,7 @@ export default function Lobby() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: hostName || "Host" })
     });
-    if (!joinRes.ok) {
-      alert("No se pudo unir el host a la sesión");
-      return;
-    }
+    if (!joinRes.ok) { alert("No se pudo unir el host a la sesión"); return; }
     const joined = await joinRes.json();
 
     setParticipant(created.sessionId, joined.participant, created.invitePath);
@@ -95,59 +85,37 @@ export default function Lobby() {
     navigate("/vote");
   }
 
-  const TabButton = ({ id, children }) => (
-    <button
-      type="button"
-      onClick={() => setTab(id)}
-      className={`tab ${tab === id ? "tab--active" : ""}`}
-      aria-pressed={tab === id}
-    >
-      {children}
-    </button>
-  );
+  const summaries = {
+    zona: `Radio ${radiusKm.toFixed(1)} km`,
+    filtros: `${selectedCuisines.length} cocina${selectedCuisines.length === 1 ? "" : "s"}${minRating ? ` · ≥ ${minRating.toFixed(1)}★` : ""}${price.length ? ` · ${price.map(n => "$".repeat(n)).join(" ")}` : ""}${openNow ? " · abierto" : ""}`,
+    decisores: `${people} pers · umbral ${people <= 2 ? 2 : requiredYes}`
+  };
+
+  const tabs = [
+    { id: "zona", label: "Zona", icon: "📍" },
+    { id: "filtros", label: "Filtros", icon: "🎛️" },
+    { id: "decisores", label: "Decisores", icon: "👥" }
+  ];
+  const activeIndex = Math.max(0, tabs.findIndex(t => t.id === tab));
 
   return (
     <div className="wrap">
       <Header />
 
-      <div
-        className="summary"
-        style={{
-          maxWidth: 900,
-          margin: "24px auto",
-          padding: 0,
-          overflow: "hidden"
-        }}
-      >
-       
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            padding: 16,
-            position: "relative",
-            borderBottom: "1px solid var(--line)"
-          }}
-        >
-          <button
-              type="button"
-              className="btn btn--ghost"
-              onClick={() => navigate("/")}
-              title="Volver a inicio"
-          >
+      <form className="summary" style={{ maxWidth: 900, margin: "24px auto", padding: 0, overflow: "hidden" }} onSubmit={applyAndStart}>
+        <div className="lobby__topbar">
+          <button type="button" className="btn btn--ghost" onClick={() => navigate("/")} title="Volver a inicio">
             ← Inicio
           </button>
-          <h2 style={{ margin: 0, fontSize: 24, position: "absolute",   left: "50%", transform: "translateX(-50%)"}}>Crear sesión</h2>
-
-          <div style={{ marginLeft: "auto" }} className="small muted">
+          <h2 className="lobby__title">Crear sesión</h2>
+          <div className="lobby__hint small muted">
             {previewCount === null
               ? "Pulsa Previsualizar para estimar resultados"
               : `${previewCount} sitio${previewCount === 1 ? "" : "s"} con estos filtros`}
           </div>
         </div>
 
-        <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--line)" }}>
+        <div className="lobby__host">
           <label htmlFor="host-name" style={{ display: "grid", gap: 6 }}>
             <div className="small">Tu nombre (host)</div>
             <input
@@ -162,33 +130,28 @@ export default function Lobby() {
           </label>
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: 120,
-            padding: 16,
-            position: "relative",
-            width: "100%",
-          }}
-        >
-          <TabButton id="zona">Zona</TabButton>
-          <TabButton id="filtros">Filtros</TabButton>
-          <TabButton id="decisores">Decisores</TabButton>
+        <div className="seg" role="tablist" aria-label="Configurar sesión">
+          <div className="seg__bg" style={{ "--i": activeIndex }} />
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={tab === t.id}
+              className={`seg__btn ${tab === t.id ? "is-active" : ""}`}
+              onClick={() => setTab(t.id)}
+            >
+              <span className="seg__icon" aria-hidden>{t.icon}</span>
+              <span className="seg__label">{t.label}</span>
+              <span className="seg__summary small muted">{summaries[t.id]}</span>
+            </button>
+          ))}
         </div>
 
-        <div
-          style={{
-            padding: 16,
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 16
-          }}
-        >
+        <div className="lobby__panels">
           {tab === "zona" && (
-            <section style={{ gridColumn: "1 / -1" }}>
-              <h3 style={{ margin: "0 0 8px" }}>Zona</h3>
+            <section className="panel">
+              <h3>Zona</h3>
               <label htmlFor="zone-radius" style={{ display: "grid", gap: 6 }}>
                 <div className="small">Radio: {radiusKm.toFixed(1)} km</div>
                 <input
@@ -206,117 +169,96 @@ export default function Lobby() {
           )}
 
           {tab === "filtros" && (
-            <>
-              <section style={{ gridColumn: "1 / -1" }}>
-                <div
-                  className="row"
-                  style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}
-                >
-                  <h3 style={{ margin: 0 }}>Cocinas</h3>
-                  <div className="small">
+            <section className="panel">
+              <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <h3 style={{ margin: 0 }}>Cocinas</h3>
+                <div className="small">
+                  <button type="button" onClick={() => setSelectedCuisines([...allCuisines])} className="link" style={{ padding: 0 }}>
+                    Seleccionar todo
+                  </button>
+                  <span> · </span>
+                  <button type="button" onClick={() => setSelectedCuisines([])} className="link" style={{ padding: 0 }}>
+                    Limpiar
+                  </button>
+                </div>
+              </div>
+
+              <div className="chips" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 8 }}>
+                {allCuisines.map(c => {
+                  const active = selectedCuisines.includes(c);
+                  return (
                     <button
+                      key={c}
                       type="button"
-                      onClick={() => setSelectedCuisines([...allCuisines])}
-                      className="link"
-                      style={{ padding: 0 }}
+                      onClick={() => toggleCuisine(c)}
+                      className={`chip${active ? " chip--active" : ""}`}
+                      aria-pressed={active}
                     >
-                      Seleccionar todo
+                      {c}
                     </button>
-                    <span> · </span>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedCuisines([])}
-                      className="link"
-                      style={{ padding: 0 }}
-                    >
-                      Limpiar
-                    </button>
+                  );
+                })}
+              </div>
+
+              {!cuisinesValid && (
+                <div className="form-error" role="alert" aria-live="assertive" style={{ marginTop: 8 }}>
+                  Debes seleccionar al menos 1 cocina.
+                </div>
+              )}
+
+              <div className="filters__row">
+                <section>
+                  <div className="small" style={{ margin: "0 0 6px" }}>Precio</div>
+                  <div className="chips" style={{ gap: 8 }}>
+                    {[1, 2, 3, 4].map(n => {
+                      const active = price.includes(n);
+                      return (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => togglePrice(n)}
+                          className={`chip${active ? " chip--active" : ""}`}
+                          aria-pressed={active}
+                        >
+                          {"$".repeat(n)}
+                        </button>
+                      );
+                    })}
                   </div>
-                </div>
+                </section>
 
-                <div
-                  className="chips"
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))",
-                    gap: 8
-                  }}
-                >
-                  {allCuisines.map(c => {
-                    const active = selectedCuisines.includes(c);
-                    return (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() => toggleCuisine(c)}
-                        className={`chip${active ? " chip--active" : ""}`}
-                        aria-pressed={active}
-                      >
-                        {c}
-                      </button>
-                    );
-                  })}
-                </div>
+                <section>
+                  <label htmlFor="open-now" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <input
+                      id="open-now"
+                      type="checkbox"
+                      checked={openNow}
+                      onChange={(e) => setOpenNow(e.target.checked)}
+                    />
+                    <span>Abierto ahora</span>
+                  </label>
 
-                {!cuisinesValid && (
-                  <div className="form-error" role="alert" aria-live="assertive" style={{ marginTop: 8 }}>
-                    Debes seleccionar al menos 1 cocina.
-                  </div>
-                )}
-              </section>
-
-              <section>
-                <div className="small" style={{ margin: "0 0 6px" }}>Precio</div>
-                <div className="chips" style={{ gap: 8 }}>
-                  {[1, 2, 3, 4].map(n => {
-                    const active = price.includes(n);
-                    return (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() => togglePrice(n)}
-                        className={`chip${active ? " chip--active" : ""}`}
-                        aria-pressed={active}
-                      >
-                        {"$".repeat(n)}
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-
-              <section>
-                <label htmlFor="open-now" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <input
-                    id="open-now"
-                    type="checkbox"
-                    checked={openNow}
-                    onChange={(e) => setOpenNow(e.target.checked)}
-                  />
-                  <span>Abierto ahora</span>
-                </label>
-
-                <label htmlFor="min-rating" style={{ display: "grid", gap: 6, marginTop: 12 }}>
-                  <div className="small">Rating mínimo: {minRating.toFixed(1)}</div>
-                  <input
-                    id="min-rating"
-                    type="range"
-                    min={0}
-                    max={5}
-                    step={0.1}
-                    value={minRating}
-                    onChange={(e) => setMinRating(Number(e.target.value))}
-                    className="range"
-                  />
-                </label>
-              </section>
-            </>
+                  <label htmlFor="min-rating" style={{ display: "grid", gap: 6, marginTop: 12 }}>
+                    <div className="small">Rating mínimo: {minRating.toFixed(1)}</div>
+                    <input
+                      id="min-rating"
+                      type="range"
+                      min={0}
+                      max={5}
+                      step={0.1}
+                      value={minRating}
+                      onChange={(e) => setMinRating(Number(e.target.value))}
+                      className="range"
+                    />
+                  </label>
+                </section>
+              </div>
+            </section>
           )}
 
           {tab === "decisores" && (
-            <section style={{ gridColumn: "1 / -1" }}>
-              <h3 style={{ margin: "0 0 8px" }}>Decisores</h3>
-
+            <section className="panel">
+              <h3>Decisores</h3>
               <div style={{ display: "grid", gap: 12 }}>
                 <label htmlFor="people" style={{ display: "grid", gap: 6 }}>
                   <div className="small">Número de personas que votan</div>
@@ -327,9 +269,7 @@ export default function Lobby() {
                     max={50}
                     step={1}
                     value={people}
-                    onChange={(e) =>
-                      setPeople(Math.max(2, Math.min(50, Number(e.target.value) || 2)))
-                    }
+                    onChange={(e) => setPeople(Math.max(2, Math.min(50, Number(e.target.value) || 2)))}
                     className="input"
                     style={{ width: 160 }}
                   />
@@ -369,17 +309,7 @@ export default function Lobby() {
           )}
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            justifyContent: "flex-end",
-            alignItems: "center",
-            padding: 12,
-            borderTop: "1px solid var(--line)",
-            background: "var(--surface)"
-          }}
-        >
+        <div className="lobby__cta">
           <button
             type="button"
             className="btn btn--ghost"
@@ -392,7 +322,6 @@ export default function Lobby() {
           <button
             type="submit"
             className="btn btn--primary"
-            onClick={applyAndStart}
             disabled={!cuisinesValid || (previewCount !== null ? (previewCount === 0 || !thresholdValid) : true)}
             title={
               !cuisinesValid
@@ -405,7 +334,7 @@ export default function Lobby() {
             Empezar a votar
           </button>
         </div>
-      </div>
+      </form>
 
       <Toast
         open={toastOpen}
@@ -417,21 +346,6 @@ export default function Lobby() {
           : `${previewCount} sitio${previewCount === 1 ? "" : "s"} disponibles con estos filtros.`}
       </Toast>
 
-      <style>{`
-        .tab {
-          border: 0;
-          background: transparent;
-          padding: 8px 12px;
-          border-radius: 999px;
-          cursor: pointer;
-        }
-        .tab--active {
-          background: var(--accent-ghost, rgba(255,122,0,.12));
-          color: var(--accent);
-        }
-        .link { background: transparent; border: 0; color: var(--accent); cursor: pointer; }
-        .muted { color: var(--muted); }
-      `}</style>
     </div>
   );
 }
