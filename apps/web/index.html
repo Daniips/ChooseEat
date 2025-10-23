@@ -5,6 +5,17 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ChooseEat</title>
+    <script>
+      (function() {
+        try {
+          var key = 'ce_theme';
+          var saved = localStorage.getItem(key) || 'system';
+          var isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var resolved = saved === 'system' ? (isDark ? 'dark' : 'light') : saved;
+          document.documentElement.setAttribute('data-theme', resolved);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
