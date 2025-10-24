@@ -1,11 +1,12 @@
 export const CUISINES = [
-    { key: "italian", label: "Italiana" },
-    { key: "japanese", label: "Japonesa" },
-    { key: "sushi", label: "Sushi" },
-    { key: "indian", label: "India" },
-    { key: "american", label: "Americana" },
-    { key: "burger", label: "Burger" },
-    { key: "mediterranean", label: "Mediterránea" },
-    { key: "mexican", label: "Mexicana" },
-    { key: "vegetarian", label: "Vegetariana" }
+  { key: "italian" },
+  { key: "japanese" },
+  { key: "sushi" },
+  { key: "indian" },
+  { key: "american" },
+  { key: "burger" },
+  { key: "mediterranean" },
+  { key: "mexican" },
+  { key: "vegetarian" },
+  { key: "vegan" },
 ];

@@ -1,28 +1,31 @@
 import { Filters, Restaurant } from "../types";
 
 export class InMemoryRestaurantProvider {
-    private data: Restaurant[];
+  private data: Restaurant[];
 
-    constructor(data: Restaurant[]) {
-        this.data = data;
-    }
+  constructor(data: Restaurant[]) {
+    this.data = data;
+  }
 
-    async search(params: { radiusKm: number; filters: Filters })
-        : Promise<{ items: Restaurant[] }> {
-        const { radiusKm, filters } = params;
+  async search(params: { radiusKm: number; filters: Filters }): Promise<{ items: Restaurant[] }> {
+    const { radiusKm, filters } = params;
+    const { cuisines, price, openNow, minRating } = filters;
 
-        const byRadius = this.data.filter(r => r.distanceKm <= radiusKm);
+    const byRadius = this.data.filter((r) => r.distanceKm <= radiusKm);
 
-        const items = byRadius.filter(r => {
-            const okCuisine = filters.cuisines.length
-                ? r.cuisine.some(c => filters.cuisines.includes(c))
-                : true;
-            const okPrice = filters.price?.length ? filters.price.includes(r.price) : true;
-            const okOpen = filters.openNow ? r.openNow : true;
-            const okRating = r.rating >= (filters.minRating ?? 0);
-            return okCuisine && okPrice && okOpen && okRating;
-        });
+    const items = byRadius.filter((r) => {
+      const okCuisine =
+        cuisines && cuisines.length
+          ? r.cuisine.some((c) => cuisines.includes(c))
+          : true;
 
-        return { items };
-    }
+      const okPrice = price?.length ? price.includes(r.price) : true;
+      const okOpen = openNow ? r.openNow : true;
+      const okRating = r.rating >= (minRating ?? 0);
+
+      return okCuisine && okPrice && okOpen && okRating;
+    });
+
+    return { items };
+  }
 }

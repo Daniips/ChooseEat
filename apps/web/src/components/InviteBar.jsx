@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function InviteBar({ inviteUrl }) {
+    const { t } = useTranslation();
     const [copied, setCopied] = useState(false);
 
     async function copyLink() {
@@ -9,8 +11,7 @@ export default function InviteBar({ inviteUrl }) {
             setCopied(true);
             setTimeout(() => setCopied(false), 1500);
         } catch {
-            // Fallback: selecciona y muestra prompt
-            window.prompt("Copia este enlace:", inviteUrl);
+            window.prompt(t("copy_prompt"), inviteUrl);
         }
     }
 
@@ -18,15 +19,14 @@ export default function InviteBar({ inviteUrl }) {
         if (navigator.share) {
             try {
                 await navigator.share({
-                    title: "Únete a mi sesión de ChooseEat",
-                    text: "Vota restaurantes conmigo 👇",
+                    title: t("share_title"),
+                    text: t("share_text"),
                     url: inviteUrl
                 });
             } catch {
-                // cancelado o error → sin ruido
+                // noop
             }
         } else {
-            // Si no hay Web Share, copiamos y avisamos
             await copyLink();
         }
     }
@@ -35,14 +35,14 @@ export default function InviteBar({ inviteUrl }) {
         <div className="invite-wrapper">
             <div className="invite-bar">
                 <button className="btn btn-sm btn--ghost" type="button" onClick={copyLink}>
-                    {copied ? "¡Copiado!" : "Copiar enlace"}
+                    {copied ? t("copied") : t("copy_link")}
                 </button>
                 <button className="btn btn-sm btn--primary" type="button" onClick={shareLink}>
-                    Compartir
+                    {t("share")}
                 </button>
             </div>
             <span className="sr-only" aria-live="polite">
-                {copied ? "Enlace copiado al portapapeles" : ""}
+                {copied ? t("copied_to_clipboard") : ""}
             </span>
         </div>
     );

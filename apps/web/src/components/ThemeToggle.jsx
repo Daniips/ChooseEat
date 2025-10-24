@@ -1,55 +1,23 @@
-import React, { useEffect, useState } from "react";
-
-const THEME_KEY = "ce_theme";
-
-function applyTheme(next) {
-  const root = document.documentElement;
-  const value = next === "dark" ? "dark" : "light";
-  root.setAttribute("data-theme", value);
-  localStorage.setItem(THEME_KEY, value);
-}
+import React from "react";
+import { useUi } from "../context/UIContext";
 
 export default function ThemeToggle() {
-  const [mode, setMode] = useState("light");
-
-  useEffect(() => {
-    const saved = localStorage.getItem(THEME_KEY);
-    if (saved === "light" || saved === "dark") {
-      setMode(saved);
-      applyTheme(saved);
-    } else {
-      const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
-      const initial = prefersDark ? "dark" : "light";
-      setMode(initial);
-      applyTheme(initial);
-    }
-  }, []);
-
-  function toggle() {
-    const next = mode === "dark" ? "light" : "dark";
-    setMode(next);
-    applyTheme(next);
-  }
-
-  const isDark = mode === "dark";
-  const nextLabel = isDark ? "Cambiar a tema claro" : "Cambiar a tema oscuro";
+  const { theme, toggleTheme } = useUi();
+  const isDark = theme === "dark";
+  const label = isDark ? "Cambiar a tema claro" : "Cambiar a tema oscuro";
 
   return (
     <button
-      type="button"
       className={`theme-switch ${isDark ? "is-dark" : "is-light"}`}
-      onClick={toggle}
-      aria-label={nextLabel}
-      title={nextLabel}
-      role="switch"
-      aria-checked={isDark}
+      onClick={toggleTheme}
+      aria-label={label}
+      title={label}
     >
-      <span className="theme-switch__track" aria-hidden="true">
-        <span className="theme-switch__icon theme-switch__icon--moon">☀️</span>
-        <span className="theme-switch__icon theme-switch__icon--sun">🌙</span>
+      <span className="theme-switch__track">
         <span className="theme-switch__thumb" />
+        <span className="theme-switch__icon theme-switch__icon--sun" aria-hidden>☀️</span>
+        <span className="theme-switch__icon theme-switch__icon--moon" aria-hidden>🌙</span>
       </span>
-      <span className="sr-only">{nextLabel}</span>
     </button>
   );
 }

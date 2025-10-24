@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import { listRememberedSessions, forgetSession } from "../lib/participant";
+import { useTranslation } from "react-i18next";
 
 function extractSessionId(input) {
   if (!input) return "";
@@ -12,6 +13,7 @@ function extractSessionId(input) {
 
 export default function Landing() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [joinValue, setJoinValue] = useState("");
   const sessions = useMemo(() => listRememberedSessions(), []);
 
@@ -37,31 +39,28 @@ export default function Landing() {
       <main className="hero">
         <section className="hero__panel">
           <h1 className="hero__title">ChooseEat</h1>
+
           <p className="hero__subtitle">
-            Decide dónde comer con tu grupo en minutos. Crea una sesión o únete con un enlace.
+            {t("welcome_message")}
           </p>
 
           <div className="cta-grid">
             <article className="cta-card">
               <div className="cta-card__body">
-                <h3>Crear sesión</h3>
-                <p className="muted">
-                  Elige radio, filtros y umbral de votos. Comparte el enlace con tu grupo.
-                </p>
+                <h3>{t("create_session")}</h3>
+                <p className="muted">{t("info_create")}</p>
               </div>
               <div className="cta-card__actions">
                 <button type="button" className="btn btn--primary" onClick={goCreate}>
-                  Crear sesión
+                  {t("create_session")}
                 </button>
               </div>
             </article>
 
             <article className="cta-card">
               <div className="cta-card__body">
-                <h3>Unirme a una sesión</h3>
-                <p className="muted">
-                  Pega el enlace que te han pasado o escribe el ID de sesión.
-                </p>
+                <h3>{t("join_session")}</h3>
+                <p className="muted">{t("info_join")}</p>
                 <form onSubmit={doJoin} className="join-form">
                   <input
                     className="input"
@@ -69,15 +68,18 @@ export default function Landing() {
                     value={joinValue}
                     onChange={(e) => setJoinValue(e.target.value)}
                   />
-                  <button type="submit" className="btn btn--ghost">Unirme</button>
+                  <button type="submit" className="btn btn--ghost">
+                    {t("join")}
+                  </button>
                 </form>
               </div>
             </article>
           </div>
+
           {sessions.length > 0 && (
             <section className="recent">
               <div className="recent__header">
-                <h4>Tus sesiones recientes</h4>
+                <h4>{t("recent_sessions")}</h4>
               </div>
               <ul className="recent__list">
                 {sessions.map((s) => (

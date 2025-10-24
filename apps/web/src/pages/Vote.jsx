@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import Header from "../components/Header";
 import Card from "../components/Card";
-import Summary from "../components/Summary";
+import Summary from "./Summary";
 import InviteBar from "../components/InviteBar";
 import { useArrows } from "../hooks/useArrows";
 import { useSession } from "../context/SessionContext";

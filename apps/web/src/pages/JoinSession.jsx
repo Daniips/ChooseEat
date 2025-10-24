@@ -4,8 +4,10 @@ import Header from "../components/Header";
 import { useSession } from "../context/SessionContext";
 import { api } from "../lib/api";
 import { getParticipantId, setParticipant, migrateFromLegacy } from "../lib/participant";
+import { useTranslation } from "react-i18next";
 
 export default function JoinSession() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const { hydrateFromJoin } = useSession();
@@ -17,7 +19,7 @@ export default function JoinSession() {
   useEffect(() => {
     (async () => {
       if (!id) {
-        setError("Enlace inválido (no hay id de sesión).");
+        setError(t("invalid_link"));
         setAutoJoining(false);
         return;
       }
@@ -39,18 +41,18 @@ export default function JoinSession() {
         }
       } catch (err) {
         console.error("auto-join failed:", err);
-        setError("No se pudo reanudar la sesión automáticamente.");
+        setError(t("auto_join_failed"));
       }
       setAutoJoining(false);
     })();
-  }, [id, hydrateFromJoin, navigate]);
+  }, [id, hydrateFromJoin, navigate, t]);
 
   async function handleJoin(e) {
     e.preventDefault();
     setError("");
 
     if (!id) {
-      setError("Enlace inválido (no hay id de sesión).");
+      setError(t("invalid_link"));
       return;
     }
     try {
@@ -63,7 +65,7 @@ export default function JoinSession() {
       navigate("/vote");
     } catch (err) {
       console.error("join error:", err);
-      setError("No se pudo unir a la sesión. " + (err?.message || ""));
+      setError(t("join_failed") + (err?.message || ""));
     }
   }
 
@@ -76,15 +78,15 @@ export default function JoinSession() {
             type="button"
             className="btn btn--ghost"
             onClick={() => navigate("/")}
-            title="Volver a inicio"
+            title={t("back_to_home")}
           >
-            ← Inicio
+            ← {t("home")}
           </button>
         </div>
 
         <div className="summary" style={{ maxWidth: 520, margin: "12px auto" }}>
-          <h2>Reanudando…</h2>
-          <p className="muted">Comprobando tu sesión previa…</p>
+          <h2>{t("resuming")}</h2>
+          <p className="muted">{t("checking_previous_session")}</p>
           {error && (
             <div className="form-error" role="alert" style={{ marginTop: 8 }}>
               {error}
@@ -104,23 +106,23 @@ export default function JoinSession() {
           type="button"
           className="btn btn--ghost"
           onClick={() => navigate("/")}
-          title="Volver a inicio"
+          title={t("back_to_home")}
         >
-          ← Inicio
+          ← {t("home")}
         </button>
       </div>
 
       <form className="summary" style={{ maxWidth: 520, margin: "12px auto" }} onSubmit={handleJoin}>
-        <h2>Unirse a sesión</h2>
+        <h2>{t("join_session")}</h2>
 
         <label htmlFor="name">
-          <div className="small">Tu nombre</div>
+          <div className="small">{t("your_name")}</div>
           <input
             id="name"
             className="input"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Introduce tu nombre"
+            placeholder={t("enter_your_name")}
             required
           />
         </label>
@@ -132,7 +134,7 @@ export default function JoinSession() {
         )}
 
         <div className="summary__actions" style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 12 }}>
-          <button type="submit" className="btn btn--primary">Unirme</button>
+          <button type="submit" className="btn btn--primary">{t("join")}</button>
         </div>
       </form>
     </div>

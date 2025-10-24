@@ -1,5 +1,6 @@
 // apps/web/src/components/Card.jsx
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next"; 
 
 const THRESHOLD = 120;           
 const EXIT_X = 1000;
@@ -9,6 +10,7 @@ const PRE_TILT_FACTOR = 0.9;
 
 
 export default function Card({ r, onNo, onYes, keySwipe, onKeyHandled }) {
+    const { t } = useTranslation();
     const ref = useRef(null);
     const [drag, setDrag] = useState({
         dx: 0,
@@ -25,7 +27,6 @@ export default function Card({ r, onNo, onYes, keySwipe, onKeyHandled }) {
     
     const hasVotedRef = useRef(false); 
 
-    // Detectar prefers-reduced-motion
     useEffect(() => {
         const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
         const update = () => setReduced(mq.matches);
@@ -38,14 +39,12 @@ export default function Card({ r, onNo, onYes, keySwipe, onKeyHandled }) {
         };
     }, []);
 
-    // Reset al cambiar de restaurante
     useEffect(() => {
         setDrag({ dx: 0, dy: 0, active: false, startX: 0, startY: 0 });
         setLeaving(null);
         hasVotedRef.current = false;
     }, [r?.id]);
 
-    // Responder a swipe (flechas/botones)
     useEffect(() => {
         if (!keySwipe) return;
         if (leaving) return;        
@@ -83,7 +82,6 @@ export default function Card({ r, onNo, onYes, keySwipe, onKeyHandled }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [keySwipe]);
 
-    //Arrastre de la tarjeta
     useEffect(() => {
         const el = ref.current;
         if (!el) return;
@@ -179,19 +177,24 @@ export default function Card({ r, onNo, onYes, keySwipe, onKeyHandled }) {
                 <img src={r.img} alt={r.name} className="card__img" />
                 <div className="card__gradient" />
 
-                <div className="card__badge card__badge--yes" style={{ opacity: likeOpacity }}>SÍ</div>
-                <div className="card__badge card__badge--no" style={{ opacity: nopeOpacity }}>NO</div>
+                <div className="card__badge card__badge--yes" style={{ opacity: likeOpacity }}>{t("yes_label")}</div>
+                <div className="card__badge card__badge--no" style={{ opacity: nopeOpacity }}>{t("no_label")}</div>
 
                 <div className="card__content">
                     <div className="row">
                         <h3 className="card__title">{r.name}</h3>
-                        {r.openNow && <span className="pill pill--green">Abierto</span>}
+                        {r.openNow && <span className="pill pill--green">{t("open")}</span>}
                     </div>
-                    <div className="card__sub">{r.cuisine.join(" · ")}</div>
+                    <div className="card__sub">
+                        {r.cuisine
+                            .map((c) => t(`${c.toLowerCase()}`))
+                            .join(" · ")
+                        }
+                    </div>
                     <div className="card__meta">
                         {"$".repeat(r.price)} · {r.distanceKm.toFixed(1)} km · ⭐ {r.rating.toFixed(1)}
                     </div>
-                    <div className="card__hint">(Arrastra a izquierda/derecha o usa ← / →)</div>
+                    <div className="card__hint">{t("drag_hint")}</div>
                 </div>
             </div>
         </>

@@ -1,3 +1,4 @@
+// src/pages/Lobby.jsx
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../context/SessionContext";
@@ -5,16 +6,18 @@ import Toast from "../components/Toast";
 import { CUISINES } from "../data/cuisines";
 import Header from "../components/Header";
 import { setParticipant } from "../lib/participant";
+import { useTranslation } from "react-i18next";
 
 export default function Lobby() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { hydrateFromJoin } = useSession();
-  const allCuisines = useMemo(() => CUISINES.map(c => c.label), []);
+  const allCuisinesKeys = useMemo(() => CUISINES.map(c => c.key), []);
   const [tab, setTab] = useState("filtros");
 
   const [hostName, setHostName] = useState("");
   const [radiusKm, setRadiusKm] = useState(2);
-  const [selectedCuisines, setSelectedCuisines] = useState([...allCuisines]);
+  const [selectedCuisines, setSelectedCuisines] = useState([...allCuisinesKeys]);
   const [price, setPrice] = useState([]);
   const [openNow, setOpenNow] = useState(false);
   const [minRating, setMinRating] = useState(0);
@@ -33,8 +36,8 @@ export default function Lobby() {
     else if (requiredYes > people) setRequiredYes(people);
   }, [people, requiredYes]);
 
-  function toggleCuisine(c) {
-    setSelectedCuisines(cs => cs.includes(c) ? cs.filter(x => x !== c) : [...cs, c]);
+  function toggleCuisine(key) {
+    setSelectedCuisines(cs => cs.includes(key) ? cs.filter(x => x !== key) : [...cs, key]);
   }
   function togglePrice(n) {
     setPrice(ps => ps.includes(n) ? ps.filter(x => x !== n) : [...ps, n]);
@@ -86,64 +89,76 @@ export default function Lobby() {
   }
 
   const summaries = {
-    zona: `Radio ${radiusKm.toFixed(1)} km`,
-    filtros: `${selectedCuisines.length} cocina${selectedCuisines.length === 1 ? "" : "s"}${minRating ? ` · ≥ ${minRating.toFixed(1)}★` : ""}${price.length ? ` · ${price.map(n => "$".repeat(n)).join(" ")}` : ""}${openNow ? " · abierto" : ""}`,
-    decisores: `${people} pers · umbral ${people <= 2 ? 2 : requiredYes}`
+    zona: `${t('radius')}: ${radiusKm.toFixed(1)} km`,
+    filtros: `${selectedCuisines.length} ${t('cuisine').toLowerCase()}${selectedCuisines.length === 1 ? "" : "s"}`
+      + (minRating ? ` · ≥ ${minRating.toFixed(1)}★` : "")
+      + (price.length ? ` · ${price.map(n => "$".repeat(n)).join(" ")}` : "")
+      + (openNow ? ` · ${t('open_now').toLowerCase()}` : ""),
+    decisores: `${people} ${t('voters').toLowerCase()} · ${t('threshold')} ${people <= 2 ? 2 : requiredYes}`
   };
 
   const tabs = [
-    { id: "zona", label: "Zona", icon: "📍" },
-    { id: "filtros", label: "Filtros", icon: "🎛️" },
-    { id: "decisores", label: "Decisores", icon: "👥" }
+    { id: "zona", label: t('zone'), icon: "📍" },
+    { id: "filtros", label: t('filters'), icon: "🎛️" },
+    { id: "decisores", label: t('voters'), icon: "👥" }
   ];
-  const activeIndex = Math.max(0, tabs.findIndex(t => t.id === tab));
+  const activeIndex = Math.max(0, tabs.findIndex(tk => tk.id === tab));
 
   return (
     <div className="wrap">
       <Header />
 
-      <form className="summary" style={{ maxWidth: 900, margin: "24px auto", padding: 0, overflow: "hidden" }} onSubmit={applyAndStart}>
+      <form
+        className="summary"
+        style={{ maxWidth: 900, margin: "24px auto", padding: 0, overflow: "hidden" }}
+        onSubmit={applyAndStart}
+      >
         <div className="lobby__topbar">
-          <button type="button" className="btn btn--ghost" onClick={() => navigate("/")} title="Volver a inicio">
-            ← Inicio
+          <button
+            type="button"
+            className="btn btn--ghost"
+            onClick={() => navigate("/")}
+            title={t('go_home')}
+          >
+            ← {t('home_button')}
           </button>
-          <h2 className="lobby__title">Crear sesión</h2>
+          <h2 className="lobby__title">{t('create_session')}</h2>
           <div className="lobby__hint small muted">
             {previewCount === null
-              ? "Pulsa Previsualizar para estimar resultados"
+              ? t('press_prev')
               : `${previewCount} sitio${previewCount === 1 ? "" : "s"} con estos filtros`}
           </div>
         </div>
 
         <div className="lobby__host">
           <label htmlFor="host-name" style={{ display: "grid", gap: 6 }}>
-            <div className="small">Tu nombre (host)</div>
+            <div className="small">{t('ur_name')} (host)</div>
             <input
               id="host-name"
               className="input"
               value={hostName}
               onChange={(e) => setHostName(e.target.value)}
-              placeholder="Introduce tu nombre"
+              placeholder={t('enter_name')}
               required
               style={{ maxWidth: 320 }}
             />
           </label>
         </div>
 
-        <div className="seg" role="tablist" aria-label="Configurar sesión">
+        <div className="seg" role="tablist" aria-label={t('create_session')}>
           <div className="seg__bg" style={{ "--i": activeIndex }} />
-          {tabs.map((t) => (
+          {tabs.map((tdef) => (
             <button
-              key={t.id}
+              key={tdef.id}
               type="button"
               role="tab"
-              aria-selected={tab === t.id}
-              className={`seg__btn ${tab === t.id ? "is-active" : ""}`}
-              onClick={() => setTab(t.id)}
+              aria-selected={tab === tdef.id}
+              className={`seg__btn ${tab === tdef.id ? "is-active" : ""}`}
+              onClick={() => setTab(tdef.id)}
             >
-              <span className="seg__icon" aria-hidden>{t.icon}</span>
-              <span className="seg__label">{t.label}</span>
-              <span className="seg__summary small muted">{summaries[t.id]}</span>
+              <span className="seg__icon" aria-hidden>{tdef.icon}</span>
+              <span className="seg__label">{tdef.label}</span>
+              <span className="seg__summary small muted">{summaries[tdef.id]}</span>
             </button>
           ))}
         </div>
@@ -151,9 +166,9 @@ export default function Lobby() {
         <div className="lobby__panels">
           {tab === "zona" && (
             <section className="panel">
-              <h3>Zona</h3>
+              <h3>{t('zone')}</h3>
               <label htmlFor="zone-radius" style={{ display: "grid", gap: 6 }}>
-                <div className="small">Radio: {radiusKm.toFixed(1)} km</div>
+                <div className="small">{t('radius')}: {radiusKm.toFixed(1)} km</div>
                 <input
                   id="zone-radius"
                   type="range"
@@ -171,30 +186,30 @@ export default function Lobby() {
           {tab === "filtros" && (
             <section className="panel">
               <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                <h3 style={{ margin: 0 }}>Cocinas</h3>
+                <h3 style={{ margin: 0 }}>{t('cuisine')}</h3>
                 <div className="small">
-                  <button type="button" onClick={() => setSelectedCuisines([...allCuisines])} className="link" style={{ padding: 0 }}>
-                    Seleccionar todo
+                  <button type="button" onClick={() => setSelectedCuisines([...allCuisinesKeys])} className="link" style={{ padding: 0 }}>
+                    {t('select_all')}
                   </button>
                   <span> · </span>
                   <button type="button" onClick={() => setSelectedCuisines([])} className="link" style={{ padding: 0 }}>
-                    Limpiar
+                    {t('clean')}
                   </button>
                 </div>
               </div>
 
               <div className="chips" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 8 }}>
-                {allCuisines.map(c => {
-                  const active = selectedCuisines.includes(c);
+                {CUISINES.map(c => {
+                  const active = selectedCuisines.includes(c.key);
                   return (
                     <button
-                      key={c}
+                      key={c.key}
                       type="button"
-                      onClick={() => toggleCuisine(c)}
+                      onClick={() => toggleCuisine(c.key)}
                       className={`chip${active ? " chip--active" : ""}`}
                       aria-pressed={active}
                     >
-                      {c}
+                      {t(c.key)}
                     </button>
                   );
                 })}
@@ -202,13 +217,13 @@ export default function Lobby() {
 
               {!cuisinesValid && (
                 <div className="form-error" role="alert" aria-live="assertive" style={{ marginTop: 8 }}>
-                  Debes seleccionar al menos 1 cocina.
+                  {t('select_one_cuisine')}
                 </div>
               )}
 
               <div className="filters__row">
                 <section>
-                  <div className="small" style={{ margin: "0 0 6px" }}>Precio</div>
+                  <div className="small" style={{ margin: "0 0 6px" }}>{t('price')}</div>
                   <div className="chips" style={{ gap: 8 }}>
                     {[1, 2, 3, 4].map(n => {
                       const active = price.includes(n);
@@ -235,11 +250,11 @@ export default function Lobby() {
                       checked={openNow}
                       onChange={(e) => setOpenNow(e.target.checked)}
                     />
-                    <span>Abierto ahora</span>
+                    <span>{t('open_now')}</span>
                   </label>
 
                   <label htmlFor="min-rating" style={{ display: "grid", gap: 6, marginTop: 12 }}>
-                    <div className="small">Rating mínimo: {minRating.toFixed(1)}</div>
+                    <div className="small">{t('minimum_rating')}: {minRating.toFixed(1)}</div>
                     <input
                       id="min-rating"
                       type="range"
@@ -258,10 +273,10 @@ export default function Lobby() {
 
           {tab === "decisores" && (
             <section className="panel">
-              <h3>Decisores</h3>
+              <h3>{t('voters')}</h3>
               <div style={{ display: "grid", gap: 12 }}>
                 <label htmlFor="people" style={{ display: "grid", gap: 6 }}>
-                  <div className="small">Número de personas que votan</div>
+                  <div className="small">{t('voters_info')}</div>
                   <input
                     id="people"
                     type="number"
@@ -277,7 +292,7 @@ export default function Lobby() {
 
                 {people > 2 ? (
                   <label htmlFor="required-yes" style={{ display: "grid", gap: 6 }}>
-                    <div className="small">Se necesita el SÍ de:</div>
+                    <div className="small">{t('need_yes_from')}</div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <input
                         id="required-yes"
@@ -293,15 +308,15 @@ export default function Lobby() {
                         className="input"
                         style={{ width: 120 }}
                       />
-                      <span className="small">de {people} persona{people === 1 ? "" : "s"}</span>
+                      <span className="small">{t('of_n_people', { count: people })}</span>
                     </div>
                     <div className="small muted">
-                      Consejo: mayoría simple suele funcionar bien (p. ej. {Math.ceil(people / 2)} de {people}).
+                      {t('tip_simple_majority', { majority: Math.ceil(people / 2), total: people })}
                     </div>
                   </label>
                 ) : (
                   <div className="small" aria-live="polite">
-                    Con 2 personas, el umbral se fija en 2 (ambos deben decir SÍ).
+                    {t('two_people_threshold')}
                   </div>
                 )}
               </div>
@@ -317,7 +332,7 @@ export default function Lobby() {
             disabled={!cuisinesValid}
             title={!cuisinesValid ? "Selecciona al menos 1 cocina" : undefined}
           >
-            Previsualizar
+            {t('preview')}
           </button>
           <button
             type="submit"
@@ -325,13 +340,13 @@ export default function Lobby() {
             disabled={!cuisinesValid || (previewCount !== null ? (previewCount === 0 || !thresholdValid) : true)}
             title={
               !cuisinesValid
-                ? "Selecciona al menos 1 cocina"
+                ? t('select_one_cuisine')
                 : (previewCount === 0
-                    ? "No hay resultados con estos filtros"
-                    : (!thresholdValid ? "Ajusta el umbral" : undefined))
+                    ? t('no_results')
+                    : (!thresholdValid ? t('adjust_threshold') : undefined))
             }
           >
-            Empezar a votar
+            {t('start_voting')}
           </button>
         </div>
       </form>
@@ -342,10 +357,9 @@ export default function Lobby() {
         variant={previewCount === 0 ? "warn" : "ok"}
       >
         {previewCount === 0
-          ? "No hay resultados con estos filtros."
-          : `${previewCount} sitio${previewCount === 1 ? "" : "s"} disponibles con estos filtros.`}
+          ? t("no_results")
+          : t("results_count", { count: previewCount })}
       </Toast>
-
     </div>
   );
 }

@@ -1,19 +1,24 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
+import LangSelect from "./LangSelect";
+import { useTranslation } from "react-i18next";
 
 export default function Header() {
+  const { t } = useTranslation();
+
   return (
     <header className="app-header">
       <div className="app-header__inner">
         <div aria-hidden />
 
-        <Link to="/" className="brand" aria-label="Ir a inicio">
+        <Link to="/" className="brand" aria-label={t("go_home")}>
           ChooseEat
         </Link>
 
         <div className="app-header__right">
           <ThemeToggle />
+          <LangSelect />
         </div>
       </div>
     </header>
