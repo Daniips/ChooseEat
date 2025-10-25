@@ -180,11 +180,27 @@ app.post("/api/sessions/:id/join", async (req, reply) => {
 
 
 app.get("/api/sessions/:id", async (req, reply) => {
-    const { id } = req.params as any;
-    const s = sessions.get(id);
-    if (!s) return reply.code(404).send({ error: "Session not found" });
-    return reply.send(s);
+  const { id } = req.params as any;
+  const s = sessions.get(id);
+  if (!s) return reply.code(404).send({ error: "Session not found" });
+
+  const participants = Object.fromEntries(
+    Object.entries(s.participants || {}).map(([pid, p]) => [
+      pid,
+      { id: p.id, name: p.name, done: (p as any).done === true },
+    ])
+  );
+
+  return reply.send({
+    id: s.id,
+    status: s.status,
+    threshold: s.threshold,
+    participants,
+    area: s.area,
+    filters: s.filters,
+  });
 });
+
 
 
 app.post("/api/sessions/:id/votes", async (req, reply) => {
@@ -216,6 +232,19 @@ app.post("/api/sessions/:id/votes", async (req, reply) => {
   const yesCount = bucket.yes.size;
   const needed = s.threshold?.value ?? 2;
 
+  try {
+    app.io.to(s.id).emit("session:vote", {
+      sessionId: s.id,
+      participantId,
+      restaurantId,
+      choice,
+      yesCount,
+      needed,
+    });
+  } catch (err) {
+    app.log.warn({ err }, "failed to emit session:vote from REST");
+  }
+
   const isNewlyMatched = yesCount >= needed && !wasAlreadyMatched;
 
   if (isNewlyMatched) {
@@ -236,14 +265,13 @@ app.post("/api/sessions/:id/votes", async (req, reply) => {
 
   return reply.send({
     ok: true,
-    matched: isNewlyMatched,          
-    wasAlreadyMatched,                
-    winner: winnerObj,                
+    matched: isNewlyMatched,
+    wasAlreadyMatched,
+    winner: winnerObj,
     yesCount,
     needed
   });
 });
-
 
 
 

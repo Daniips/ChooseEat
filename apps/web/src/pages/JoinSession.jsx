@@ -1,3 +1,4 @@
+//apps/web/src/pages/JoinSession.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Header from "../components/Header";

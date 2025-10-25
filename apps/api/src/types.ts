@@ -1,3 +1,4 @@
+//apps/api/src/types.ts
 export type Restaurant = {
     id: string;
     name: string;

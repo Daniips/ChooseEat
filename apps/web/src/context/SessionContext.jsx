@@ -38,24 +38,45 @@ export function SessionProvider({ children }) {
   }
 
   function hydrateFromJoin(payload) {
+    if (!payload || !payload.session) {
+      console.error("hydrateFromJoin: payload/session ausente o inválido:", payload);
+      return false;
+    }
+
     const { session: s, restaurants, invitePath, participant, winner } = payload;
+
+    let safeRestaurants = [];
+    if (Array.isArray(restaurants)) {
+      const seen = new Set();
+      for (const r of restaurants) {
+        if (r && typeof r.id === "string" && !seen.has(r.id)) {
+          seen.add(r.id);
+          safeRestaurants.push(r);
+        }
+      }
+    }
+
     setSession(prev => ({
       ...prev,
-      id: s.id,
+      id: s?.id ?? prev.id,
       status: s?.status || "voting",
-      area: s.area,
-      filters: s.filters,
-      threshold: s.threshold,
-      invitePath,
-      restaurants: Array.isArray(restaurants) ? restaurants : [],
+      area: s?.area ?? prev.area,
+      filters: s?.filters ?? prev.filters,
+      threshold: s?.threshold ?? prev.threshold,
+      invitePath: typeof invitePath === "string" ? invitePath : prev.invitePath,
+      restaurants: safeRestaurants,
       winner: winner ?? null
     }));
+
+    let stored = true;
     try {
-      localStorage.setItem("ce_participant", JSON.stringify(participant));
+      localStorage.setItem("ce_participant", JSON.stringify(participant || null));
       localStorage.setItem("ce_sessionId", s.id);
-    } catch {
-        //nada
+    } catch (e) {
+      stored = false;
+      console.error("hydrateFromJoin: no se pudo persistir en localStorage:", e);
     }
+    return stored;
   }
 
   const value = useMemo(() => ({

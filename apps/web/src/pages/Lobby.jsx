@@ -7,6 +7,7 @@ import { CUISINES } from "../data/cuisines";
 import Header from "../components/Header";
 import { setParticipant } from "../lib/participant";
 import { useTranslation } from "react-i18next";
+import { api } from "../lib/api";
 
 export default function Lobby() {
   const { t } = useTranslation();
@@ -28,6 +29,8 @@ export default function Lobby() {
   const [previewCount, setPreviewCount] = useState(null);
   const [toastOpen, setToastOpen] = useState(false);
 
+  const [error, setError] = useState("");
+
   const cuisinesValid = selectedCuisines.length > 0;
   const thresholdValid = people >= 2 && (people === 2 ? true : (requiredYes >= 2 && requiredYes <= people));
 
@@ -43,8 +46,12 @@ export default function Lobby() {
     setPrice(ps => ps.includes(n) ? ps.filter(x => x !== n) : [...ps, n]);
   }
 
+  const msg = (e, fallback = "Error de red") => (e?.message ? String(e.message) : fallback);
+
   async function preview() {
     if (!cuisinesValid) return;
+    setError("");
+
     const params = new URLSearchParams();
     params.set("radiusKm", String(radiusKm));
     if (selectedCuisines.length) params.set("cuisines", selectedCuisines.join(","));
@@ -52,14 +59,22 @@ export default function Lobby() {
     if (openNow) params.set("openNow", "true");
     if (minRating) params.set("minRating", String(minRating));
 
-    const res = await fetch(`/api/restaurants?${params.toString()}`);
-    const data = await res.json();
-    setPreviewCount(data.count ?? (Array.isArray(data.items) ? data.items.length : 0));
-    setToastOpen(true);
+    try {
+      const data = await api(`/api/restaurants?${params.toString()}`);
+      setPreviewCount(data.count ?? (Array.isArray(data.items) ? data.items.length : 0));
+      setToastOpen(true);
+    } catch (e) {
+      console.error("Preview filters failed:", e);
+      setError(`No se pudo previsualizar restaurantes: ${msg(e)}`);
+      setPreviewCount(null);
+      setToastOpen(false);
+    }
   }
 
   async function applyAndStart(e) {
     e.preventDefault();
+    setError("");
+
     if (!cuisinesValid || !thresholdValid) return;
 
     const area = { radiusKm };
@@ -67,25 +82,24 @@ export default function Lobby() {
     const finalRequired = people <= 2 ? 2 : Math.max(2, Math.min(people, Number(requiredYes) || 2));
     const threshold = { type: "absolute", value: finalRequired, participants: Number(people) };
 
-    const res = await fetch("/api/sessions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ area, filters, threshold })
-    });
-    if (!res.ok) { alert("No se pudo crear la sesión"); return; }
-    const created = await res.json();
+    try {
+      const created = await api("/api/sessions", {
+        method: "POST",
+        body: JSON.stringify({ area, filters, threshold })
+      });
 
-    const joinRes = await fetch(`/api/sessions/${created.sessionId}/join`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: hostName || "Host" })
-    });
-    if (!joinRes.ok) { alert("No se pudo unir el host a la sesión"); return; }
-    const joined = await joinRes.json();
+      const joined = await api(`/api/sessions/${created.sessionId}/join`, {
+        method: "POST",
+        body: JSON.stringify({ name: hostName || "Host" })
+      });
 
-    setParticipant(created.sessionId, joined.participant, created.invitePath);
-    hydrateFromJoin(joined);
-    navigate("/vote");
+      setParticipant(created.sessionId, joined.participant, created.invitePath);
+      hydrateFromJoin(joined);
+      navigate("/vote");
+    } catch (e) {
+      console.error("Create/join session failed:", e);
+      setError(`No se pudo crear o unir la sesión: ${msg(e)}`);
+    }
   }
 
   const summaries = {
@@ -108,6 +122,19 @@ export default function Lobby() {
     <div className="wrap">
       <Header />
 
+      {error ? (
+        <div role="alert" aria-live="assertive" className="toast error" style={{ margin: "8px 0" }}>
+          {error}
+          <button
+            className="btn btn-sm btn--ghost"
+            style={{ marginLeft: 8 }}
+            onClick={() => setError("")}
+          >
+            ✕
+          </button>
+        </div>
+      ) : null}
+
       <form
         className="summary"
         style={{ maxWidth: 900, margin: "24px auto", padding: 0, overflow: "hidden" }}
@@ -129,7 +156,6 @@ export default function Lobby() {
               : `${previewCount} sitio${previewCount === 1 ? "" : "s"} con estos filtros`}
           </div>
         </div>
-
         <div className="lobby__host">
           <label htmlFor="host-name" style={{ display: "grid", gap: 6 }}>
             <div className="small">{t('ur_name')} (host)</div>

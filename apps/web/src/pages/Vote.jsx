@@ -1,3 +1,4 @@
+// apps/web/src/pages/Vote.jsx
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import Header from "../components/Header";
 import Card from "../components/Card";
@@ -8,7 +9,7 @@ import { useSession } from "../context/SessionContext";
 import { io } from "socket.io-client";
 import MatchOverlay from "../components/MatchOverlay";
 import { getParticipantId, getParticipant, setParticipant, migrateFromLegacy } from "../lib/participant";
-
+import { api } from "../lib/api";
 
 export default function Vote() {
   const { session, setWinner } = useSession();
@@ -24,6 +25,7 @@ export default function Vote() {
   const [results, setResults] = useState(null);
 
   const [forceFinished, setForceFinished] = useState(false);
+  const [error, setError] = useState("");
 
   const [showOverlay, setShowOverlay] = useState(false);
   const overlayTimerRef = useRef(null);
@@ -49,6 +51,8 @@ export default function Vote() {
   const finishedByDeck = !current;
   const finished = finishedByDeck || forceFinished;
 
+  const msg = (e, fallback) => (e?.message ? String(e.message) : fallback);
+
   useEffect(() => {
     (async () => {
       try {
@@ -57,44 +61,40 @@ export default function Vote() {
         migrateFromLegacy(session.id);
 
         const existingId = getParticipantId(session.id);
-        if (existingId) {
-          return;
-        }
-        const res = await fetch(`/api/sessions/${session.id}/join`, {
+        if (existingId) return;
+
+        const data = await api(`/api/sessions/${session.id}/join`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: "Host" }),
         });
-
-        if (res.ok) {
-          const data = await res.json();
+        if (data?.participant) {
           setParticipant(session.id, data.participant);
         }
-      } catch {
-        // noop
+      } catch (e) {
+        console.error("Auto-join host failed:", e);
+        setError(`No se pudo unir el host automáticamente: ${msg(e, "Error de red")}`);
       }
     })();
   }, [session?.id]);
-
 
   useEffect(() => {
     (async () => {
       if (!session?.id) return;
       try {
-        const res = await fetch(`/api/sessions/${session.id}`);
-        if (!res.ok) return;
-        const s = await res.json();
+        const s = await api(`/api/sessions/${session.id}`);
         const me = getParticipant(session.id);
         const iAmDone = me?.id && s.participants?.[me.id]?.done;
         if (s.status === "finished" || iAmDone) {
           setForceFinished(true);
         }
-      } catch {
-        // noop
+      } catch (e) {
+        console.error("Fetch session status failed:", e);
+        setError(`No se pudo comprobar el estado de la sesión: ${msg(e, "Error de red")}`);
       }
     })();
   }, [session?.id]);
 
+  // Socket
   useEffect(() => {
     if (!session?.id) return;
 
@@ -103,16 +103,11 @@ export default function Vote() {
     socketRef.current = socket;
 
     const onParticipants = ({ participants }) => setParticipants(participants || []);
-    const onVote = () => { /* contador en vivo? */ };
+    const onVote = () => {};
     const onMatched = (evt) => {
-      if (evt?.winner) {
-        setWinner(evt.winner);
-      }
+      if (evt?.winner) setWinner(evt.winner);
     };
-
-    const onFinished = () => {
-      setForceFinished(true);
-    };
+    const onFinished = () => setForceFinished(true);
 
     socket.emit("session:join", { sessionId: session.id });
     socket.on("session:participants", onParticipants);
@@ -139,14 +134,14 @@ export default function Vote() {
       try {
         const me = getParticipant(session.id);
         if (me?.id) {
-          await fetch(`/api/sessions/${session.id}/done`, {
+          await api(`/api/sessions/${session.id}/done`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ participantId: me.id })
+            body: JSON.stringify({ participantId: me.id }),
           });
         }
-      } catch {
-        // noop
+      } catch (e) {
+        console.error("Mark done failed:", e);
+        setError(`No se pudo marcar como terminado: ${msg(e, "Error de red")}`);
       }
       setForceFinished(true);
     })();
@@ -159,12 +154,11 @@ export default function Vote() {
     let aborted = false;
     (async () => {
       try {
-        const res = await fetch(`/api/sessions/${session.id}/results`);
-        if (!res.ok) return;
-        const data = await res.json();
+        const data = await api(`/api/sessions/${session.id}/results`);
         if (!aborted) setResults(data);
-      } catch {
-        //noop
+      } catch (e) {
+        console.error("Load results failed:", e);
+        if (!aborted) setError(`No se pudieron cargar los resultados: ${msg(e, "Error de red")}`);
       }
     })();
 
@@ -184,36 +178,55 @@ export default function Vote() {
     setIndex((i) => i + 1);
 
     try {
-      const me = getParticipant(session.id); // <— helper
+      const me = getParticipant(session.id);
       if (!me?.id) return;
 
-      const res = await fetch(`/api/sessions/${session.id}/votes`, {
+      const data = await api(`/api/sessions/${session.id}/votes`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           participantId: me.id,
           restaurantId: current.id,
-          choice
-        })
+          choice,
+        }),
       });
 
-      if (res.ok) {
-        const data = await res.json(); 
-        if (
-          choice === "yes" &&
-          (data.matched === true || data.wasAlreadyMatched === true)
-        ) {
-          triggerMatchFlash();
-        }
-
-        if (data.winner) setWinner(data.winner);
+      if (
+        choice === "yes" &&
+        (data?.matched === true || data?.wasAlreadyMatched === true)
+      ) {
+        triggerMatchFlash();
       }
-    } catch { /* noop */ }
+      if (data?.winner) setWinner(data.winner);
+    } catch (e) {
+      console.error("Vote failed:", e);
+      setError(`No se pudo registrar tu voto: ${msg(e, "Error de red")}`);
+
+      setIndex((i) => Math.max(0, i - 1));
+      if (choice === "yes") {
+        setYesIds((s) => s.filter((id) => id !== current.id));
+      } else {
+        setNoIds((s) => s.filter((id) => id !== current.id));
+      }
+    }
   }
 
   return (
     <div className="wrap">
       <Header />
+
+      {error ? (
+        <div role="alert" aria-live="assertive" className="toast error" style={{ margin: "8px 0" }}>
+          {error}
+          <button
+            className="btn btn-sm btn--ghost"
+            style={{ marginLeft: 8 }}
+            onClick={() => setError("")}
+          >
+            ✕
+          </button>
+        </div>
+      ) : null}
+
       <InviteBar inviteUrl={inviteUrl} connectedCount={participants.length} />
 
       <MatchOverlay visible={showOverlay} onDone={() => setShowOverlay(false)} />
@@ -260,6 +273,7 @@ export default function Vote() {
             setWinner(null);
             setResults(null);
             setForceFinished(false);
+            setError("");
           }}
         />
       )}

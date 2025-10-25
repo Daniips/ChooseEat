@@ -16,18 +16,21 @@ export default function InviteBar({ inviteUrl }) {
     }
 
     async function shareLink() {
-        if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: t("share_title"),
-                    text: t("share_text"),
-                    url: inviteUrl
-                });
-            } catch {
-                // noop
+        if (!navigator.share) {
+            try { await copyLink(); } catch (e) { console.error("Copy failed:", e); }
+            return;
+        }
+        try {
+            await navigator.share({
+            title: t("share_title"),
+            text: t("share_text"),
+            url: inviteUrl,
+            });
+        } catch (e) {
+            if (e?.name !== "AbortError") {
+            console.warn("Share failed, falling back to copy:", e);
+            try { await copyLink(); } catch (e2) { console.error("Copy failed:", e2); }
             }
-        } else {
-            await copyLink();
         }
     }
 

@@ -1,68 +1,73 @@
+// src/context/UIContext.jsx
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import i18n from "../lib/i18n";
+import { applyTheme, resolveTheme, watchSystemTheme } from "../lib/theme";
 
 const UiContext = createContext(null);
 
 const THEME_KEY = "ce_theme";
 const LANG_KEY  = "ce_lang";
 
-function systemTheme() {
-  if (typeof window === "undefined") return "light";
-  const mql = window.matchMedia("(prefers-color-scheme: dark)");
-  return mql.matches ? "dark" : "light";
+function lsGet(key) {
+  try { return localStorage.getItem(key); } catch (e) {
+    console.error(`localStorage get ${key} failed:`, e); return null;
+  }
+}
+function lsSet(key, value) {
+  try { localStorage.setItem(key, value); return true; } catch (e) {
+    console.error(`localStorage set ${key} failed:`, e); return false;
+  }
 }
 
 export function UiProvider({ children, persist = false }) {
-  // === THEME ===
-  const [theme, setTheme] = useState(systemTheme());
-  useEffect(() => {
-    try {
-      if (persist) {
-        const saved = localStorage.getItem(THEME_KEY);
-        if (saved === "light" || saved === "dark") setTheme(saved);
-      }
-    } catch {
-        // noop
-    }
-  }, [persist]);
+  // ===== THEME =====
+  const [theme, setTheme] = useState(() => {
+    const saved = persist ? lsGet(THEME_KEY) : null;
+    return (saved === "light" || saved === "dark" || saved === "system") ? saved : "system";
+  });
 
   useEffect(() => {
-    if (typeof document !== "undefined") {
-      document.documentElement.setAttribute("data-theme", theme);
-    }
-    try { if (persist) localStorage.setItem(THEME_KEY, theme); } catch {
-        // noop
-    }
+    try { applyTheme(theme); } catch (e) { console.error("applyTheme failed:", e); }
+    if (persist) lsSet(THEME_KEY, theme);
   }, [theme, persist]);
 
-  const toggleTheme = () => setTheme(t => (t === "dark" ? "light" : "dark"));
+  useEffect(() => {
+    if (theme !== "system") return;
+    const stop = watchSystemTheme(() => {
+      try { applyTheme("system"); } catch (e) { console.error("re-apply system theme failed:", e); }
+    });
+    return stop;
+  }, [theme]);
 
-  // === LANGUAGE ===
+  const toggleTheme = () =>
+    setTheme(t => (resolveTheme(t) === "dark" ? "light" : "dark"));
+
+  // ===== LANGUAGE =====
   const [lang, setLang] = useState(() => i18n.language || "en");
 
   useEffect(() => {
-    try {
-      if (persist) {
-        const saved = localStorage.getItem(LANG_KEY);
-        if (saved) setLang(saved);
-      }
-    } catch {
-        // noop
-    }
+    if (!persist) return;
+    const saved = lsGet(LANG_KEY);
+    if (saved) setLang(saved);
   }, [persist]);
 
   useEffect(() => {
-    i18n.changeLanguage(lang);
-    if (typeof document !== "undefined") {
-      document.documentElement.setAttribute("lang", lang);
+    try { i18n.changeLanguage(lang); } catch (e) {
+      console.error("i18n.changeLanguage failed:", e);
     }
-    try { if (persist) localStorage.setItem(LANG_KEY, lang); } catch {
-        // noop
+    try {
+      if (typeof document !== "undefined") {
+        document.documentElement.setAttribute("lang", lang);
+      }
+      if (persist) lsSet(LANG_KEY, lang);
+    } catch (e) {
+      console.error("apply lang failed:", e);
     }
   }, [lang, persist]);
 
   const value = useMemo(() => ({
-    theme, setTheme, toggleTheme,
+    theme, effectiveTheme: resolveTheme(theme),
+    setTheme, toggleTheme,
     lang, setLang,
   }), [theme, lang]);
 

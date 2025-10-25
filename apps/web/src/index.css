@@ -1004,80 +1004,101 @@ input[type="checkbox"] { accent-color: var(--accent); }
       .res-img{ width: 56px; height: 56px; }
     }
 
-  /* ====================================
-    THEME SWITCH (unificado a tokens)
-    ==================================== */
-  .theme-switch{
-    --sw-h: var(--ctrl-h);
-    --sw-thumb: calc(var(--ctrl-h) - 8px);
-    --sw-w: calc(var(--ctrl-h) * 1.8);
+  /* =============================================
+    THEME SWITCH 
+    ============================================= */
+    .theme-switch {
+      --sw-w: 56px;
+      --sw-h: 30px;
+      --sw-pad: 3px;
+      --sw-r: 999px;
 
-    display: inline-grid;
-    place-items: center;
-    width: var(--sw-w);
-    height: var(--sw-h);
-    padding: 0;
-    background: transparent;
-    border: 0;
-    cursor: pointer;
-  }
+      /* colores base (se integran con tus variables) */
+      --sw-track-light: color-mix(in oklab, var(--card, #fff) 85%, black 8%);
+      --sw-track-dark:  color-mix(in oklab, var(--bg, #0b0b0b) 80%, white 8%);
+      --sw-border: color-mix(in oklab, var(--text, #111) 12%, transparent);
+      --sw-thumb: #fff;
 
-  .theme-switch__track{
-    position: relative;
-    width: 100%;
-    height: 100%;
-    border-radius: 999px;
-    background: var(--ctrl-bg);
-    border: 1px solid var(--ctrl-border);
-    box-shadow: var(--ctrl-shadow);
-    transition: background .2s ease, border-color .2s ease, box-shadow .2s ease;
-  }
+      appearance: none;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      line-height: 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
 
-  .theme-switch__thumb{
-    position: absolute;
-    top: 50%;
-    left: 3px;
-    width: var(--sw-thumb);
-    height: var(--sw-thumb);
-    border-radius: 50%;
-    transform: translateY(-50%);
-    background: var(--text);
-    border: 2px solid var(--card);
-    box-shadow: 0 2px 6px rgba(0,0,0,.22);
-    transition: left .25s cubic-bezier(.2,.7,.4,1);
-  }
+      outline: none;
+      border-radius: var(--sw-r);
+    }
 
-  .theme-switch.is-dark .theme-switch__thumb{
-    left: calc(100% - var(--sw-thumb) - 3px);
-  }
+    .theme-switch:focus-visible {
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent, #7c3aed) 45%, transparent);
+      border-radius: var(--sw-r);
+    }
 
-  .theme-switch__icon{
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 14px;
-    pointer-events: none;
-    transition: opacity .2s ease, transform .25s ease;
-    opacity: .85;
-  }
-  .theme-switch__icon--sun{ left: 8px; }
-  .theme-switch__icon--moon{ right: 8px; }
-  .theme-switch.is-light .theme-switch__icon--moon{ opacity: .38; transform: translateY(-50%) scale(.94); }
-  .theme-switch.is-dark  .theme-switch__icon--sun { opacity: .38; transform: translateY(-50%) scale(.94); }
+    .theme-switch__track {
+      position: relative;
+      width: var(--sw-w);
+      height: var(--sw-h);
+      padding: var(--sw-pad);
+      border-radius: var(--sw-r);
+      background: var(--sw-track-light);
+      border: 1px solid var(--sw-border);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.08),
+        inset 0 -1px 0 rgba(0,0,0,.06);
+      transition: background .2s ease, border-color .2s ease, box-shadow .2s ease;
+    }
 
-  .theme-switch:focus-visible .theme-switch__track{
-    outline: none;
-    box-shadow: 0 0 0 3px var(--ring);
-  }
-  .theme-switch:hover .theme-switch__track{
-    background: var(--ctrl-hover-bg);
-  }
+    .theme-switch.is-dark .theme-switch__track {
+      background: var(--sw-track-dark);
+    }
 
-  @media (prefers-reduced-motion: reduce){
-    .theme-switch__thumb,
-    .theme-switch__icon,
-    .theme-switch__track{ transition: none !important; }
-  }
+    .theme-switch__thumb {
+      position: absolute;
+      top: var(--sw-pad);
+      left: var(--sw-pad);
+      width: calc(var(--sw-h) - var(--sw-pad) * 2);
+      height: calc(var(--sw-h) - var(--sw-pad) * 2);
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(0,0,0,.25), 0 4px 10px rgba(0,0,0,.18);
+      transform: translateX(0);
+      transition: transform .22s cubic-bezier(.25,.8,.25,1);
+      display: grid;
+      place-items: center;
+    }
+
+    .theme-switch__thumb::before {
+      content: "☀️";
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .theme-switch.is-dark .theme-switch__thumb::before {
+      content: "🌙";
+    }
+
+    .theme-switch.is-dark .theme-switch__thumb {
+      transform: translateX(calc(var(--sw-w) - var(--sw-h)));
+    }
+
+
+    .theme-switch:hover .theme-switch__thumb {
+      box-shadow:
+        0 2px 4px rgba(0,0,0,.28),
+        0 6px 14px rgba(0,0,0,.2);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .theme-switch__thumb,
+      .theme-switch__track,
+      .theme-switch__icon {
+        transition: none !important;
+      }
+    }
 
   /* ====================================
     LANG SELECT (mismo look&feel)

@@ -1,32 +1,37 @@
 // src/lib/theme.js
-const STORAGE_KEY = "ce_theme";
 
-export function getStoredTheme() {
-  try { return localStorage.getItem(STORAGE_KEY) || "system"; }
-  catch { return "system"; }
+export function resolveTheme(theme) {
+  if (theme === "system") {
+    try {
+      return (typeof window !== "undefined" &&
+        window.matchMedia?.("(prefers-color-scheme: dark)")?.matches)
+        ? "dark"
+        : "light";
+    } catch {
+      return "light";
+    }
+  }
+  return theme === "dark" ? "dark" : "light";
 }
 
 export function applyTheme(theme) {
-  const root = document.documentElement;
-  let resolved = theme;
-  if (theme === "system") {
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    resolved = prefersDark ? "dark" : "light";
-  }
+  const root = typeof document !== "undefined" ? document.documentElement : null;
+  if (!root) return false;
+  const resolved = resolveTheme(theme);
   root.setAttribute("data-theme", resolved);
-  try { localStorage.setItem(STORAGE_KEY, theme); } catch {
-    // noop
-  }
+  return true;
 }
 
-export function initTheme() {
-  const saved = getStoredTheme();
-  applyTheme(saved);
-
-  const mq = window.matchMedia("(prefers-color-scheme: dark)");
-  const handler = () => {
-    if (getStoredTheme() === "system") applyTheme("system");
+export function watchSystemTheme(onChange) {
+  if (typeof window === "undefined" || !window.matchMedia) return () => {};
+  const mql = window.matchMedia("(prefers-color-scheme: dark)");
+  const handler = () => onChange?.(mql.matches ? "dark" : "light");
+  try {
+    mql.addEventListener?.("change", handler) || mql.addListener?.(handler);
+  } catch { /* noop */ }
+  return () => {
+    try {
+      mql.removeEventListener?.("change", handler) || mql.removeListener?.(handler);
+    } catch { /* noop */ }
   };
-  mq.addEventListener?.("change", handler);
-  return () => mq.removeEventListener?.("change", handler);
 }
