@@ -33,7 +33,7 @@ export default function Landing() {
   }
 
   return (
-    <div className="wrap">
+    <div className="wrap home-page">
       <Header />
 
       <main className="hero">

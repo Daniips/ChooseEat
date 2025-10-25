@@ -2,97 +2,102 @@
    VARIABLES / TEMA
    ====================================================== */
 :root {
-    --bg: #FAF6F2;
-    --card: #FFFFFF;
-    --text: #1E1B16;
-    --muted: #7A6E65;
-    --border: #E7DCD2;
+  --bg: #FAF6F2;                 /* Color de fondo principal */
+  --card: #FFFFFF;               /* Fondo de tarjetas/paneles */
+  --text: #1E1B16;               /* Color de texto principal */
+  --muted: #7A6E65;              /* Texto secundario/descriptivo */
+  --border: #E7DCD2;             /* Bordes y líneas sutiles */
 
-    --accent: #f97316;
-    --accent-600: #ea580c;
-    --accent-2: #E3B341;
-    --accent-3: #5E7A4A;
+  --accent: #f97316;             /* Color de acento principal (botones, barras) */
+  --accent-600: #ea580c;         /* Acento en estado hover/activo */
+  --accent-2: #E3B341;           /* Acento alternativo #1 (gráficas/badges) */
+  --accent-3: #5E7A4A;           /* Acento alternativo #2 (gráficas/badges) */
 
-    --green: #10b981;
-    --red: #ef4444;
-    --halo-yes: rgba(16, 185, 129, 0.22);
-    --halo-no: rgba(239, 68, 68, 0.22);
-    --ring: rgba(249, 115, 22, 0.2);
+  --green: #10b981;              /* Verde de confirmación/éxito */
+  --red: #ef4444;                /* Rojo de error/negativo */
+  --halo-yes: rgba(16, 185, 129, 0.22); /* Halo lateral al aceptar (swipe right) */
+  --halo-no: rgba(239, 68, 68, 0.22);   /* Halo lateral al rechazar (swipe left) */
+  --ring: rgba(249, 115, 22, 0.2);      /* Resaltado de foco (focus ring) */
 
-    --surface: #ffffff;
-    --line: #efe5db;
-    --cardSoft: #faf8f4;
-    --accent-ghost: rgba(249,115,22,.10);
+  --surface: #ffffff;            /* Superficie intermedia (barras, paneles suaves) */
+  --line: #efe5db;               /* Líneas divisorias más suaves que --border */
+  --cardSoft: #faf8f4;           /* Variante suave para fondos de secciones */
+  --accent-ghost: rgba(249,115,22,.10); /* Fondo de botones “ghost”/hover */
 
-    --ghost-hover-bg: #f9fafb;
-    --ghost-hover-border: #d1d5db;
-    --focus-outline: rgba(0,0,0,.25);
-    --img-fallback: var(--cardSoft);
+  --ghost-hover-bg: #f9fafb;     /* Hover para botones ghost (fondo) */
+  --ghost-hover-border: #d1d5db; /* Hover para botones ghost (borde) */
+  --focus-outline: rgba(0,0,0,.25); /* Contorno accesible al enfocar con teclado */
+  --img-fallback: var(--cardSoft);   /* Fondo de reserva si no carga una imagen */
 
-    --positive-bg: #d1fae5;
-    --positive-border: #a7f3d0;
-    --positive-ink: #065f46;
+  --positive-bg: #d1fae5;        /* Fondo de avisos positivos */
+  --positive-border: #a7f3d0;    /* Borde de avisos positivos */
+  --positive-ink: #065f46;       /* Texto de avisos positivos */
 
-    --negative-bg: #fee2e2;
-    --negative-border: #fecaca;
-    --negative-ink: #7f1d1d;
+  --negative-bg: #fee2e2;        /* Fondo de avisos de error/negativos */
+  --negative-border: #fecaca;    /* Borde de avisos negativos */
+  --negative-ink: #7f1d1d;       /* Texto de avisos negativos */
 
-    --pill-bg: var(--card);
-    --pill-ink: var(--text);
+  --pill-bg: var(--card);        /* Fondo de chips/píldoras */
+  --pill-ink: var(--text);       /* Texto de chips/píldoras */
 
-    --range-track-h: 6px;
-    --range-thumb-d: 18px;
+  --range-track-h: 6px;          /* Altura de la pista del input[type=range] */
+  --range-thumb-d: 18px;         /* Diámetro del pulgar del input[type=range] */
 
-    --panel: color-mix(in srgb, var(--card) 88%, var(--text) 12%);
-    --bar-yes: hsl(142 71% 45%);
-    --bar-no: hsl(0 75% 60%);
-    --bar-pending: hsl(40 90% 60%);
+  --panel: color-mix(in srgb, var(--card) 88%, var(--text) 12%); /* Fondo de paneles */
+  --bar-yes: hsl(142 71% 45%);   /* Color de barra “sí” en resultados */
+  --bar-no: hsl(0 75% 60%);      /* Color de barra “no” en resultados */
+  --bar-pending: hsl(40 90% 60%);/* Color de barra “pendiente” */
 
-    --ctrl-h: 32px;
-    --ctrl-br: 10px;
-    --ctrl-bg: var(--card);
-    --ctrl-border: var(--border);
-    --ctrl-shadow: 0 4px 12px rgba(0,0,0,.06);
-    --ctrl-hover-bg: var(--ghost-hover-bg);
-  }
-  
+  --ctrl-h: 32px;                /* Altura estándar de controles (selects, etc.) */
+  --ctrl-br: 10px;               /* Radio de borde de controles */
+  --ctrl-bg: var(--card);        /* Fondo de controles */
+  --ctrl-border: var(--border);  /* Borde de controles */
+  --ctrl-shadow: 0 4px 12px rgba(0,0,0,.06); /* Sombra de controles */
+  --ctrl-hover-bg: var(--ghost-hover-bg);    /* Hover de controles */
+
+  --header-h: 56px;              /* Altura del header sticky */
+
+  --wrap-py: 16px;               /* Padding vertical del contenedor .wrap */
+}
+
 
 /* ======================================================
    TEMA OSCURO
    ====================================================== */
-  [data-theme="dark"] {
-    --bg: #12100e;
-    --card: #1a1714;
-    --surface: #191612;
-    --text: #efeae4;
-    --muted: #b6aca3;
-    --border: #2b241e;
-    --line: #2d2620;
-    --cardSoft: #161310;
+[data-theme="dark"] {
+  --bg: #12100e;                 /* Fondo principal (modo oscuro) */
+  --card: #1a1714;               /* Fondo de tarjetas/paneles */
+  --surface: #191612;            /* Superficie intermedia */
+  --text: #efeae4;               /* Texto principal */
+  --muted: #b6aca3;              /* Texto secundario/descriptivo */
+  --border: #2b241e;             /* Bordes y líneas sutiles */
+  --line: #2d2620;               /* Líneas divisorias suaves */
+  --cardSoft: #161310;           /* Variante suave de fondo */
 
-    --accent-ghost: rgba(249,115,22,.22);
-    --ring: rgba(249,115,22,.35);
-    --halo-yes: rgba(16,185,129,.28);
-    --halo-no:  rgba(239,68,68,.28);
-    --ghost-hover-bg: color-mix(in srgb, var(--card) 86%, var(--text) 14%);
-    --ghost-hover-border: color-mix(in srgb, var(--border) 70%, var(--text) 30%);
+  --accent-ghost: rgba(249,115,22,.22); /* Fondo ghost adaptado a modo oscuro */
+  --ring: rgba(249,115,22,.35);         /* Focus ring más visible en modo oscuro */
+  --halo-yes: rgba(16,185,129,.28);     /* Halo “sí” en modo oscuro */
+  --halo-no:  rgba(239,68,68,.28);      /* Halo “no” en modo oscuro */
+  --ghost-hover-bg: color-mix(in srgb, var(--card) 86%, var(--text) 14%); /* Hover ghost */
+  --ghost-hover-border: color-mix(in srgb, var(--border) 70%, var(--text) 30%); /* Hover borde ghost */
 
-    --focus-outline: color-mix(in srgb, var(--text) 28%, transparent);
+  --focus-outline: color-mix(in srgb, var(--text) 28%, transparent); /* Contorno accesible */
 
-    --img-fallback: color-mix(in srgb, var(--cardSoft) 70%, black 30%);
+  --img-fallback: color-mix(in srgb, var(--cardSoft) 70%, black 30%); /* Fondo fallback de imágenes */
 
-    --positive-bg: color-mix(in srgb, var(--accent-3) 18%, var(--card));
-    --positive-border: color-mix(in srgb, var(--accent-3) 28%, var(--border));
-    --positive-ink: color-mix(in srgb, var(--accent-3) 84%, white 16%);
-    --negative-bg: color-mix(in srgb, var(--red) 14%, var(--card));
-    --negative-border: color-mix(in srgb, var(--red) 24%, var(--border));
-    --negative-ink: color-mix(in srgb, var(--red) 82%, white 18%);
+  --positive-bg: color-mix(in srgb, var(--accent-3) 18%, var(--card)); /* Aviso positivo fondo */
+  --positive-border: color-mix(in srgb, var(--accent-3) 28%, var(--border)); /* Aviso positivo borde */
+  --positive-ink: color-mix(in srgb, var(--accent-3) 84%, white 16%);        /* Aviso positivo texto */
+  --negative-bg: color-mix(in srgb, var(--red) 14%, var(--card));            /* Aviso negativo fondo */
+  --negative-border: color-mix(in srgb, var(--red) 24%, var(--border));      /* Aviso negativo borde */
+  --negative-ink: color-mix(in srgb, var(--red) 82%, white 18%);             /* Aviso negativo texto */
 
-    --pill-bg: var(--surface);
-    --pill-ink: var(--text);
+  --pill-bg: var(--surface);     /* Fondo de chips/píldoras */
+  --pill-ink: var(--text);       /* Texto de chips/píldoras */
 
-    --panel: color-mix(in srgb, var(--card) 70%, var(--text) 30%);
-  }
+  --panel: color-mix(in srgb, var(--card) 70%, var(--text) 30%); /* Paneles en modo oscuro */
+}
+
 
   [data-theme="dark"] .summary,
   [data-theme="dark"] .invite-bar,
@@ -115,11 +120,18 @@ body {
 /* ======================================================
    DISPOSICIÓN GENERAL (WRAP / HEADER / UTILIDADES)
    =====================================================*/
+/* Disposición general (wrap) – unificado */
 .wrap {
-    max-width: 920px;
-    margin: 0 auto;
-    padding: 24px;
+  max-width: 920px;
+  margin: 0 auto;
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-top: var(--wrap-py);
+  padding-bottom: var(--wrap-py);
+  min-height: 100svh;
+  overflow: clip; 
 }
+
 .header h1 {
     margin: 0 0 4px;
     text-align: center;
@@ -138,7 +150,6 @@ body {
 /* ==================================================
     HEADER 
   ==================================================== */
-:root { --header-h: 64px; }
 
 .app-header{
   position: sticky;
@@ -153,11 +164,11 @@ body {
   height: var(--header-h);
   max-width: 980px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 12px;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .app-header__left{ 
@@ -669,12 +680,7 @@ input[type="checkbox"] { accent-color: var(--accent); }
 /* ======================================================
    LANDING / HERO (HOME)
    ================================================== */
-.hero {
-  display: grid;
-  place-items: start center;
-  min-height: calc(100vh - 80px);
-  padding: 24px 16px 48px;
-}
+
 .hero__panel {
   width: 100%;
   max-width: 920px;
@@ -1141,6 +1147,133 @@ input[type="checkbox"] { accent-color: var(--accent); }
   @media (max-width: 420px){
     .lang-select{ min-width: 96px; }
   }
+/* ==============================================
+   Vote – Progress bar (aislado)
+   ============================================== */
+.vote-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0 0;
+}
+.vote-progress__track {
+  flex: 1;
+  height: 8px;
+  background: color-mix(in oklab, var(--muted, #e5e5e5) 80%, transparent);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.vote-progress__bar {
+  height: 100%;
+  width: 0%;                 /* actualízalo inline: style={{ width: `${pct}%` }} */
+  background: var(--accent, #f97316);
+  transition: width .2s ease;
+}
+.vote-progress__meta {
+  min-width: 64px;
+  text-align: right;
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vote-progress__bar { transition: none !important; }
+}
+
+  /* =========================================================
+    Normalización de wrapper y utilidades anti-scroll
+    ======================================================== */       /* padding vertical del wrapper */
+
+  html, body { height: 100%; }
+
+
+  .app-header { contain: paint; }     /* evita “sangrado” de backdrop-filter/sombras */
+
+
+  /* =========================================================
+    LANDING (HOME) – sin scroll residual
+    ======================================================== */
+  .hero {
+    min-height: calc(100svh - var(--header-h) - (var(--wrap-py) * 2));
+    padding: 20px 16px 20px;
+    overflow: clip;
+  }
+  @media (max-height: 760px) {
+    .hero { padding-bottom: 12px; }
+  }
+
+
+  /* =========================================================
+    VOTE PAGE – cálculo de alturas + layout sin scroll
+    ======================================================== */
+  .vote-page{
+    /* referencia al alto de tu header sticky ya definido */
+    --vote-header-h: var(--header-h);
+
+    --vote-invite-h: 56px;     /* barra de invitar */
+    --vote-progress-h: 28px;   /* barra de progreso + meta */
+    --vote-actions-h: 88px;    /* botones Sí/No */
+    --vote-vert-margins: 36px; /* respiración superior/inferior */
+
+    /* Alto disponible seguro para la card:
+      resta header, padding del wrapper y bloques de UI */
+    --vote-card-safe-h: max(
+      340px,
+      calc(
+        100svh
+        - var(--vote-header-h)
+        - (var(--wrap-py) * 2)
+        - var(--vote-invite-h)
+        - var(--vote-progress-h)
+        - var(--vote-actions-h)
+        - var(--vote-vert-margins)
+      )
+    );
+  }
+
+  /* cabecera de progreso algo más compacta */
+  .vote-page .vote__header { padding: 6px 16px 0; }
+
+  /* escenario sin overflow “fantasma” */
+  .vote-page .stage{
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px 10px;
+    overflow: clip;
+  }
+
+  /* card responsive: sobrescribe altura fija global */
+  .vote-page .stage .card{
+    width: min(92vw, 520px);
+    height: clamp(340px, var(--vote-card-safe-h), 520px);
+    max-height: var(--vote-card-safe-h);
+  }
+
+  /* Botones algo más pequeños si falta altura */
+  @media (max-height: 760px) {
+    .vote-page .btn-circle { width: 52px; height: 52px; font-size: 24px; }
+    .vote-page .card__hint { display: none; }
+  }
+  @media (max-height: 700px), (max-width: 480px){
+    .vote-page .btn-circle { width: 48px; height: 48px; font-size: 22px; }
+    .vote-page .card__hint { display: none; }
+  }
+
+
+  /* =============== 
+  HOME (landing) corrige overflow 
+  ====================================*/
+.home-page .hero{
+  min-height: calc(100svh - var(--header-h) - (var(--wrap-py) * 2) - 1px);
+  padding: 20px 16px 16px;
+  overflow: clip;
+}
+
+.home-page .hero > :first-child { margin-top: 0; }
+.home-page .hero > :last-child  { margin-bottom: 0; }
+
 
 /* =========================================================
    ACCESIBILIDAD – REDUCCIÓN DE MOVIMIENTO

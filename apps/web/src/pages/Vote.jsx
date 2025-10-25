@@ -48,6 +48,9 @@ export default function Vote() {
 
   const current = list[index] || null;
 
+  const total = list.length;
+  const currentNumber = Math.min(index + (current ? 1 : 0), total);
+  const pct = total ? Math.min(100, Math.round((index / total) * 100)) : 0;
   const finishedByDeck = !current;
   const finished = finishedByDeck || forceFinished;
 
@@ -94,7 +97,6 @@ export default function Vote() {
     })();
   }, [session?.id]);
 
-  // Socket
   useEffect(() => {
     if (!session?.id) return;
 
@@ -211,7 +213,7 @@ export default function Vote() {
   }
 
   return (
-    <div className="wrap">
+    <div className="wrap vote-page">
       <Header />
 
       {error ? (
@@ -228,6 +230,15 @@ export default function Vote() {
       ) : null}
 
       <InviteBar inviteUrl={inviteUrl} connectedCount={participants.length} />
+      
+      <div className="vote-progress">
+        <div className="vote-progress__track" role="progressbar"
+            aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}
+            aria-label="Progreso de tu mazo">
+          <div className="vote-progress__bar" style={{ width: `${pct}%` }} />
+        </div>
+        <div className="vote-progress__meta">{currentNumber}/{total || 0}</div>
+      </div>
 
       <MatchOverlay visible={showOverlay} onDone={() => setShowOverlay(false)} />
 
