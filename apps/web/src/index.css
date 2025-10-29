@@ -1,101 +1,101 @@
 /* ======================================================
-   VARIABLES / TEMA
+   VARIABLES / TEMA (LIGHT)
    ====================================================== */
 :root {
-  --bg: #FAF6F2;                 /* Color de fondo principal */
-  --card: #FFFFFF;               /* Fondo de tarjetas/paneles */
-  --text: #1E1B16;               /* Color de texto principal */
-  --muted: #7A6E65;              /* Texto secundario/descriptivo */
-  --border: #E7DCD2;             /* Bordes y líneas sutiles */
+  --bg: #FAF6F2;
+  --card: #FFFFFF;
+  --text: #1E1B16;
+  --muted: #7A6E65;
+  --border: #E7DCD2;
 
-  --accent: #f97316;             /* Color de acento principal (botones, barras) */
-  --accent-600: #ea580c;         /* Acento en estado hover/activo */
-  --accent-2: #E3B341;           /* Acento alternativo #1 (gráficas/badges) */
-  --accent-3: #5E7A4A;           /* Acento alternativo #2 (gráficas/badges) */
+  /* ACCENT (indigo accesible para texto blanco) */
+  --accent: #4F46E5;            /* base/primary bg (≈ indigo-600) */
+  --accent-600: #4338CA;        /* hover/active más oscuro */
+  --accent-2: #E3B341;
+  --accent-3: #5E7A4A;
 
-  --green: #10b981;              /* Verde de confirmación/éxito */
-  --red: #ef4444;                /* Rojo de error/negativo */
-  --halo-yes: rgba(16, 185, 129, 0.22); /* Halo lateral al aceptar (swipe right) */
-  --halo-no: rgba(239, 68, 68, 0.22);   /* Halo lateral al rechazar (swipe left) */
-  --ring: rgba(249, 115, 22, 0.2);      /* Resaltado de foco (focus ring) */
+  --green: #10b981;
+  --red: #ef4444;
+  --halo-yes: rgba(16, 185, 129, 0.22);
+  --halo-no: rgba(239, 68, 68, 0.22);
+  --ring: rgba(99, 102, 241, .35);     /* indigo focus ring */
+  --accent-ghost: rgba(99,102,241,.10);/* fondos ghost/hover suaves */
 
-  --surface: #ffffff;            /* Superficie intermedia (barras, paneles suaves) */
-  --line: #efe5db;               /* Líneas divisorias más suaves que --border */
-  --cardSoft: #faf8f4;           /* Variante suave para fondos de secciones */
-  --accent-ghost: rgba(249,115,22,.10); /* Fondo de botones “ghost”/hover */
+  --surface: #ffffff;
+  --line: #efe5db;
+  --cardSoft: #faf8f4;
 
-  --ghost-hover-bg: #f9fafb;     /* Hover para botones ghost (fondo) */
-  --ghost-hover-border: #d1d5db; /* Hover para botones ghost (borde) */
-  --focus-outline: rgba(0,0,0,.25); /* Contorno accesible al enfocar con teclado */
-  --img-fallback: var(--cardSoft);   /* Fondo de reserva si no carga una imagen */
+  --ghost-hover-bg: #f9fafb;
+  --ghost-hover-border: #d1d5db;
+  --focus-outline: rgba(0,0,0,.25);
+  --img-fallback: var(--cardSoft);
 
-  --positive-bg: #d1fae5;        /* Fondo de avisos positivos */
-  --positive-border: #a7f3d0;    /* Borde de avisos positivos */
-  --positive-ink: #065f46;       /* Texto de avisos positivos */
+  --positive-bg: #d1fae5;
+  --positive-border: #a7f3d0;
+  --positive-ink: #065f46;
 
-  --negative-bg: #fee2e2;        /* Fondo de avisos de error/negativos */
-  --negative-border: #fecaca;    /* Borde de avisos negativos */
-  --negative-ink: #7f1d1d;       /* Texto de avisos negativos */
+  --negative-bg: #fee2e2;
+  --negative-border: #fecaca;
+  --negative-ink: #7f1d1d;
 
-  --pill-bg: var(--card);        /* Fondo de chips/píldoras */
-  --pill-ink: var(--text);       /* Texto de chips/píldoras */
+  --pill-bg: var(--card);
+  --pill-ink: var(--text);
 
-  --range-track-h: 6px;          /* Altura de la pista del input[type=range] */
-  --range-thumb-d: 18px;         /* Diámetro del pulgar del input[type=range] */
+  --range-track-h: 6px;
+  --range-thumb-d: 18px;
 
-  --panel: color-mix(in srgb, var(--card) 88%, var(--text) 12%); /* Fondo de paneles */
-  --bar-yes: hsl(142 71% 45%);   /* Color de barra “sí” en resultados */
-  --bar-no: hsl(0 75% 60%);      /* Color de barra “no” en resultados */
-  --bar-pending: hsl(40 90% 60%);/* Color de barra “pendiente” */
+  --panel: color-mix(in srgb, var(--card) 88%, var(--text) 12%);
+  --bar-yes: hsl(142 71% 45%);
+  --bar-no: hsl(0 75% 60%);
+  --bar-pending: hsl(40 90% 60%);
 
-  --ctrl-h: 32px;                /* Altura estándar de controles (selects, etc.) */
-  --ctrl-br: 10px;               /* Radio de borde de controles */
-  --ctrl-bg: var(--card);        /* Fondo de controles */
-  --ctrl-border: var(--border);  /* Borde de controles */
-  --ctrl-shadow: 0 4px 12px rgba(0,0,0,.06); /* Sombra de controles */
-  --ctrl-hover-bg: var(--ghost-hover-bg);    /* Hover de controles */
+  --ctrl-h: 32px;
+  --ctrl-br: 10px;
+  --ctrl-bg: var(--card);
+  --ctrl-border: var(--border);
+  --ctrl-shadow: 0 4px 12px rgba(0,0,0,.06);
+  --ctrl-hover-bg: var(--ghost-hover-bg);
 
-  --header-h: 56px;              /* Altura del header sticky */
-
-  --wrap-py: 16px;               /* Padding vertical del contenedor .wrap */
+  --header-h: 56px;
+  --wrap-py: 16px;
 }
 
-
 /* ======================================================
-   TEMA OSCURO
+   TEMA OSCURO (DARK)
    ====================================================== */
 [data-theme="dark"] {
-  --bg: #12100e;                 /* Fondo principal (modo oscuro) */
-  --card: #1a1714;               /* Fondo de tarjetas/paneles */
-  --surface: #191612;            /* Superficie intermedia */
-  --text: #efeae4;               /* Texto principal */
-  --muted: #b6aca3;              /* Texto secundario/descriptivo */
-  --border: #2b241e;             /* Bordes y líneas sutiles */
-  --line: #2d2620;               /* Líneas divisorias suaves */
-  --cardSoft: #161310;           /* Variante suave de fondo */
+  --bg: #12100e;
+  --card: #1a1714;
+  --surface: #191612;
+  --text: #efeae4;
+  --muted: #b6aca3;
+  --border: #2b241e;
+  --line: #2d2620;
+  --cardSoft: #161310;
 
-  --accent-ghost: rgba(249,115,22,.22); /* Fondo ghost adaptado a modo oscuro */
-  --ring: rgba(249,115,22,.35);         /* Focus ring más visible en modo oscuro */
-  --halo-yes: rgba(16,185,129,.28);     /* Halo “sí” en modo oscuro */
-  --halo-no:  rgba(239,68,68,.28);      /* Halo “no” en modo oscuro */
-  --ghost-hover-bg: color-mix(in srgb, var(--card) 86%, var(--text) 14%); /* Hover ghost */
-  --ghost-hover-border: color-mix(in srgb, var(--border) 70%, var(--text) 30%); /* Hover borde ghost */
+  /* ajustar ghost/ring al indigo */
+  --accent-ghost: rgba(99,102,241,.22);
+  --ring: rgba(99,102,241,.45);
 
-  --focus-outline: color-mix(in srgb, var(--text) 28%, transparent); /* Contorno accesible */
+  --halo-yes: rgba(16,185,129,.28);
+  --halo-no:  rgba(239,68,68,.28);
+  --ghost-hover-bg: color-mix(in srgb, var(--card) 86%, var(--text) 14%);
+  --ghost-hover-border: color-mix(in srgb, var(--border) 70%, var(--text) 30%);
 
-  --img-fallback: color-mix(in srgb, var(--cardSoft) 70%, black 30%); /* Fondo fallback de imágenes */
+  --focus-outline: color-mix(in srgb, var(--text) 28%, transparent);
+  --img-fallback: color-mix(in srgb, var(--cardSoft) 70%, black 30%);
 
-  --positive-bg: color-mix(in srgb, var(--accent-3) 18%, var(--card)); /* Aviso positivo fondo */
-  --positive-border: color-mix(in srgb, var(--accent-3) 28%, var(--border)); /* Aviso positivo borde */
-  --positive-ink: color-mix(in srgb, var(--accent-3) 84%, white 16%);        /* Aviso positivo texto */
-  --negative-bg: color-mix(in srgb, var(--red) 14%, var(--card));            /* Aviso negativo fondo */
-  --negative-border: color-mix(in srgb, var(--red) 24%, var(--border));      /* Aviso negativo borde */
-  --negative-ink: color-mix(in srgb, var(--red) 82%, white 18%);             /* Aviso negativo texto */
+  --positive-bg: color-mix(in srgb, var(--accent-3) 18%, var(--card));
+  --positive-border: color-mix(in srgb, var(--accent-3) 28%, var(--border));
+  --positive-ink: color-mix(in srgb, var(--accent-3) 84%, white 16%);
+  --negative-bg: color-mix(in srgb, var(--red) 14%, var(--card));
+  --negative-border: color-mix(in srgb, var(--red) 24%, var(--border));
+  --negative-ink: color-mix(in srgb, var(--red) 82%, white 18%);
 
-  --pill-bg: var(--surface);     /* Fondo de chips/píldoras */
-  --pill-ink: var(--text);       /* Texto de chips/píldoras */
+  --pill-bg: var(--surface);
+  --pill-ink: var(--text);
 
-  --panel: color-mix(in srgb, var(--card) 70%, var(--text) 30%); /* Paneles en modo oscuro */
+  --panel: color-mix(in srgb, var(--card) 70%, var(--text) 30%);
 }
 
 
