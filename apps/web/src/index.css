@@ -148,8 +148,8 @@ body {
 }
 
 /* ==================================================
-    HEADER 
-  ==================================================== */
+   HEADER
+   ================================================== */
 
 .app-header{
   position: sticky;
@@ -158,37 +158,35 @@ body {
   backdrop-filter: saturate(1.1) blur(6px);
   background: color-mix(in srgb, var(--bg) 86%, transparent);
   border-bottom: 1px solid var(--line);
+  padding-top: env(safe-area-inset-top);
 }
 
 .app-header__inner{
+  position: relative;
   height: var(--header-h);
   max-width: 980px;
   margin: 0 auto;
   padding: 0 12px;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: flex-end; 
+  gap: 10px;
 }
 
-.app-header__left{ 
-  display: flex; 
-  align-items: center; 
-  gap: 8px;
+.app-header__brand{
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
-.app-header__nav{ 
-  display: flex; 
-  gap: 10px; 
-  justify-content: center;
-}
-.app-header__right{ 
-  display: flex; 
-  justify-content: flex-end;
-  gap: 10px; 
+
+.app-header__right{
+  display: flex;
   align-items: center;
+  gap: 10px;
   white-space: nowrap;
-  
 }
+
+.app-header__theme { order: 0; }
 
 .brand{
   font-weight: 800;
@@ -200,14 +198,6 @@ body {
   border-radius: 10px;
 }
 .brand:hover{ background: var(--accent-ghost); }
-
-.nav-link{
-  color: var(--muted);
-  text-decoration: none;
-  padding: 6px 8px;
-  border-radius: 10px;
-}
-.nav-link:hover{ color: var(--text); background: var(--accent-ghost); }
 
 .icon-btn{
   height: 36px; width: 36px;
@@ -222,11 +212,17 @@ body {
 
 .btn--mini{ padding: 6px 10px; border-radius: 999px; }
 
+
 @media (max-width: 640px){
-  .app-header__inner{
-    grid-template-columns: 1fr auto;
+  .app-header__theme{
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
   }
-  .app-header__nav{ display: none; }
+  .app-header__right{ margin-left: auto; gap: 8px; }
+  .brand{ font-size: 16px; padding: 4px 8px; border-radius: 8px; }
+  .icon-btn{ height: 32px; width: 32px; }
 }
 
 /* =====================================================

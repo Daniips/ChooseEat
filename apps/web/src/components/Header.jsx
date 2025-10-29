@@ -10,14 +10,13 @@ export default function Header() {
   return (
     <header className="app-header">
       <div className="app-header__inner">
-        <div aria-hidden />
-
-        <Link to="/" className="brand" aria-label={t("go_home")}>
+        <div className="app-header__theme">
+          <ThemeToggle />
+        </div>
+        <Link to="/" className="brand app-header__brand" aria-label={t("go_home")}>
           ChooseEat
         </Link>
-
         <div className="app-header__right">
-          <ThemeToggle />
           <LangSelect />
         </div>
       </div>
