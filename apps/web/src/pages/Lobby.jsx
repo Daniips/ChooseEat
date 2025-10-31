@@ -8,6 +8,22 @@ import Header from "../components/Header";
 import { setParticipant } from "../lib/participant";
 import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
+import { errorToMessage } from "../lib/errorToMessage";
+import { DEFAULT_ERROR_KEYS } from "../lib/errorKeys";
+
+const PREVIEW_ERROR_KEYS = {
+  ...DEFAULT_ERROR_KEYS,
+  notFound: "errors.preview_failed",
+  generic:  "errors.preview_failed",
+};
+
+const CREATE_ERROR_KEYS = {
+  ...DEFAULT_ERROR_KEYS,
+  notFound:  "errors.cannot_create_session",
+  badRequest:"errors.form_invalid",
+  conflict:  "errors.conflict_action",
+  generic:   "errors.cannot_create_session",
+};
 
 export default function Lobby() {
   const { t } = useTranslation();
@@ -27,9 +43,9 @@ export default function Lobby() {
   const [requiredYes, setRequiredYes] = useState(2);
 
   const [previewCount, setPreviewCount] = useState(null);
-  const [toastOpen, setToastOpen] = useState(false);
-
-  const [error, setError] = useState("");
+  const [toast, setToast] = useState({ open: false, variant: "warn", msg: "", duration: 5000 });
+  const showToast = (variant, msg, duration = 5000) =>
+    setToast({ open: true, variant, msg, duration });
 
   const cuisinesValid = selectedCuisines.length > 0;
   const thresholdValid = people >= 2 && (people === 2 ? true : (requiredYes >= 2 && requiredYes <= people));
@@ -40,17 +56,23 @@ export default function Lobby() {
   }, [people, requiredYes]);
 
   function toggleCuisine(key) {
-    setSelectedCuisines(cs => cs.includes(key) ? cs.filter(x => x !== key) : [...cs, key]);
+    setSelectedCuisines(cs => {
+      const next = cs.includes(key) ? cs.filter(x => x !== key) : [...cs, key];
+      return next;
+    });
+    setPreviewCount(null);
   }
   function togglePrice(n) {
-    setPrice(ps => ps.includes(n) ? ps.filter(x => x !== n) : [...ps, n]);
+    setPrice(ps => {
+      const next = ps.includes(n) ? ps.filter(x => x !== n) : [...ps, n];
+      return next;
+    });
+    setPreviewCount(null);
   }
-
-  const msg = (e, fallback = "Error de red") => (e?.message ? String(e.message) : fallback);
+    
 
   async function preview() {
     if (!cuisinesValid) return;
-    setError("");
 
     const params = new URLSearchParams();
     params.set("radiusKm", String(radiusKm));
@@ -61,20 +83,18 @@ export default function Lobby() {
 
     try {
       const data = await api(`/api/restaurants?${params.toString()}`);
-      setPreviewCount(data.count ?? (Array.isArray(data.items) ? data.items.length : 0));
-      setToastOpen(true);
+      const count = data?.count ?? (Array.isArray(data.items) ? data.items.length : 0);
+      setPreviewCount(count);
+      showToast("ok", t("results_count", { count: count }), 2200);
     } catch (e) {
       console.error("Preview filters failed:", e);
-      setError(`No se pudo previsualizar restaurantes: ${msg(e)}`);
       setPreviewCount(null);
-      setToastOpen(false);
+      showToast("warn", errorToMessage(e, t, PREVIEW_ERROR_KEYS));
     }
   }
 
   async function applyAndStart(e) {
     e.preventDefault();
-    setError("");
-
     if (!cuisinesValid || !thresholdValid) return;
 
     const area = { radiusKm };
@@ -98,7 +118,7 @@ export default function Lobby() {
       navigate("/vote");
     } catch (e) {
       console.error("Create/join session failed:", e);
-      setError(`No se pudo crear o unir la sesión: ${msg(e)}`);
+      showToast("warn", errorToMessage(e, t, CREATE_ERROR_KEYS));
     }
   }
 
@@ -121,19 +141,6 @@ export default function Lobby() {
   return (
     <div className="wrap">
       <Header />
-
-      {error ? (
-        <div role="alert" aria-live="assertive" className="toast error" style={{ margin: "8px 0" }}>
-          {error}
-          <button
-            className="btn btn-sm btn--ghost"
-            style={{ marginLeft: 8 }}
-            onClick={() => setError("")}
-          >
-            ✕
-          </button>
-        </div>
-      ) : null}
 
       <form
         className="summary"
@@ -202,7 +209,7 @@ export default function Lobby() {
                   max={5}
                   step={0.1}
                   value={radiusKm}
-                  onChange={(e) => setRadiusKm(Number(e.target.value))}
+                  onChange={(e) => { setRadiusKm(Number(e.target.value)); setPreviewCount(null); }}
                   className="range"
                 />
               </label>
@@ -274,7 +281,7 @@ export default function Lobby() {
                       id="open-now"
                       type="checkbox"
                       checked={openNow}
-                      onChange={(e) => setOpenNow(e.target.checked)}
+                      onChange={(e) => { setOpenNow(e.target.checked); setPreviewCount(null); }}
                     />
                     <span>{t('open_now')}</span>
                   </label>
@@ -288,7 +295,7 @@ export default function Lobby() {
                       max={5}
                       step={0.1}
                       value={minRating}
-                      onChange={(e) => setMinRating(Number(e.target.value))}
+                      onChange={(e) => { setMinRating(Number(e.target.value)); setPreviewCount(null); }}
                       className="range"
                     />
                   </label>
@@ -376,15 +383,13 @@ export default function Lobby() {
           </button>
         </div>
       </form>
-
       <Toast
-        open={toastOpen}
-        onClose={() => setToastOpen(false)}
-        variant={previewCount === 0 ? "warn" : "ok"}
+        open={toast.open}
+        variant={toast.variant}
+        duration={toast.duration}
+        onClose={() => setToast((s) => ({ ...s, open: false }))}
       >
-        {previewCount === 0
-          ? t("no_results")
-          : t("results_count", { count: previewCount })}
+        {toast.msg}
       </Toast>
     </div>
   );

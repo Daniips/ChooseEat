@@ -16,6 +16,7 @@
 
   --green: #10b981;
   --red: #ef4444;
+  --red-strong: #B91C1C;
   --halo-yes: rgba(16, 185, 129, 0.22);
   --halo-no: rgba(239, 68, 68, 0.22);
   --ring: rgba(99, 102, 241, .35);     /* indigo focus ring */
@@ -565,7 +566,7 @@ input[type="checkbox"] { accent-color: var(--accent); }
     box-shadow: 0 14px 40px rgba(0,0,0,.2);
 }
 .toast--ok   { background: var(--accent); }
-.toast--warn { background: var(--red); }
+.toast--warn { background: var(--red-strong); }
 .toast__icon { font-weight: 800; }
 .toast__msg  { font-weight: 600; }
 .toast__close {

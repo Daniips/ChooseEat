@@ -66,7 +66,7 @@
     "liked": "Te han gustado:",
     "no_liked": "No has dado \"sí\" a ninguno esta vez.",
     "restart": "Reiniciar",
-    "threshold_reached": "✅ Se alcanzó el umbral (≥ {{needed}}) en {{count}} lugar{{count === 1 ? '' : 'es'}}.",
+    "threshold_reached": "Se alcanzó el umbral (≥ {{needed}}) en {{count}} lugar{{count === 1 ? '' : 'es'}}.",
     "threshold_not_reached": "Aún no se alcanzó el umbral (≥ {{needed}}).",
     "winner": "Ganador",
     "vote_count": "Recuento de votos",
@@ -81,5 +81,26 @@
     "resuming": "Reanudando…",
     "checking_previous_session": "Comprobando tu sesión previa…",
     "your_name": "Tu nombre",
-    "enter_your_name": "Introduce tu nombre"
+    "enter_your_name": "Introduce tu nombre",
+    "errors": {
+        "network_down": "No se pudo conectar. Comprueba tu conexión e inténtalo de nuevo.",
+        "session_not_found": "La sesión no existe o ha expirado.",
+        "already_joined": "Ya te has unido a esta sesión.",
+        "bad_request": "El enlace no es válido.",
+        "server": "Error del servidor. Vuelve a intentarlo en unos segundos.",
+        "generic": "No se pudo completar la acción. Inténtalo de nuevo.",
+        "timeout": "Se agotó el tiempo de espera de la solicitud. Por favor, inténtalo de nuevo.",
+        "aborted": "La operación fue cancelada.",
+        "preview_failed": "No se pudo previsualizar los resultados. Inténtalo de nuevo.",
+        "form_invalid": "Revisa los filtros y completa los campos requeridos.",
+        "conflict_action": "La acción no puede completarse por un conflicto. Vuelve a intentarlo.",
+        "cannot_create_session": "No se pudo crear la sesión. Inténtalo de nuevo.",
+        "timeout_retry": "Se agotó el tiempo de espera. Vuelve a intentarlo en unos segundos.",
+        "join_host_failed": "No se pudo unir automáticamente al host.",
+        "session_status_failed": "No se pudo comprobar el estado de la sesión.",
+        "mark_done_failed": "No se pudo marcar como terminado.",
+        "load_results_failed": "No se pudieron cargar los resultados.",
+        "vote_failed": "No se pudo registrar tu voto."
+
+    }
 }

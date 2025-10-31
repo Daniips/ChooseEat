@@ -10,8 +10,42 @@ import { io } from "socket.io-client";
 import MatchOverlay from "../components/MatchOverlay";
 import { getParticipantId, getParticipant, setParticipant, migrateFromLegacy } from "../lib/participant";
 import { api } from "../lib/api";
+import { useTranslation } from "react-i18next";
+import Toast from "../components/Toast";
+import { errorToMessage } from "../lib/errorToMessage";
+import { DEFAULT_ERROR_KEYS } from "../lib/errorKeys";
+
+const AUTOJOIN_ERROR_KEYS = {
+  ...DEFAULT_ERROR_KEYS,
+  // Overrides específicos de auto-join (si aplican)
+  notFound: "errors.session_not_found",
+  conflict: "errors.already_joined",
+};
+
+const STATUS_ERROR_KEYS = {
+  ...DEFAULT_ERROR_KEYS,
+  notFound: "errors.session_not_found",
+};
+
+const MARK_DONE_ERROR_KEYS = {
+  ...DEFAULT_ERROR_KEYS,
+  notFound: "errors.session_not_found",
+};
+
+const LOAD_RESULTS_ERROR_KEYS = {
+  ...DEFAULT_ERROR_KEYS,
+  notFound: "errors.session_not_found",
+};
+
+const VOTE_ERROR_KEYS = {
+  ...DEFAULT_ERROR_KEYS,
+  notFound: "errors.session_not_found",
+  conflict: "errors.conflict_action",
+};
+
 
 export default function Vote() {
+  const { t } = useTranslation();
   const { session, setWinner } = useSession();
 
   const [index, setIndex] = useState(0);
@@ -25,7 +59,22 @@ export default function Vote() {
   const [results, setResults] = useState(null);
 
   const [forceFinished, setForceFinished] = useState(false);
-  const [error, setError] = useState("");
+
+  const [toast, setToast] = useState({ open: false, variant: "warn", msg: "", duration: 5000 });
+  const showToast = (variant, msg, duration = 5000) =>
+    setToast({ open: true, variant, msg, duration });
+
+  const list = useMemo(
+    () => (Array.isArray(session?.restaurants) ? session.restaurants : []),
+    [session?.restaurants]
+  );
+
+  const current = list[index] || null;
+  const total = list.length;
+  const currentNumber = Math.min(index + (current ? 1 : 0), total);
+  const pct = total ? Math.min(100, Math.round((index / total) * 100)) : 0;
+  const finishedByDeck = !current;
+  const finished = finishedByDeck || forceFinished;
 
   const [showOverlay, setShowOverlay] = useState(false);
   const overlayTimerRef = useRef(null);
@@ -34,27 +83,11 @@ export default function Vote() {
     if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
     overlayTimerRef.current = setTimeout(() => setShowOverlay(false), 1600);
   };
-
   useEffect(() => {
     return () => {
       if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
     };
   }, []);
-
-  const list = useMemo(
-    () => (Array.isArray(session?.restaurants) ? session.restaurants : []),
-    [session?.restaurants]
-  );
-
-  const current = list[index] || null;
-
-  const total = list.length;
-  const currentNumber = Math.min(index + (current ? 1 : 0), total);
-  const pct = total ? Math.min(100, Math.round((index / total) * 100)) : 0;
-  const finishedByDeck = !current;
-  const finished = finishedByDeck || forceFinished;
-
-  const msg = (e, fallback) => (e?.message ? String(e.message) : fallback);
 
   useEffect(() => {
     (async () => {
@@ -75,10 +108,10 @@ export default function Vote() {
         }
       } catch (e) {
         console.error("Auto-join host failed:", e);
-        setError(`No se pudo unir el host automáticamente: ${msg(e, "Error de red")}`);
+        showToast("warn", errorToMessage(e, t, AUTOJOIN_ERROR_KEYS));
       }
     })();
-  }, [session?.id]);
+  }, [session?.id, t]);
 
   useEffect(() => {
     (async () => {
@@ -92,10 +125,10 @@ export default function Vote() {
         }
       } catch (e) {
         console.error("Fetch session status failed:", e);
-        setError(`No se pudo comprobar el estado de la sesión: ${msg(e, "Error de red")}`);
+        showToast("warn", errorToMessage(e, t, STATUS_ERROR_KEYS));
       }
     })();
-  }, [session?.id]);
+  }, [session?.id, t]);
 
   useEffect(() => {
     if (!session?.id) return;
@@ -143,11 +176,11 @@ export default function Vote() {
         }
       } catch (e) {
         console.error("Mark done failed:", e);
-        setError(`No se pudo marcar como terminado: ${msg(e, "Error de red")}`);
+        showToast("warn", errorToMessage(e, t, MARK_DONE_ERROR_KEYS));
       }
       setForceFinished(true);
     })();
-  }, [finishedByDeck, session?.id]);
+  }, [finishedByDeck, session?.id, t]);
 
   useEffect(() => {
     if (!session?.id) return;
@@ -160,12 +193,12 @@ export default function Vote() {
         if (!aborted) setResults(data);
       } catch (e) {
         console.error("Load results failed:", e);
-        if (!aborted) setError(`No se pudieron cargar los resultados: ${msg(e, "Error de red")}`);
+        if (!aborted) showToast("warn", errorToMessage(e, t, LOAD_RESULTS_ERROR_KEYS));
       }
     })();
 
     return () => { aborted = true; };
-  }, [session?.id, finished, winner]);
+  }, [session?.id, finished, winner, t]);
 
   useArrows({ left: () => setKeySwipe("left"), right: () => setKeySwipe("right") }, [index]);
 
@@ -192,23 +225,20 @@ export default function Vote() {
         }),
       });
 
-      if (
-        choice === "yes" &&
-        (data?.matched === true || data?.wasAlreadyMatched === true)
-      ) {
+      if (choice === "yes" && (data?.matched === true || data?.wasAlreadyMatched === true)) {
         triggerMatchFlash();
       }
       if (data?.winner) setWinner(data.winner);
     } catch (e) {
       console.error("Vote failed:", e);
-      setError(`No se pudo registrar tu voto: ${msg(e, "Error de red")}`);
-
+      // Revertir estado si falla
       setIndex((i) => Math.max(0, i - 1));
       if (choice === "yes") {
         setYesIds((s) => s.filter((id) => id !== current.id));
       } else {
         setNoIds((s) => s.filter((id) => id !== current.id));
       }
+      showToast("warn", errorToMessage(e, t, VOTE_ERROR_KEYS));
     }
   }
 
@@ -216,25 +246,17 @@ export default function Vote() {
     <div className="wrap vote-page">
       <Header />
 
-      {error ? (
-        <div role="alert" aria-live="assertive" className="toast error" style={{ margin: "8px 0" }}>
-          {error}
-          <button
-            className="btn btn-sm btn--ghost"
-            style={{ marginLeft: 8 }}
-            onClick={() => setError("")}
-          >
-            ✕
-          </button>
-        </div>
-      ) : null}
-
       <InviteBar inviteUrl={inviteUrl} connectedCount={participants.length} />
-      
+
       <div className="vote-progress">
-        <div className="vote-progress__track" role="progressbar"
-            aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}
-            aria-label="Progreso de tu mazo">
+        <div
+          className="vote-progress__track"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={pct}
+          aria-label={t("progress_label", "Progreso")}
+        >
           <div className="vote-progress__bar" style={{ width: `${pct}%` }} />
         </div>
         <div className="vote-progress__meta">{currentNumber}/{total || 0}</div>
@@ -257,7 +279,7 @@ export default function Vote() {
               type="button"
               className="btn-circle btn-circle--no"
               onClick={() => setKeySwipe("left")}
-              aria-label="No"
+              aria-label={t("no_label")}
             >
               ×
             </button>
@@ -265,7 +287,7 @@ export default function Vote() {
               type="button"
               className="btn-circle btn-circle--yes"
               onClick={() => setKeySwipe("right")}
-              aria-label="Sí"
+              aria-label={t("yes_label")}
             >
               ✓
             </button>
@@ -284,10 +306,18 @@ export default function Vote() {
             setWinner(null);
             setResults(null);
             setForceFinished(false);
-            setError("");
           }}
         />
       )}
+
+      <Toast
+        open={toast.open}
+        variant={toast.variant}
+        duration={toast.duration}
+        onClose={() => setToast((s) => ({ ...s, open: false }))}
+      >
+        {toast.msg}
+      </Toast>
     </div>
   );
 }

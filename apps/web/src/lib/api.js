@@ -1,6 +1,7 @@
 // apps/web/src/lib/api.js
-export const API_BASE = import.meta.env.VITE_API_URL || "";
+import { HttpError, TimeoutError, NetworkError, AbortRequestError } from "./errors";
 
+export const API_BASE = import.meta.env.VITE_API_URL || "";
 
 export async function api(path, options = {}) {
   const { timeoutMs, ...rest } = options || {};
@@ -11,31 +12,54 @@ export async function api(path, options = {}) {
   const signals = [ctrl.signal, userSignal].filter(Boolean);
   const signal = signals.length === 1 ? signals[0] : mergeSignals(signals);
 
-  const timer = typeof timeoutMs === "number" && timeoutMs > 0
-    ? setTimeout(() => ctrl.abort(new DOMException("Timeout", "AbortError")), timeoutMs)
-    : null;
+  let didTimeout = false;
+  const timer =
+    typeof timeoutMs === "number" && timeoutMs > 0
+      ? setTimeout(() => {
+          didTimeout = true;
+          ctrl.abort();
+        }, timeoutMs)
+      : null;
 
   try {
     const res = await fetch(url, {
-      headers: { "Content-Type": "application/json", ...(rest.headers || {}) },
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...(rest.headers || {}),
+      },
       ...rest,
-      signal
+      signal,
     });
 
+    if (res.status === 204) return null;
+    const raw = await res.text();
+    const json = safeParseJSON(raw);
+
     if (!res.ok) {
-      let msg = "";
-      try { msg = await res.text(); } catch { /* ignore */ }
-      throw new Error(`[${res.status}] ${res.statusText} :: ${msg || url}`);
+      throw new HttpError(
+        json?.error || json?.message || res.statusText || "Request failed",
+        {
+          status: res.status,
+          code: json?.code || null,
+          url,
+          details: json || (raw ? { raw } : null),
+        }
+      );
     }
-    const text = await res.text();
-    if (!text) return null;
-    try { return JSON.parse(text); } catch { return null; }
+
+    return json ?? null;
   } catch (e) {
-    const name = e?.name || "";
-    const reason = e?.message || e;
-    const isAbort = name === "AbortError";
-    const tag = isAbort ? "ABORT/TIMEOUT" : "NETWORK";
-    throw new Error(`[${tag}] ${url} :: ${reason}`);
+    if (e instanceof HttpError) throw e;
+
+    if (e?.name === "AbortError") {
+      if (didTimeout) {
+        throw new TimeoutError("Request timed out", { url });
+      }
+      throw new AbortRequestError("Request aborted", { url, details: e });
+    }
+
+    throw new NetworkError(e?.message || "Network error", { url, details: e });
   } finally {
     if (timer) clearTimeout(timer);
   }
@@ -49,4 +73,9 @@ function mergeSignals(signals) {
     s?.addEventListener?.("abort", onAbort, { once: true });
   }
   return ctrl.signal;
+}
+
+function safeParseJSON(text) {
+  if (!text) return null;
+  try { return JSON.parse(text); } catch { return null; }
 }

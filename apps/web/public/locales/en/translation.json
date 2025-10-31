@@ -82,6 +82,25 @@
     "resuming": "Resuming…",
     "checking_previous_session": "Checking your previous session…",
     "your_name": "Your name",
-    "enter_your_name": "Enter your name"
-
+    "enter_your_name": "Enter your name",
+    "errors": {
+        "network_down": "Could not connect. Check your connection and try again.",
+        "session_not_found": "The session does not exist or has expired.",
+        "already_joined": "You have already joined this session.",
+        "bad_request": "The link is invalid.",
+        "server": "Server error. Please try again in a few seconds.",
+        "generic": "Could not complete the action. Please try again.",
+        "timeout": "Request timed out. Please try again.",
+        "aborted": "The operation was aborted.",
+        "preview_failed": "Could not preview results. Please try again.",
+        "form_invalid": "Review the filters and complete the required fields.",
+        "conflict_action": "The action cannot be completed due to a conflict. Please try again.",
+        "cannot_create_session": "Could not create the session. Please try again.",
+        "timeout_retry": "Timed out. Please try again in a few seconds.",
+        "join_host_failed": "Could not automatically join the host.",
+        "session_status_failed": "Could not check the session status.",
+        "mark_done_failed": "Could not mark as finished.",
+        "load_results_failed": "Could not load results.",
+        "vote_failed": "Could not register your vote."
+    }
 }

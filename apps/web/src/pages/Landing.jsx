@@ -68,7 +68,7 @@ export default function Landing() {
                     value={joinValue}
                     onChange={(e) => setJoinValue(e.target.value)}
                   />
-                  <button type="submit" className="btn btn--ghost">
+                  <button type="submit" className="btn btn--primary">
                     {t("join")}
                   </button>
                 </form>
