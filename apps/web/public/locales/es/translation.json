@@ -66,8 +66,6 @@
     "liked": "Te han gustado:",
     "no_liked": "No has dado \"sí\" a ninguno esta vez.",
     "restart": "Reiniciar",
-    "threshold_reached": "Se alcanzó el umbral (≥ {{needed}}) en {{count}} lugar{{count === 1 ? '' : 'es'}}.",
-    "threshold_not_reached": "Aún no se alcanzó el umbral (≥ {{needed}}).",
     "winner": "Ganador",
     "vote_count": "Recuento de votos",
     "yes": "Sí",
@@ -82,6 +80,9 @@
     "checking_previous_session": "Comprobando tu sesión previa…",
     "your_name": "Tu nombre",
     "enter_your_name": "Introduce tu nombre",
+    "threshold_reached_one": "Se alcanzó el umbral (≥ {{needed}}) en {{count}} lugar.",
+    "threshold_reached_other": "Se alcanzó el umbral (≥ {{needed}}) en {{count}} lugares.",
+    "threshold_not_reached": "Aún no se alcanzó el umbral (≥ {{needed}}).",
     "errors": {
         "network_down": "No se pudo conectar. Comprueba tu conexión e inténtalo de nuevo.",
         "session_not_found": "La sesión no existe o ha expirado.",

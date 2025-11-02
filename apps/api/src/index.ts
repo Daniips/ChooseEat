@@ -80,11 +80,17 @@ app.post("/api/sessions", async (req, reply) => {
     const body = (req.body as any) ?? {};
     const area: Area = body.area;
     const filters: Filters = body.filters;
-    const threshold = body.threshold as Session["threshold"]; // { type: 'absolute', value, participants }
+    const rawThreshold = body.threshold as Partial<Session["threshold"]> | undefined; 
 
     if (!area?.radiusKm || !Array.isArray(filters?.cuisines) || filters.cuisines.length === 0) {
         return reply.code(400).send({ error: "Parámetros inválidos" });
     }
+
+    const participants = Math.max(2, Number(rawThreshold?.participants ?? 2) || 2);
+    const valueRaw = Number(rawThreshold?.value ?? 2) || 2;
+    const value = Math.min(Math.max(2, valueRaw), participants);
+    const type = (rawThreshold?.type === "absolute") ? "absolute" : "absolute";
+    const threshold: Session["threshold"] = { type, value, participants };
 
     const { items } = await provider.search({ radiusKm: area.radiusKm, filters });
 
@@ -400,6 +406,7 @@ app.get("/api/sessions/:id/results", async (req, reply) => {
   if (!s) return reply.code(404).send({ error: "Session not found" });
 
   const totalParticipants = Object.keys(s.participants || {}).length;
+  const votersTarget = s.threshold?.participants ?? totalParticipants;
   const needed = s.threshold?.value ?? 2;
 
   const results = s.restaurants
@@ -407,7 +414,7 @@ app.get("/api/sessions/:id/results", async (req, reply) => {
       const b = s.votes[r.id] ?? { yes: new Set<string>(), no: new Set<string>() };
       const yes = b.yes.size;
       const no  = b.no.size;
-      const pending = Math.max(0, totalParticipants - yes - no);
+      const pending = Math.max(0, votersTarget - yes - no);
       return {
         id: r.id,
         name: r.name,
@@ -419,6 +426,7 @@ app.get("/api/sessions/:id/results", async (req, reply) => {
         no,
         pending,
         total: yes + no,
+        votersTarget,
       };
     })
     
@@ -434,6 +442,7 @@ app.get("/api/sessions/:id/results", async (req, reply) => {
     status: s.status,
     needed,
     totalParticipants,
+    votersTarget,
     winnerIds,
     winners,
     results,

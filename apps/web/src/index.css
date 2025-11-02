@@ -8,9 +8,8 @@
   --muted: #7A6E65;
   --border: #E7DCD2;
 
-  /* ACCENT (indigo accesible para texto blanco) */
-  --accent: #4F46E5;            /* base/primary bg (≈ indigo-600) */
-  --accent-600: #4338CA;        /* hover/active más oscuro */
+  --accent: #4F46E5;
+  --accent-600: #4338CA; 
   --accent-2: #E3B341;
   --accent-3: #5E7A4A;
 
@@ -19,8 +18,8 @@
   --red-strong: #B91C1C;
   --halo-yes: rgba(16, 185, 129, 0.22);
   --halo-no: rgba(239, 68, 68, 0.22);
-  --ring: rgba(99, 102, 241, .35);     /* indigo focus ring */
-  --accent-ghost: rgba(99,102,241,.10);/* fondos ghost/hover suaves */
+  --ring: rgba(99, 102, 241, .35);
+  --accent-ghost: rgba(99,102,241,.10);
 
   --surface: #ffffff;
   --line: #efe5db;
@@ -46,9 +45,7 @@
   --range-thumb-d: 18px;
 
   --panel: color-mix(in srgb, var(--card) 88%, var(--text) 12%);
-  --bar-yes: hsl(142 71% 45%);
-  --bar-no: hsl(0 75% 60%);
-  --bar-pending: hsl(40 90% 60%);
+  --bar-pending: #6b7280;
 
   --ctrl-h: 32px;
   --ctrl-br: 10px;
@@ -391,6 +388,17 @@ body {
 .small { font-size: 12px; color: var(--muted); }
 .summary__actions { margin-top: 12px; }
 .next { color: var(--muted); font-size: 14px; }
+
+.legend { display: flex; gap: 16px; align-items: center; }
+.legend__item { display: inline-flex; align-items: center; gap: 6px; }
+.swatch {
+  width: 10px; height: 10px; border-radius: 2px;
+  display: inline-block;
+}
+.swatch--yes     { background: var(--green); }
+.swatch--no      { background: var(--red); }
+.swatch--pending { background: var(--bar-pending, #6b7280); }
+
 
 /* ====================================================
    EFECTOS LATERALES (HALOS) + ACCIONES (SI/NO)
@@ -978,26 +986,31 @@ input[type="checkbox"] { accent-color: var(--accent); }
     .badge{ font-size: 14px; line-height: 1; }
     .res-meta{ color: var(--muted); }
 
-    .bar{
-      position: relative;
-      height: 12px;
+    .meter {
+      height: 8px;
       border-radius: 999px;
-      background: var(--panel);
       overflow: hidden;
-      border: 1px solid var(--line);
-    }
-    .bar__seg{ height: 100%; display: inline-block; }
-    .bar--yes{ background: var(--bar-yes); }
-    .bar--no{ background: var(--bar-no); }
-    .bar--pending{ background: var(--bar-pending); }
+      background: transparent;
+      }
 
-    .bar__goal{
-      position: absolute;
-      top: -2px;
-      bottom: -2px;
-      width: 2px;
-      background: var(--accent);
-      opacity: .9;
+    .meter--stack {
+      display: flex;
+    }
+
+    .meter__seg {
+      flex-shrink: 0;
+      height: 100%;
+    }
+
+    .meter__pending { background: var(--pending, rgba(255,255,255,0.08)); }
+
+
+    .meter__yes    { background: var(--green); }
+    .meter__no     { background: var(--red); }
+
+    .meter__pending {
+      background: color-mix(in srgb, var(--bar-pending) 55%, transparent);
+      opacity: .45;
     }
 
     .res-counts{ color: var(--muted); }
@@ -1016,7 +1029,6 @@ input[type="checkbox"] { accent-color: var(--accent); }
       --sw-pad: 3px;
       --sw-r: 999px;
 
-      /* colores base (se integran con tus variables) */
       --sw-track-light: color-mix(in oklab, var(--card, #fff) 85%, black 8%);
       --sw-track-dark:  color-mix(in oklab, var(--bg, #0b0b0b) 80%, white 8%);
       --sw-border: color-mix(in oklab, var(--text, #111) 12%, transparent);

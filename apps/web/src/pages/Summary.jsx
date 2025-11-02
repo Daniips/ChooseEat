@@ -1,4 +1,4 @@
-//apps/web/src/pages/Summary.jsx
+// apps/web/src/pages/Summary.jsx
 import React from "react";
 import Button from "../components/Button";
 import { useTranslation } from "react-i18next";
@@ -8,6 +8,7 @@ export default function Summary({
   scores = [],
   winnerIds = [],
   needed,
+  participantsTotal,
   onRestart,
 }) {
   const { t } = useTranslation();
@@ -32,10 +33,8 @@ export default function Summary({
                       {Array.isArray(x.cuisine)
                         ? x.cuisine.map((c) => t(c.toLowerCase())).join(" · ")
                         : null}
-                      {x.price ? ` · ${"$".repeat(x.price)}` : null}
-                      {typeof x.rating === "number"
-                        ? ` · ⭐ ${x.rating.toFixed(1)}`
-                        : null}
+                      {x.price ? ` · ${"$".repeat(x.price)}` : ""}
+                      {typeof x.rating === "number" ? ` · ⭐ ${x.rating.toFixed(1)}` : ""}
                     </div>
                   </div>
                 </li>
@@ -47,9 +46,7 @@ export default function Summary({
         )}
 
         <div className="summary__actions">
-          <Button variant="ghost" onClick={onRestart}>
-            {t("restart")}
-          </Button>
+          <Button variant="ghost" onClick={onRestart}>{t("restart")}</Button>
         </div>
       </div>
     );
@@ -61,81 +58,69 @@ export default function Summary({
 
       <p className="muted" style={{ marginTop: -4 }}>
         {winnerIds?.length
-          ? t("threshold_reached", {
-              needed,
-              count: winnerIds.length,
-            })
+          ? t("threshold_reached", { needed, count: winnerIds.length })
           : t("threshold_not_reached", { needed })}
       </p>
 
+      <div className="legend small muted">
+        <span className="legend__item"><i className="swatch swatch--yes" /> {t("yes")}</span>
+        <span className="legend__item"><i className="swatch swatch--no" /> {t("no")}</span>
+        <span className="legend__item"><i className="swatch swatch--pending" /> {t("pending")}</span>
+      </div>
+
       <ul className="results">
         {scores.map((r) => {
-          const total = Math.max(
-            1,
-            (r.yes || 0) + (r.no || 0) + (r.pending || 0)
-          );
-          const yesPct = (100 * (r.yes || 0)) / total;
-          const noPct = (100 * (r.no || 0)) / total;
-          const pendingPct = 100 - yesPct - noPct;
-          const goalPct = Math.min(
-            100,
-            Math.max(0, (100 * (needed || 0)) / total)
-          );
+          const yes = r.yes ?? 0;
+          const no  = r.no  ?? 0;
+
+          const voters = (typeof participantsTotal === "number" && participantsTotal > 0)
+            ? participantsTotal
+            : 1;
+
+          const pending = Math.max(0, voters - (yes + no));
+
+          const yesPct     = (100 * yes) / voters;
+          const noPct      = (100 * no) / voters;
+          const pendingPct = Math.max(0, 100 - yesPct - noPct);
+
           const isWinner = winners.has(r.id);
 
           return (
-            <li
-              key={r.id}
-              className={`res-row${isWinner ? " res-row--winner" : ""}`}
-            >
+            <li key={r.id} className={`res-row${isWinner ? " res-row--winner" : ""}`}>
               <img className="res-img" src={r.img} alt="" />
               <div className="res-main">
                 <div className="res-title">
                   <span className="name">{r.name}</span>
                   {isWinner && (
-                    <span
-                      className="badge"
-                      title={t("winner")}
-                      aria-label={t("winner")}
-                    >
-                      🏆
-                    </span>
+                    <span className="badge" title={t("winner")} aria-label={t("winner")}>🏆</span>
                   )}
                 </div>
 
                 <div className="small res-meta">
-                  {Array.isArray(r.cuisine) 
+                  {Array.isArray(r.cuisine)
                     ? r.cuisine.map((c) => t(c.toLowerCase())).join(" · ")
                     : null}
                   {r.price ? ` · ${"$".repeat(r.price)}` : ""}
-                  {typeof r.rating === "number"
-                    ? ` · ⭐ ${r.rating.toFixed(1)}`
-                    : ""}
+                  {typeof r.rating === "number" ? ` · ⭐ ${r.rating.toFixed(1)}` : ""}
                 </div>
 
-                <div className="bar" aria-label={t("vote_count")}>
-                  <div className="bar__seg bar--yes" style={{ width: `${yesPct}%` }} />
-                  <div className="bar__seg bar--no" style={{ width: `${noPct}%` }} />
-                  <div
-                    className="bar__seg bar--pending"
-                    style={{ width: `${pendingPct}%` }}
-                  />
-                  {typeof needed === "number" && total > 0 && (
-                    <div
-                      className="bar__goal"
-                      style={{ left: `${goalPct}%` }}
-                      title={t("threshold", { needed })}
-                    />
+
+                <div className="meter meter--stack" role="img" aria-label={t("vote_count")}>
+                  {yesPct > 0 && (
+                    <div className="meter__seg meter__yes" style={{ flexBasis: `${yesPct}%` }} />
+                  )}
+                  {noPct > 0 && (
+                    <div className="meter__seg meter__no" style={{ flexBasis: `${noPct}%` }} />
+                  )}
+                  {pendingPct > 0 && (
+                    <div className="meter__seg meter__pending" style={{ flexBasis: `${pendingPct}%` }} />
                   )}
                 </div>
 
                 <div className="small res-counts">
-                  <span>{t("yes")}: {r.yes}</span>
-                  <span>· {t("no")}: {r.no}</span>
-                  <span>· {t("pending")}: {r.pending}</span>
-                  {typeof needed === "number" ? (
-                    <span>· {t("threshold")}: {needed}</span>
-                  ) : null}
+                  <span>{t("yes")}: {yes}</span>
+                  <span> · {t("no")}: {no}</span>
+                  <span> · {t("pending")}: {pending}</span>
                 </div>
               </div>
             </li>
@@ -144,9 +129,7 @@ export default function Summary({
       </ul>
 
       <div className="summary__actions">
-        <Button variant="ghost" onClick={onRestart}>
-          {t("restart")}
-        </Button>
+        <Button variant="ghost" onClick={onRestart}>{t("restart")}</Button>
       </div>
     </div>
   );

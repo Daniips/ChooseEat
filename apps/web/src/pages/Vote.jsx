@@ -17,7 +17,6 @@ import { DEFAULT_ERROR_KEYS } from "../lib/errorKeys";
 
 const AUTOJOIN_ERROR_KEYS = {
   ...DEFAULT_ERROR_KEYS,
-  // Overrides específicos de auto-join (si aplican)
   notFound: "errors.session_not_found",
   conflict: "errors.already_joined",
 };
@@ -299,6 +298,7 @@ export default function Vote() {
           scores={results?.results}
           winnerIds={results?.winnerIds}
           needed={results?.needed}
+          participantsTotal={Math.max(results?.votersTarget ?? 0, results?.totalParticipants ?? 1)}
           onRestart={() => {
             setIndex(0);
             setYesIds([]);
