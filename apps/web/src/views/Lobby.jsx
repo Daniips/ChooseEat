@@ -1,4 +1,4 @@
-// src/pages/Lobby.jsx
+// src/views/Lobby.jsx
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../context/SessionContext";

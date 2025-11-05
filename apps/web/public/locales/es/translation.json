@@ -103,5 +103,6 @@
         "load_results_failed": "No se pudieron cargar los resultados.",
         "vote_failed": "No se pudo registrar tu voto."
 
-    }
+    },
+    "queued_vote": "Sin conexión: tu voto se enviará al reconectar"
 }

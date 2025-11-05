@@ -1,12 +1,27 @@
+//apps/api/src/index.ts
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import fastifyIO from "fastify-socket.io";
 
 import { InMemoryRestaurantProvider } from "./providers/InMemoryRestaurantProvider";
 import { MOCK_RESTAURANTS } from "./data/restaurants";
-import { Area, Filters, Restaurant } from "./types";
+import { Area, Filters} from "./types";
 
 import type { Server as IOServer, Socket } from "socket.io";
+
+import 'dotenv/config';
+import { ensureRedis, getRedis,  isRedisAvailable} from "./redis";
+import { resyncMemoryToRedis } from "./data/sessionRepo";
+
+import {
+  saveSession,
+  getSession,
+  updateSession,
+  computeResults as computeRepoResults,
+  touchSession,
+  type Session as StoredSession,
+  VoteBuckets,
+} from "./data/sessionRepo";
 
 declare module "fastify" {
     interface FastifyInstance {
@@ -14,47 +29,49 @@ declare module "fastify" {
     }
 }
 
-type Choice = "yes" | "no";
-
-type Participant = {
-    id: string;
-    name: string;
-    joinedAt: string;
-    done?: boolean; 
-};
-
-type VoteBuckets = {
-    yes: Set<string>;
-    no: Set<string>;
-};
-
-type SessionStatus = "open" | "voting" | "matched" | "finished";
-
-type Session = {
-  id: string;
-  area: Area;
-  filters: Filters;
-  threshold: { type: "absolute"; value: number; participants: number };
-  status: "open" | "voting" | "matched" | "finished";
-  restaurants: Restaurant[];
-  createdAt: string;
-  participants: Record<string, Participant>;
-  votes: Record<string, VoteBuckets>;
-  matchedIds: Set<string>;    
-  winners?: Restaurant[];               
-};
 
 const app = Fastify({ logger: true });
 
 await app.register(cors, { origin: true });
 
 await app.register(fastifyIO, {
-    cors: { origin: true }
+    cors: { origin: true },
+
+    pingInterval: 25_000,
+    pingTimeout: 20_000,
+
+    connectionStateRecovery: {
+    maxDisconnectionDuration: 2 * 60 * 1000,
+    }
 });
+
+function requireStorage(reply: any) {
+  if (!isRedisAvailable()) {
+    reply.code(503).send({ error: "Storage unavailable" });
+    return false;
+  }
+  return true;
+}
+
+try {
+  await ensureRedis();
+  app.log.info("[Redis] connected");
+  getRedis()?.on("ready", async () => {
+    const n = await resyncMemoryToRedis();
+    app.log.info(`[Redis] ready – resynced ${n} sessions from memory`);
+  });
+} catch (err) {
+  app.log.error({ err }, "[Redis] failed to connect – running with in-memory store");
+}
+
 
 const provider = new InMemoryRestaurantProvider(MOCK_RESTAURANTS);
 
-app.get("/health", async () => ({ ok: true }));
+app.get("/health", async () => ({ 
+  ok: true,
+  redisOpen: !!getRedis()?.isOpen,
+  mode: getRedis()?.isOpen ? "redis" : "memory-fallback",
+}));
 
 app.get("/api/restaurants", async (req) => {
     const q = req.query as any;
@@ -74,69 +91,81 @@ app.get("/api/restaurants", async (req) => {
     return { count: items.length, items };
 });
 
-const sessions = new Map<string, Session>();
-
 app.post("/api/sessions", async (req, reply) => {
-    const body = (req.body as any) ?? {};
-    const area: Area = body.area;
-    const filters: Filters = body.filters;
-    const rawThreshold = body.threshold as Partial<Session["threshold"]> | undefined; 
+  const body = (req.body as any) ?? {};
+  const area: Area = body.area;
+  const filters: Filters = body.filters;
+  const rawThreshold = body.threshold as Partial<StoredSession["threshold"]> | undefined;
 
-    if (!area?.radiusKm || !Array.isArray(filters?.cuisines) || filters.cuisines.length === 0) {
-        return reply.code(400).send({ error: "Parámetros inválidos" });
-    }
+  if (!area?.radiusKm || !Array.isArray(filters?.cuisines) || filters.cuisines.length === 0) {
+    return reply.code(400).send({ error: "Parámetros inválidos" });
+  }
 
-    const participants = Math.max(2, Number(rawThreshold?.participants ?? 2) || 2);
-    const valueRaw = Number(rawThreshold?.value ?? 2) || 2;
-    const value = Math.min(Math.max(2, valueRaw), participants);
-    const type = (rawThreshold?.type === "absolute") ? "absolute" : "absolute";
-    const threshold: Session["threshold"] = { type, value, participants };
+  const participants = Math.max(2, Number(rawThreshold?.participants ?? 2) || 2);
+  const valueRaw = Number(rawThreshold?.value ?? 2) || 2;
+  const value = Math.min(Math.max(2, valueRaw), participants);
+  const threshold: StoredSession["threshold"] = { type: "absolute", value, participants };
 
-    const { items } = await provider.search({ radiusKm: area.radiusKm, filters });
+  const { items } = await provider.search({ radiusKm: area.radiusKm, filters });
 
-    const sessionId = "s_" + Math.random().toString(36).slice(2, 10);
-    const session: Session = {
-        id: sessionId,
-        area,
-        filters,
-        threshold,
-        status: "open",
-        restaurants: items,
-        createdAt: new Date().toISOString(),
-        participants: {},
-        votes: {},
-        matchedIds: new Set(), 
-        winners: []
-    };
-    sessions.set(sessionId, session);
+  const sessionId = "s_" + Math.random().toString(36).slice(2, 10);
+  const session: StoredSession = {
+    id: sessionId,
+    area,
+    filters,
+    threshold,
+    status: "open",
+    restaurants: items,
+    createdAt: new Date().toISOString(),
+    participants: {},
+    votes: {},
+    matchedIds: new Set(),
+    winners: [],
+  };
 
-    return reply.send({
-        sessionId,
-        invitePath: `/s/${sessionId}`,
-        count: items.length,
-        session: {
-            id: session.id,
-            area: session.area,
-            filters: session.filters,
-            threshold: session.threshold,
-            status: session.status
-        },
-        restaurants: items
-    });
+  try {
+    await saveSession(session);
+  } catch (e) {
+    req.log.error({ err: e }, "storage unavailable");
+    return reply.code(503).send({ error: "Storage unavailable" });
+  }
+
+  return reply.send({
+    sessionId,
+    invitePath: `/s/${sessionId}`,
+    count: items.length,
+    session: {
+      id: session.id,
+      area: session.area,
+      filters: session.filters,
+      threshold: session.threshold,
+      status: session.status,
+    },
+    restaurants: items,
+  });
 });
 
 app.post("/api/sessions/:id/join", async (req, reply) => {
+  if (!requireStorage(reply)) return;
   const { id } = req.params as any;
   const body = (req.body as any) ?? {};
   const { participantId, name } = body;
 
-  const s = sessions.get(id);
+  let s: StoredSession | null;
+  try {
+    s = await getSession(id);
+  } catch (e: any) {
+    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+      return reply.code(503).send({ error: "Storage unavailable" });
+    }
+    throw e;
+  }
   if (!s) return reply.code(404).send({ error: "Session not found" });
 
   if (participantId && s.participants[participantId]) {
     const p = s.participants[participantId];
-
     if (s.status === "open") s.status = "voting";
+    await saveSession(s);
 
     return reply.send({
       sessionId: id,
@@ -147,23 +176,36 @@ app.post("/api/sessions/:id/join", async (req, reply) => {
         area: s.area,
         filters: s.filters,
         threshold: s.threshold,
-        status: s.status
+        status: s.status,
       },
-      restaurants: s.restaurants
+      restaurants: s.restaurants,
     });
   }
 
   const display = String(name || "").trim() || "Invitado";
   const pid = "p_" + Math.random().toString(36).slice(2, 10);
-  s.participants[pid] = { id: pid, name: display, joinedAt: new Date().toISOString() };
 
-  if (s.status === "open") s.status = "voting";
+  let after: StoredSession | null;
+  try {
+    after = await updateSession(id, (sess) => {
+    sess.participants[pid] = { id: pid, name: display, joinedAt: new Date().toISOString() };
+      if (sess.status === "open") sess.status = "voting";
+    });
+  } catch (e: any) {
+    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+      return reply.code(503).send({ error: "Storage unavailable" });
+    }
+    throw e;
+  }
+  if (!after) {
+    return reply.code(404).send({ error: "Session not found" });
+  }
 
   try {
     app.io.to(id).emit("participant:joined", {
       sessionId: id,
       participant: { id: pid, name: display },
-      participants: Object.values(s.participants)
+      participants: Object.values(after.participants),
     });
   } catch {}
 
@@ -172,28 +214,46 @@ app.post("/api/sessions/:id/join", async (req, reply) => {
     participant: { id: pid, name: display },
     invitePath: `/s/${id}`,
     session: {
-      id: s.id,
-      area: s.area,
-      filters: s.filters,
-      threshold: s.threshold,
-      status: s.status
+      id: after.id,
+      area: after.area,
+      filters: after.filters,
+      threshold: after.threshold,
+      status: after.status,
     },
-    restaurants: s.restaurants
+    restaurants: after.restaurants,
   });
 });
 
 
 
 
+
 app.get("/api/sessions/:id", async (req, reply) => {
+  if (!requireStorage(reply)) return;
   const { id } = req.params as any;
-  const s = sessions.get(id);
+  let s: StoredSession | null;
+  try {
+    s = await getSession(id);
+  } catch (e: any) {
+    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+      return reply.code(503).send({ error: "Storage unavailable" });
+    }
+    throw e;
+  }
   if (!s) return reply.code(404).send({ error: "Session not found" });
+
+  try { await touchSession(id); }
+  catch (e: any) {
+    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+      return reply.code(503).send({ error: "Storage unavailable" });
+    }
+    throw e;
+  }
 
   const participants = Object.fromEntries(
     Object.entries(s.participants || {}).map(([pid, p]) => [
       pid,
-      { id: p.id, name: p.name, done: (p as any).done === true },
+      { id: p.id, name: p.name, done: p.done === true },
     ])
   );
 
@@ -210,14 +270,22 @@ app.get("/api/sessions/:id", async (req, reply) => {
 
 
 app.post("/api/sessions/:id/votes", async (req, reply) => {
-  const { id } = (req.params as any);
+  if (!requireStorage(reply)) return;
+  const { id } = req.params as any;
   const { participantId, restaurantId, choice } = (req.body as any) as {
     participantId?: string;
     restaurantId?: string;
     choice?: "yes" | "no";
   };
 
-  const s = sessions.get(id);
+  let s: StoredSession | null;
+  try { s = await getSession(id); }
+  catch (e: any) {
+    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+      return reply.code(503).send({ error: "Storage unavailable" });
+    }
+    throw e;
+  }
   if (!s) return reply.code(404).send({ error: "Session not found" });
   if (!participantId || !s.participants?.[participantId]) {
     return reply.code(403).send({ error: "Unknown participant" });
@@ -226,58 +294,73 @@ app.post("/api/sessions/:id/votes", async (req, reply) => {
     return reply.code(400).send({ error: "Bad vote payload" });
   }
 
-  const bucket: VoteBuckets = s.votes[restaurantId] ?? { yes: new Set<string>(), no: new Set<string>() };
-  s.votes[restaurantId] = bucket;
-
-  const wasAlreadyMatched = s.matchedIds.has(restaurantId);
-
-  bucket.yes.delete(participantId);
-  bucket.no.delete(participantId);
-  (choice === "yes" ? bucket.yes : bucket.no).add(participantId);
-
-  const yesCount = bucket.yes.size;
   const needed = s.threshold?.value ?? 2;
+  const wasAlreadyMatchedBefore = s.matchedIds.has(restaurantId);
+
+  let yesCount = 0;
+  let isNewlyMatched = false;
+  let winnerObj: StoredSession["restaurants"][number] | null = null;
+
+  let updated: StoredSession | null;
+  try {
+    updated = await updateSession(id, (sess) => {
+      const bucket: VoteBuckets =
+        sess.votes[restaurantId] ?? { yes: new Set<string>(), no: new Set<string>() };
+      sess.votes[restaurantId] = bucket;
+
+      bucket.yes.delete(participantId);
+      bucket.no.delete(participantId);
+      (choice === "yes" ? bucket.yes : bucket.no).add(participantId);
+
+      yesCount = bucket.yes.size;
+
+      isNewlyMatched = yesCount >= needed && !sess.matchedIds.has(restaurantId);
+      if (isNewlyMatched) {
+        sess.matchedIds.add(restaurantId);
+        if (sess.status !== "matched") sess.status = "matched";
+        const w = sess.restaurants.find((r) => r.id === restaurantId) || null;
+        if (w) {
+          if (!sess.winners) sess.winners = [];
+          if (!sess.winners.some((x) => x.id === w.id)) sess.winners.push(w);
+          winnerObj = w;
+        }
+      }
+      return sess;
+    });
+  } catch (e: any) {
+    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+      return reply.code(503).send({ error: "Storage unavailable" });
+    }
+    throw e;
+  }
+
+  if (!updated) return reply.code(404).send({ error: "Session not found" });
 
   try {
-    app.io.to(s.id).emit("session:vote", {
-      sessionId: s.id,
+    app.io.to(updated.id).emit("session:vote", {
+      sessionId: updated.id,
       participantId,
       restaurantId,
       choice,
       yesCount,
       needed,
     });
-  } catch (err) {
-    app.log.warn({ err }, "failed to emit session:vote from REST");
-  }
-
-  const isNewlyMatched = yesCount >= needed && !wasAlreadyMatched;
-
-  if (isNewlyMatched) {
-    s.matchedIds.add(restaurantId);
-    if (s.status !== "matched") s.status = "matched";
-    const w = s.restaurants.find(r => r.id === restaurantId);
-    if (w) {
-      if (!s.winners) s.winners = [];
-      if (!s.winners.some(x => x.id === w.id)) s.winners.push(w);
-      try { app.io.to(id).emit("session:matched", { sessionId: id, winner: w }); } catch {}
+    if (isNewlyMatched && winnerObj) {
+      app.io.to(updated.id).emit("session:matched", { sessionId: updated.id, winner: winnerObj });
     }
-  }
-
-  const winnerObj =
-    yesCount >= needed
-      ? (s.restaurants.find(r => r.id === restaurantId) ?? null)
-      : null;
+  } catch { /* noop */ }
 
   return reply.send({
     ok: true,
     matched: isNewlyMatched,
-    wasAlreadyMatched,
+    wasAlreadyMatched: wasAlreadyMatchedBefore,
     winner: winnerObj,
     yesCount,
-    needed
+    needed,
   });
 });
+
+
 
 
 
@@ -285,12 +368,12 @@ app.ready().then(() => {
   app.io.on("connection", (socket: Socket) => {
     app.log.info({ id: socket.id }, "socket connected");
 
-    socket.on("session:join", (payload: { sessionId?: string }) => {
+    socket.on("session:join", async (payload: { sessionId?: string }) => {
       const sessionId = payload?.sessionId;
       if (!sessionId) return;                
       socket.join(sessionId);
 
-      const s = sessions.get(sessionId);
+      const s = await getSession(sessionId);
       if (s) {
         socket.emit("session:participants", {
           sessionId: s.id,
@@ -299,7 +382,7 @@ app.ready().then(() => {
       }
     });
 
-    socket.on("vote", (payload: {
+    socket.on("vote", async (payload: {
       sessionId?: string;
       participantId?: string;
       restaurantId?: string;
@@ -308,41 +391,53 @@ app.ready().then(() => {
       const { sessionId, participantId, restaurantId, choice } = payload || {};
       if (!sessionId) return;
 
-      const s = sessions.get(sessionId);
+      const s = await getSession(sessionId);
       if (!s || !participantId || !s.participants?.[participantId] || !restaurantId || (choice !== "yes" && choice !== "no")) {
         return;
       }
 
-
-      const bucket = s.votes[restaurantId] ?? { yes: new Set<string>(), no: new Set<string>() };
-      s.votes[restaurantId] = bucket;
-
-      bucket.yes.delete(participantId);
-      bucket.no.delete(participantId);
-      (choice === "yes" ? bucket.yes : bucket.no).add(participantId);
-
-      const yesCount = bucket.yes.size;
       const needed = s.threshold?.value ?? 2;
 
-      app.io.to(s.id).emit("session:vote", { participantId, restaurantId, choice, yesCount, needed });
+      let yesCount = 0;
+      let isNewlyMatched = false;
+      let winnerObj: StoredSession["restaurants"][number] | null = null;
 
-      const isNewlyMatched = yesCount >= needed && !s.matchedIds.has(restaurantId);
-      if (isNewlyMatched) {
-        s.matchedIds.add(restaurantId);
+      const updated = await updateSession(sessionId, (sess) => {
+        const bucket: VoteBuckets =
+          sess.votes[restaurantId] ?? { yes: new Set<string>(), no: new Set<string>() };
+        sess.votes[restaurantId] = bucket;
 
-        if (s.status === "voting") s.status = "matched";
+        bucket.yes.delete(participantId);
+        bucket.no.delete(participantId);
+        (choice === "yes" ? bucket.yes : bucket.no).add(participantId);
 
-        const winner = s.restaurants.find(r => r.id === restaurantId);
-        if (winner) {
-          if (!s.winners) s.winners = [];
-          if (!s.winners.some(w => w.id === restaurantId)) s.winners.push(winner);
+        yesCount = bucket.yes.size;
 
-          app.io.to(s.id).emit("session:matched", { sessionId: s.id, winner });
-        } else {
-          app.log.warn({ id: restaurantId }, "winner restaurant not found in session");
+        isNewlyMatched = yesCount >= needed && !sess.matchedIds.has(restaurantId);
+        if (isNewlyMatched) {
+          sess.matchedIds.add(restaurantId);
+          if (sess.status === "voting") sess.status = "matched";
+          const w = sess.restaurants.find((r) => r.id === restaurantId) || null;
+          if (w) {
+            if (!sess.winners) sess.winners = [];
+            if (!sess.winners.some((x) => x.id === w.id)) sess.winners.push(w);
+            winnerObj = w;
+          }
         }
+        return sess;
+      });
+
+      if (!updated) return;
+
+      app.io.to(updated.id).emit("session:vote", {
+        participantId, restaurantId, choice, yesCount, needed
+      });
+
+      if (isNewlyMatched && winnerObj) {
+        app.io.to(updated.id).emit("session:matched", { sessionId: updated.id, winner: winnerObj });
       }
     });
+
 
 
     socket.on("disconnect", () => {
@@ -356,83 +451,41 @@ app.listen({ port, host: "0.0.0.0" }).then(() => {
     app.log.info(`API on http://localhost:${port}`);
 });
 
-function computeResults(s: Session) {
-  const totalParticipants = Object.keys(s.participants || {}).length;
-  const needed = s.threshold?.value ?? 2;
-
-  const rows = s.restaurants.map(r => {
-    const b = s.votes[r.id] ?? { yes: new Set<string>(), no: new Set<string>() };
-    const yes = b.yes.size;
-    const no  = b.no.size;
-    const pending = Math.max(0, totalParticipants - yes - no);
-
-    return {
-      id: r.id,
-      name: r.name,
-      img: (r as any).img,
-      cuisine: r.cuisine,
-      price: r.price,
-      rating: r.rating,
-      yes,
-      no,
-      pending,
-      total: yes + no,
-    };
-  }).sort((a, b) => {
-    if (b.yes !== a.yes) return b.yes - a.yes;
-    return a.no - b.no;
-  });
-
-  const winnerIds = rows.filter(x => x.yes >= needed).map(x => x.id);
-  const winners = s.winners && s.winners.length
-    ? s.winners
-    : s.restaurants.filter(r => s.matchedIds.has(r.id));
-
-  return {
-    sessionId: s.id,
-    status: s.status,
-    needed,
-    totalParticipants,
-    winnerIds,
-    winners,
-    results: rows,           
-  };
-}
-
+//Controlar el cierre de redis
+app.addHook("onClose", async () => {
+  const r = getRedis();
+  if (r?.isOpen) {
+    try {
+      await r.quit();
+      console.info("[Redis] client quit");
+    } catch (e) {
+      console.warn("[Redis] quit failed:", (e as Error).message);
+    }
+  }
+});
 
 app.get("/api/sessions/:id/results", async (req, reply) => {
+  if (!requireStorage(reply)) return;
   const { id } = req.params as any;
-  const s = sessions.get(id);
+  let s: StoredSession | null;
+  try { s = await getSession(id); }
+  catch (e: any) {
+    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+      return reply.code(503).send({ error: "Storage unavailable" });
+    }
+    throw e;
+  }
   if (!s) return reply.code(404).send({ error: "Session not found" });
 
-  const totalParticipants = Object.keys(s.participants || {}).length;
-  const votersTarget = s.threshold?.participants ?? totalParticipants;
-  const needed = s.threshold?.value ?? 2;
+  try { await touchSession(id); }
+  catch (e: any) {
+    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+      return reply.code(503).send({ error: "Storage unavailable" });
+    }
+    throw e;
+  }
 
-  const results = s.restaurants
-    .map(r => {
-      const b = s.votes[r.id] ?? { yes: new Set<string>(), no: new Set<string>() };
-      const yes = b.yes.size;
-      const no  = b.no.size;
-      const pending = Math.max(0, votersTarget - yes - no);
-      return {
-        id: r.id,
-        name: r.name,
-        img: r.img,
-        cuisine: r.cuisine,
-        price: r.price,
-        rating: r.rating,
-        yes,
-        no,
-        pending,
-        total: yes + no,
-        votersTarget,
-      };
-    })
-    
-    .sort((a, b) => (b.yes - a.yes) || (a.no - b.no));
-
-  const winnerIds = results.filter(x => x.yes >= needed).map(x => x.id);
+  const { totalParticipants, votersTarget, needed, results, winnerIds } = computeRepoResults(s);
   const winners = (s.winners && s.winners.length)
     ? s.winners
     : s.restaurants.filter(r => s.matchedIds.has(r.id));
@@ -449,25 +502,63 @@ app.get("/api/sessions/:id/results", async (req, reply) => {
   });
 });
 
+
 app.post("/api/sessions/:id/done", async (req, reply) => {
+  if (!requireStorage(reply)) return;
   const { id } = req.params as any;
   const { participantId } = (req.body as any) ?? {};
 
-  const s = sessions.get(id);
+  let s: StoredSession | null;
+  try { s = await getSession(id); }
+  catch (e: any) {
+    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+      return reply.code(503).send({ error: "Storage unavailable" });
+    }
+    throw e;
+  }
   if (!s) return reply.code(404).send({ error: "Session not found" });
-  const p = participantId ? s.participants?.[participantId] : null;
-  if (!p) return reply.code(403).send({ error: "Unknown participant" });
-
-  p.done = true;
-
-  const min = s.threshold?.participants ?? Object.keys(s.participants || {}).length;
-  const doneCount = Object.values(s.participants).filter(x => x.done).length;
-
-  if (doneCount >= min && s.status !== "finished") {
-    s.status = "finished";
-    try { app.io.to(id).emit("session:finished", { sessionId: id }); } catch {}
+  if (!participantId || !s.participants?.[participantId]) {
+    return reply.code(403).send({ error: "Unknown participant" });
   }
 
-  return reply.send({ ok: true, status: s.status, doneCount, min });
+  let newStatus: StoredSession["status"] = s.status;
+  let doneCount = 0;
+  let min = 0;
+
+  try {
+    await updateSession(id, (sess) => {
+      const p = sess.participants[participantId];
+      if (p) p.done = true;
+
+      min = sess.threshold?.participants ?? Object.keys(sess.participants || {}).length;
+      doneCount = Object.values(sess.participants).filter((x) => x.done).length;
+
+      if (doneCount >= min && sess.status !== "finished") {
+        sess.status = "finished";
+        newStatus = "finished";
+        try { app.io.to(id).emit("session:finished", { sessionId: id }); } catch {}
+      } else {
+        newStatus = sess.status;
+      }
+    });
+  } catch (e: any) {
+    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+      return reply.code(503).send({ error: "Storage unavailable" });
+    }
+    throw e;
+  }
+
+  return reply.send({ ok: true, status: newStatus, doneCount, min });
 });
+
+
+//DELETE
+//BORRAR
+//SOLO TEST
+app.get("/debug/redis", async () => {
+  const r = getRedis();
+  return { isOpen: !!r?.isOpen };
+});
+
+
 

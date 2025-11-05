@@ -1,4 +1,4 @@
-// apps/web/src/pages/Summary.jsx
+// apps/web/src/views/Summary.jsx
 import React from "react";
 import Button from "../components/Button";
 import { useTranslation } from "react-i18next";

@@ -102,5 +102,6 @@
         "mark_done_failed": "Could not mark as finished.",
         "load_results_failed": "Could not load results.",
         "vote_failed": "Could not register your vote."
-    }
+    },
+    "queued_vote": "Offline: your vote will be submitted upon reconnecting"
 }
