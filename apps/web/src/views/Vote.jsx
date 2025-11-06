@@ -1,5 +1,6 @@
 // apps/web/src/pages/Vote.jsx
 import React, { useEffect, useMemo, useState, useRef } from "react";
+import {useParams, useNavigate} from "react-router-dom";
 import Header from "../components/Header";
 import Card from "../components/Card";
 import Summary from "./Summary";
@@ -8,7 +9,12 @@ import { useArrows } from "../hooks/useArrows";
 import { useSession } from "../context/SessionContext";
 import { io } from "socket.io-client";
 import MatchOverlay from "../components/MatchOverlay";
-import { getParticipantId, getParticipant, setParticipant, migrateFromLegacy } from "../lib/participant";
+import {
+  getParticipantId,
+  getParticipant,
+  setParticipant,
+  migrateFromLegacy,
+} from "../lib/participant";
 import { api } from "../lib/api";
 import { useTranslation } from "react-i18next";
 import Toast from "../components/Toast";
@@ -42,15 +48,18 @@ const VOTE_ERROR_KEYS = {
   conflict: "errors.conflict_action",
 };
 
-
 export default function Vote() {
   const { t } = useTranslation();
-  const { session, setWinner } = useSession();
+  const {sessionId} = useParams();
+  const navigate = useNavigate();
+  const { session, setWinner, hydrateFromJoin } = useSession();
 
   const [index, setIndex] = useState(0);
   const [yesIds, setYesIds] = useState([]);
-  const [, setNoIds] = useState([]);
+  const [noIds, setNoIds] = useState([]);
   const [keySwipe, setKeySwipe] = useState(null);
+  const [progressRestored, setProgressRestored] = useState(false);
+  const isRestoring = useRef(false);
 
   const winner = session.winner;
   const socketRef = useRef(null);
@@ -59,21 +68,35 @@ export default function Vote() {
 
   const [forceFinished, setForceFinished] = useState(false);
 
-  const [toast, setToast] = useState({ open: false, variant: "warn", msg: "", duration: 5000 });
+  const [toast, setToast] = useState({
+    open: false,
+    variant: "warn",
+    msg: "",
+    duration: 5000,
+  });
   const showToast = (variant, msg, duration = 5000) =>
     setToast({ open: true, variant, msg, duration });
 
   const list = useMemo(
-    () => (Array.isArray(session?.restaurants) ? session.restaurants : []),
+    () => {
+      const restaurants = Array.isArray(session?.restaurants) ? session.restaurants : [];
+      console.log('🔍 [DECK] session.restaurants:', session?.restaurants);
+      console.log('🔍 [DECK] list length:', restaurants.length);
+      return restaurants;
+    },
     [session?.restaurants]
   );
 
-  const current = list[index] || null;
   const total = list.length;
-  const currentNumber = Math.min(index + (current ? 1 : 0), total);
-  const pct = total ? Math.min(100, Math.round((index / total) * 100)) : 0;
-  const finishedByDeck = !current;
+  const deckReady = total > 0;
+  console.log('🔍 [DECK STATE] total:', total, 'deckReady:', deckReady);
+  const current = deckReady ? (list[index] || null) : null;
+  const currentNumber = deckReady ? Math.min(index + (current ? 1 : 0), total) : 0; 
+  const pct = deckReady ? Math.min(100, Math.round((index / Math.max(total, 1)) * 100)) : 0;
+  const finishedByDeck = deckReady && !current;
   const finished = finishedByDeck || forceFinished;
+
+  console.log('🔍 [STATE] index:', index, 'current:', current?.name, 'finished:', finished);
 
   const [showOverlay, setShowOverlay] = useState(false);
   const overlayTimerRef = useRef(null);
@@ -82,12 +105,69 @@ export default function Vote() {
     if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
     overlayTimerRef.current = setTimeout(() => setShowOverlay(false), 1600);
   };
+
+  // 1) Limpieza del temporizador del overlay al desmontar
   useEffect(() => {
     return () => {
       if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
     };
   }, []);
 
+  // 1.5) NUEVO: Recuperar sesión al refrescar usando el sessionId de la URL
+  useEffect(() => {
+    const restoreSession = async () => {
+      if (!sessionId) {
+        console.log('⚠️ [RESTORE] No sessionId in URL');
+        navigate('/'); // Redirigir al inicio si no hay sessionId
+        return;
+      }
+
+      // Si ya tenemos la sesión cargada, no hacer nada
+      if (session?.id === sessionId && session?.restaurants?.length > 0) {
+        console.log('✅ [RESTORE] Session already loaded');
+        return;
+      }
+
+      const participant = getParticipant(sessionId);
+      
+      if (!participant?.id) {
+        console.log('⚠️ [RESTORE] No participant found for session:', sessionId);
+        return;
+      }
+
+      console.log('🔄 [RESTORE] Attempting to restore session:', sessionId);
+
+      try {
+        const response = await api(`/api/sessions/${sessionId}/join`, {
+          method: "POST",
+          body: JSON.stringify({ participantId: participant.id }),
+        });
+
+        console.log('✅ [RESTORE] Session restored:', {
+          sessionId: response.session?.id,
+          restaurants: response.restaurants?.length || 0,
+        });
+
+        hydrateFromJoin(response);
+      } catch (e) {
+        console.error("❌ [RESTORE] Failed to restore session:", e);
+        showToast("error", errorToMessage(e, t, AUTOJOIN_ERROR_KEYS));
+      }
+    };
+
+    restoreSession();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId]);
+
+  // NUEVO: Guardar sessionId cuando la sesión se cargue
+  useEffect(() => {
+    if (session?.id) {
+      console.log('💾 [SESSION] Saving current session ID:', session.id);
+      sessionStorage.setItem('currentSessionId', session.id);
+    }
+  }, [session?.id]);
+
+  // 2) Auto-join del “Host” si no existe participante local
   useEffect(() => {
     (async () => {
       try {
@@ -112,6 +192,7 @@ export default function Vote() {
     })();
   }, [session?.id, t]);
 
+   // 3) Consultar estado de la sesión (no forzar fin hasta tener mazo y estar realmente al final)
   useEffect(() => {
     (async () => {
       if (!session?.id) return;
@@ -119,29 +200,74 @@ export default function Vote() {
         const s = await api(`/api/sessions/${session.id}`);
         const me = getParticipant(session.id);
         const iAmDone = me?.id && s.participants?.[me.id]?.done;
-        if (s.status === "finished" || iAmDone) {
+
+        console.log('🔍 [SESSION STATUS] status:', s.status, 'iAmDone:', iAmDone);
+
+        if (s.status === "finished") {
+          console.log('✅ [SESSION STATUS] Session finished globally');
           setForceFinished(true);
+          return;
+        }
+
+        // Si ya había terminado antes, forzar fin
+        if (iAmDone) {
+          console.log('✅ [SESSION STATUS] I already finished voting');
+          setForceFinished(true);
+          
+          // Restaurar el progreso completo para mostrar correctamente
+          const key = `vote-progress-${session.id}`;
+          const saved = sessionStorage.getItem(key);
+          if (saved) {
+            try {
+              const { index: savedIndex, yesIds: savedYes, noIds: savedNo } = JSON.parse(saved);
+              console.log('✅ [RESTORE FINISHED] Restored finished state - index:', savedIndex);
+              setIndex(savedIndex || total);
+              setYesIds(savedYes || []);
+              setNoIds(savedNo || []);
+            } catch (e) {
+              console.error('❌ [RESTORE FINISHED] Failed:', e);
+            }
+          }
         }
       } catch (e) {
         console.error("Fetch session status failed:", e);
         showToast("warn", errorToMessage(e, t, STATUS_ERROR_KEYS));
       }
     })();
-  }, [session?.id, t]);
+  }, [session?.id, t, total]);
 
+
+  // 4) Socket.io: conexión, join y handlers de eventos en tiempo real
   useEffect(() => {
     if (!session?.id) return;
 
-    const url = (import.meta.env.VITE_API_URL || window.location.origin).replace(/\/$/, "");
+    const url = (
+      import.meta.env.VITE_API_URL || window.location.origin
+    ).replace(/\/$/, "");
     const socket = io(url, { transports: ["websocket"], autoConnect: true });
     socketRef.current = socket;
 
-    const onParticipants = ({ participants }) => setParticipants(participants || []);
-    const onVote = () => {};
+    const onParticipants = ({ participants }) =>
+      setParticipants(participants || []);
+    const onVote = () => {
+      // Recargar resultados cuando alguien vota (si ya terminaste)
+      if (finished) {
+        console.log('🔄 [SOCKET] Vote received, reloading results...');
+        reloadResults();
+      }
+    };
     const onMatched = (evt) => {
       if (evt?.winner) setWinner(evt.winner);
     };
     const onFinished = () => setForceFinished(true);
+    
+    // NUEVO: Cuando alguien marca done, recargar resultados
+    const onParticipantDone = () => {
+      console.log('🔄 [SOCKET] Participant done, reloading results...');
+      if (finished) {
+        reloadResults();
+      }
+    };
 
     socket.emit("session:join", { sessionId: session.id });
     socket.on("session:participants", onParticipants);
@@ -149,6 +275,7 @@ export default function Vote() {
     socket.on("session:vote", onVote);
     socket.on("session:matched", onMatched);
     socket.on("session:finished", onFinished);
+    socket.on("participant:done", onParticipantDone); // ← NUEVO
 
     return () => {
       socket.off("session:participants", onParticipants);
@@ -156,13 +283,15 @@ export default function Vote() {
       socket.off("session:vote", onVote);
       socket.off("session:matched", onMatched);
       socket.off("session:finished", onFinished);
+      socket.off("participant:done", onParticipantDone); // ← NUEVO
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [session?.id, setWinner]);
+  }, [session?.id, setWinner, finished]);
 
+  // 5) Marcar done solo cuando el mazo existe y realmente se acabó
   useEffect(() => {
-    if (!finishedByDeck || !session?.id) return;
+    if (!session?.id || !deckReady || !finishedByDeck) return;
 
     (async () => {
       try {
@@ -179,30 +308,105 @@ export default function Vote() {
       }
       setForceFinished(true);
     })();
-  }, [finishedByDeck, session?.id, t]);
+  }, [session?.id, deckReady, finishedByDeck, t]);
 
+
+  // 6) Si hay ganador o la sesión ya está terminada, carga resultados desde el backend
   useEffect(() => {
     if (!session?.id) return;
     if (!finished && !winner) return;
 
-    let aborted = false;
-    (async () => {
-      try {
-        const data = await api(`/api/sessions/${session.id}/results`);
-        if (!aborted) setResults(data);
-      } catch (e) {
-        console.error("Load results failed:", e);
-        if (!aborted) showToast("warn", errorToMessage(e, t, LOAD_RESULTS_ERROR_KEYS));
-      }
-    })();
-
-    return () => { aborted = true; };
+    reloadResults();
   }, [session?.id, finished, winner, t]);
 
-  useArrows({ left: () => setKeySwipe("left"), right: () => setKeySwipe("right") }, [index]);
 
-  const liked = useMemo(() => list.filter((x) => yesIds.includes(x.id)), [yesIds, list]);
-  const inviteUrl = `${window.location.origin}${session.invitePath || `/s/${session.id}`}`;
+  const reloadResults = async () => {
+    if (!session?.id) return;
+    
+    try {
+      console.log('📊 [RESULTS] Loading results...');
+      const data = await api(`/api/sessions/${session.id}/results`);
+      console.log('✅ [RESULTS] Results loaded:', data);
+      setResults(data);
+    } catch (e) {
+      console.error("❌ [RESULTS] Load results failed:", e);
+      showToast("warn", errorToMessage(e, t, LOAD_RESULTS_ERROR_KEYS));
+    }
+  };
+
+  // 7) Guardar/Restaurar progreso de votación en sessionStorage
+  useEffect(() => {
+    if (!session?.id || !session?.restaurants?.length || forceFinished || progressRestored) {
+      if (progressRestored) {
+        console.log('✅ [RESTORE PROGRESS] Already restored');
+      } else {
+        console.log('⏳ [RESTORE PROGRESS] Skipping restore - waiting for session or already finished');
+      }
+      return;
+    }
+
+    const key = `vote-progress-${session.id}`;
+    const saved = sessionStorage.getItem(key);
+    console.log('🔄 [RESTORE PROGRESS] sessionStorage key:', key);
+    console.log('🔄 [RESTORE PROGRESS] saved data:', saved);
+    
+    if (saved) {
+      try {
+        const { index: savedIndex, yesIds: savedYes, noIds: savedNo } = JSON.parse(saved);
+        console.log('✅ [RESTORE PROGRESS] Restored - index:', savedIndex, 'yesIds:', savedYes.length, 'noIds:', savedNo.length);
+        
+        isRestoring.current = true;
+        setIndex(savedIndex || 0);
+        setYesIds(savedYes || []);
+        setNoIds(savedNo || []);
+        setProgressRestored(true);
+        
+        setTimeout(() => {
+          isRestoring.current = false;
+          console.log('✅ [RESTORE PROGRESS] Restoration complete, can save now');
+        }, 100);
+      } catch (e) {
+        console.error('❌ [RESTORE PROGRESS] Failed:', e);
+        isRestoring.current = false;
+      }
+    } else {
+      console.log('⚠️ [RESTORE PROGRESS] No saved progress found');
+      setProgressRestored(true);
+    }
+  }, [session?.id, session?.restaurants?.length, forceFinished, progressRestored]);
+
+
+  useEffect(() => {
+    if (!session?.id || isRestoring.current) {
+      if (isRestoring.current) {
+        console.log('⏸️ [SAVE] Skipping save during restoration');
+      }
+      return;
+    }
+    
+    const key = `vote-progress-${session.id}`;
+    const data = JSON.stringify({ index, yesIds, noIds });
+    console.log('💾 [SAVE] Saving to sessionStorage:', data);
+    sessionStorage.setItem(key, data);
+  }, [session?.id, index, yesIds, noIds]);
+
+  useEffect(() => {
+    if (!deckReady) return;
+    setIndex((i) => Math.min(i, total));
+  }, [deckReady, total]);
+
+  useArrows(
+    { left: () => setKeySwipe("left"), right: () => setKeySwipe("right") },
+    [index]
+  );
+
+  const liked = useMemo(
+    () => list.filter((x) => yesIds.includes(x.id)),
+    [yesIds, list]
+  );
+  const inviteUrl = `${window.location.origin}${
+    session.invitePath || `/s/${session.id}`
+  }`;
 
   async function vote(choice) {
     if (!current || !session?.id) return;
@@ -224,13 +428,15 @@ export default function Vote() {
         }),
       });
 
-      if (choice === "yes" && (data?.matched === true || data?.wasAlreadyMatched === true)) {
+      if (
+        choice === "yes" &&
+        (data?.matched === true || data?.wasAlreadyMatched === true)
+      ) {
         triggerMatchFlash();
       }
       if (data?.winner) setWinner(data.winner);
     } catch (e) {
       console.error("Vote failed:", e);
-      // Revertir estado si falla
       setIndex((i) => Math.max(0, i - 1));
       if (choice === "yes") {
         setYesIds((s) => s.filter((id) => id !== current.id));
@@ -258,12 +464,18 @@ export default function Vote() {
         >
           <div className="vote-progress__bar" style={{ width: `${pct}%` }} />
         </div>
-        <div className="vote-progress__meta">{currentNumber}/{total || 0}</div>
+        <div className="vote-progress__meta">
+          {currentNumber}/{total || 0}
+        </div>
       </div>
 
-      <MatchOverlay visible={showOverlay} onDone={() => setShowOverlay(false)} />
+      <MatchOverlay
+        visible={showOverlay}
+        onDone={() => setShowOverlay(false)}
+      />
 
       {!finished ? (
+        deckReady ? (
         <div className="stage">
           <Card
             key={current?.id || "end"}
@@ -293,12 +505,20 @@ export default function Vote() {
           </div>
         </div>
       ) : (
+        <div className="stage">
+            {t("loading")}
+          </div>
+        )
+      ) : (
         <Summary
           liked={liked}
           scores={results?.results}
           winnerIds={results?.winnerIds}
           needed={results?.needed}
-          participantsTotal={Math.max(results?.votersTarget ?? 0, results?.totalParticipants ?? 1)}
+          participantsTotal={Math.max(
+            results?.votersTarget ?? 0,
+            results?.totalParticipants ?? 1
+          )}
           onRestart={() => {
             setIndex(0);
             setYesIds([]);
@@ -306,6 +526,12 @@ export default function Vote() {
             setWinner(null);
             setResults(null);
             setForceFinished(false);
+            setProgressRestored(false);
+            isRestoring.current = false;
+            if (session?.id) {
+              sessionStorage.removeItem(`vote-progress-${session.id}`);
+              sessionStorage.removeItem('currentSessionId');
+            }
           }}
         />
       )}

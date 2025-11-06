@@ -46,9 +46,9 @@ export default function JoinSession() {
             method: "POST",
             body: JSON.stringify({ participantId: existingId }),
           });
-          setParticipant(id, data.participant, data.invitePath);
+          setParticipant(id, data.participant, data.invitePath)
           hydrateFromJoin(data);
-          navigate("/vote");
+          navigate(`/vote/${id}`);
           return;
         }
       } catch (err) {
@@ -72,7 +72,7 @@ export default function JoinSession() {
       });
       setParticipant(id, data.participant, data.invitePath);
       hydrateFromJoin(data);
-      navigate("/vote");
+      navigate(`/vote/${id}`);
     } catch (err) {
       console.error("join error:", err);
       showError(errorToMessage(err, t, JOIN_ERROR_KEYS));

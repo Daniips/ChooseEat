@@ -13,7 +13,7 @@ export default function App() {
             <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/create" element={<Lobby />} />
-                <Route path="/vote" element={<Vote />} />
+                <Route path="/vote/:sessionId" element={<Vote />} />
                 <Route path="/s/:id" element={<JoinSession />} />
             </Routes>
         </SessionProvider>   

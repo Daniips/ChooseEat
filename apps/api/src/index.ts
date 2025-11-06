@@ -541,6 +541,14 @@ app.post("/api/sessions/:id/done", async (req, reply) => {
         newStatus = sess.status;
       }
     });
+    try {
+      app.io.to(id).emit("participant:done", { 
+        sessionId: id, 
+        participantId,
+        doneCount,
+        min
+      });
+    } catch {}
   } catch (e: any) {
     if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
       return reply.code(503).send({ error: "Storage unavailable" });

@@ -115,7 +115,7 @@ export default function Lobby() {
 
       setParticipant(created.sessionId, joined.participant, created.invitePath);
       hydrateFromJoin(joined);
-      navigate("/vote");
+      navigate(`/vote/${created.sessionId}`);
     } catch (e) {
       console.error("Create/join session failed:", e);
       showToast("warn", errorToMessage(e, t, CREATE_ERROR_KEYS));

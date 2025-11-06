@@ -104,5 +104,7 @@
         "vote_failed": "No se pudo registrar tu voto."
 
     },
-    "queued_vote": "Sin conexión: tu voto se enviará al reconectar"
+    "queued_vote": "Sin conexión: tu voto se enviará al reconectar",
+     "loading": "Cargando...",
+     "progress_label": "Progreso"
 }

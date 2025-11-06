@@ -17,7 +17,7 @@ i18n
     ns: ['translation'],
     defaultNS: 'translation',
     interpolation: { escapeValue: false },
-    react: { useSuspense: false },
+    react: { useSuspense: true },
     debug: import.meta.env.DEV, 
   });
 

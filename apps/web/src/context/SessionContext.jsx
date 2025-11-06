@@ -1,5 +1,5 @@
 // src/context/SessionContext.jsx
-import React, { createContext, useContext, useMemo, useState } from "react";
+import React, { createContext, useContext, useMemo, useState,useEffect } from "react";
 
 const SessionContext = createContext(null);
 
@@ -16,6 +16,15 @@ const INITIAL_SESSION = {
 
 export function SessionProvider({ children }) {
   const [session, setSession] = useState(INITIAL_SESSION);
+
+  // Log para depurar
+  useEffect(() => {
+    console.log('📦 [SESSION CONTEXT] session updated:', {
+      id: session?.id,
+      restaurants: session?.restaurants?.length || 0,
+      status: session?.status
+    });
+  }, [session]);
 
   const setArea = (patch)     => setSession(s => ({ ...s, area: { ...s.area, ...patch }}));
   const setFilters = (patch)  => setSession(s => ({ ...s, filters: { ...s.filters, ...patch }}));
