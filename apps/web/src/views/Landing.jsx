@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import { listRememberedSessions, forgetSession } from "../lib/participant";
@@ -15,7 +15,7 @@ export default function Landing() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [joinValue, setJoinValue] = useState("");
-  const sessions = useMemo(() => listRememberedSessions(), []);
+  const [sessions, setSessions] = useState(() => listRememberedSessions());
 
   function goCreate() {
     navigate("/create");
@@ -98,7 +98,7 @@ export default function Landing() {
                       className="recent__forget"
                       onClick={() => {
                         forgetSession(s.id);
-                        window.location.reload();
+                        setSessions((prev) => prev.filter((x) => x.id !== s.id));
                       }}
                       aria-label="Olvidar"
                       title="Olvidar"
