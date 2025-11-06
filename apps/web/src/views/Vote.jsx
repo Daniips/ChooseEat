@@ -1,5 +1,5 @@
 // apps/web/src/pages/Vote.jsx
-import React, { useEffect, useMemo, useState, useRef } from "react";
+import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Card from "../components/Card";
@@ -98,6 +98,10 @@ export default function Vote() {
     : 0;
   const finishedByDeck = deckReady && !current;
   const finished = finishedByDeck || forceFinished;
+  const finishedRef = useRef(false);
+  useEffect(() => {
+    finishedRef.current = finished;
+  }, [finished]);
 
   console.log(
     "🔍 [STATE] index:",
@@ -116,6 +120,22 @@ export default function Vote() {
     overlayTimerRef.current = setTimeout(() => setShowOverlay(false), 1600);
   };
 
+
+    const reloadResults = useCallback(async () => {
+    if (!session?.id) return;
+
+    try {
+      console.log("📊 [RESULTS] Loading results...");
+      const data = await api(`/api/sessions/${session.id}/results`);
+      console.log("✅ [RESULTS] Results loaded:", data);
+      setResults(data);
+    } catch (e) {
+      console.error("❌ [RESULTS] Load results failed:", e);
+      showToast("warn", errorToMessage(e, t, LOAD_RESULTS_ERROR_KEYS));
+    }
+  }, [session?.id, t]);
+
+  
   // 1) Limpieza del temporizador del overlay al desmontar
   useEffect(() => {
     return () => {
@@ -279,7 +299,7 @@ export default function Vote() {
     const onParticipants = ({ participants }) =>
       setParticipants(participants || []);
     const onVote = () => {
-      if (finished) {
+      if (finishedRef.current) {
         console.log("🔄 [SOCKET] Vote received, reloading results...");
         reloadResults();
       }
@@ -288,10 +308,9 @@ export default function Vote() {
       if (evt?.winner) setWinner(evt.winner);
     };
     const onFinished = () => setForceFinished(true);
-
     const onParticipantDone = () => {
       console.log("🔄 [SOCKET] Participant done, reloading results...");
-      if (finished) {
+      if (finishedRef.current) {
         reloadResults();
       }
     };
@@ -314,7 +333,7 @@ export default function Vote() {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [session?.id, setWinner, finished]);
+  }, [session?.id, setWinner, reloadResults]);
 
   // 7) Cuando terminas tu mazo (finishedByDeck), marca "done" en backend y fuerza estado terminado en cliente.
   useEffect(() => {
@@ -343,21 +362,8 @@ export default function Vote() {
     if (!finished && !winner) return;
 
     reloadResults();
-  }, [session?.id, finished, winner, t]);
+  }, [session?.id, finished, winner, t, reloadResults]);
 
-  const reloadResults = async () => {
-    if (!session?.id) return;
-
-    try {
-      console.log("📊 [RESULTS] Loading results...");
-      const data = await api(`/api/sessions/${session.id}/results`);
-      console.log("✅ [RESULTS] Results loaded:", data);
-      setResults(data);
-    } catch (e) {
-      console.error("❌ [RESULTS] Load results failed:", e);
-      showToast("warn", errorToMessage(e, t, LOAD_RESULTS_ERROR_KEYS));
-    }
-  };
 
   // 9)  Restaura tu progreso desde sessionStorage UNA sola vez por sesión.
   // Usa isRestoring/progressRestored/forceFinished para evitar sobrescrituras y guardados prematuros.
