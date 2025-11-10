@@ -76,6 +76,7 @@ export default function Lobby() {
 
     const params = new URLSearchParams();
     params.set("radiusKm", String(radiusKm));
+    params.set("center", "41.3879,2.16992");
     if (selectedCuisines.length) params.set("cuisines", selectedCuisines.join(","));
     if (price.length) params.set("price", price.join(","));
     if (openNow) params.set("openNow", "true");
@@ -101,11 +102,13 @@ export default function Lobby() {
     const filters = { cuisines: selectedCuisines, price, openNow, minRating };
     const finalRequired = people <= 2 ? 2 : Math.max(2, Math.min(people, Number(requiredYes) || 2));
     const threshold = { type: "absolute", value: finalRequired, participants: Number(people) };
+    // Por defecto
+    const center = { lat: 41.3879, lng: 2.16992 };
 
     try {
       const created = await api("/api/sessions", {
         method: "POST",
-        body: JSON.stringify({ area, filters, threshold })
+        body: JSON.stringify({ area, filters, threshold, center })
       });
 
       const joined = await api(`/api/sessions/${created.sessionId}/join`, {

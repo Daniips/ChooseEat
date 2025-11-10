@@ -1,12 +1,11 @@
+// apps/api/src/index.ts
 //apps/api/src/index.ts
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import fastifyIO from "fastify-socket.io";
 
-import { InMemoryRestaurantProvider } from "./providers/InMemoryRestaurantProvider";
-import { MOCK_RESTAURANTS } from "./data/restaurants";
+import { createRestaurantsProvider } from "./providers";
 import { Area, Filters} from "./types";
-
 import type { Server as IOServer, Socket } from "socket.io";
 
 import 'dotenv/config';
@@ -64,8 +63,10 @@ try {
   app.log.error({ err }, "[Redis] failed to connect – running with in-memory store");
 }
 
-
-const provider = new InMemoryRestaurantProvider(MOCK_RESTAURANTS);
+// Provider factory
+const provider = createRestaurantsProvider();
+const useMock = process.env.USE_MOCK !== "false";
+app.log.info(`[Provider] Using: ${useMock ? "In-Memory Mock" : "Google Places API"}`);
 
 app.get("/health", async () => ({ 
   ok: true,
@@ -73,32 +74,79 @@ app.get("/health", async () => ({
   mode: getRedis()?.isOpen ? "redis" : "memory-fallback",
 }));
 
-app.get("/api/restaurants", async (req) => {
-    const q = req.query as any;
+app.get("/api/restaurants", async (req, reply) => {
+  const q = (req as any).query || {};
+  
+  // Parse radiusKm
+  const radiusKm = Number(q.radiusKm ?? 2);
+  
+  // Parse cuisines (CSV)
+  const cuisines = q.cuisines
+    ? String(q.cuisines)
+        .split(",")
+        .map((s: string) => s.trim())
+        .filter(Boolean)
+    : [];
+  
+  // Parse price (CSV → number[] 0–4)
+  const price = q.price
+    ? String(q.price)
+        .split(",")
+        .map((n: string) => Number(n))
+        .filter((n: number) => !Number.isNaN(n) && n >= 0 && n <= 4)
+    : undefined;
+  
+  // Parse openNow (boolean)
+  const openNow = String(q.openNow) === "true";
+  
+  // Parse minRating (Number)
+  const minRating = q.minRating ? Number(q.minRating) : undefined;
+  
+  // Parse center ("lat,lng" → { lat, lng })
+  let center: { lat: number; lng: number } | undefined;
+  if (q.center && typeof q.center === "string") {
+    const [latStr, lngStr] = q.center.split(",");
+    const lat = Number(latStr);
+    const lng = Number(lngStr);
+    if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+      center = { lat, lng };
+    }
+  }
+  
+  // Si no es mock y no hay center ni PLACES_DEFAULT_CENTER
+  if (!useMock && !center && !process.env.PLACES_DEFAULT_CENTER) {
+    return reply.code(400).send({ 
+      error: "Center required: provide ?center=lat,lng or set PLACES_DEFAULT_CENTER" 
+    });
+  }
 
-    const radiusKm = Number(q.radiusKm ?? 2);
-    const cuisines = q.cuisines
-        ? String(q.cuisines).split(",").map((s) => s.trim()).filter(Boolean)
-        : [];
-    const price = q.price
-        ? String(q.price).split(",").map((n) => Number(n))
-        : undefined;
-    const openNow = String(q.openNow) === "true";
-    const minRating = q.minRating ? Number(q.minRating) : undefined;
-
-    const filters: Filters = { cuisines, price, openNow, minRating };
-    const { items } = await provider.search({ radiusKm, filters });
-    return { count: items.length, items };
+  const filters: Filters = { cuisines, price, openNow, minRating };
+  
+  try {
+    const { items, nextPageToken } = await provider.search({ radiusKm, filters, center });
+    return { count: items.length, items, nextPageToken };
+  } catch (e: any) {
+    req.log.error({ err: e }, "Provider search failed");
+    return reply.code(500).send({ error: e?.message || "Search failed" });
+  }
 });
 
 app.post("/api/sessions", async (req, reply) => {
   const body = (req.body as any) ?? {};
   const area: Area = body.area;
   const filters: Filters = body.filters;
+  const center = body.center; // { lat, lng } opcional
   const rawThreshold = body.threshold as Partial<StoredSession["threshold"]> | undefined;
 
   if (!area?.radiusKm || !Array.isArray(filters?.cuisines) || filters.cuisines.length === 0) {
     return reply.code(400).send({ error: "Parámetros inválidos" });
+  }
+  
+  // Validar center si no es mock
+  if (!useMock && !center && !process.env.PLACES_DEFAULT_CENTER) {
+    return reply.code(400).send({ 
+      error: "Center required: provide center or set PLACES_DEFAULT_CENTER" 
+    });
   }
 
   const participants = Math.max(2, Number(rawThreshold?.participants ?? 2) || 2);
@@ -106,44 +154,53 @@ app.post("/api/sessions", async (req, reply) => {
   const value = Math.min(Math.max(2, valueRaw), participants);
   const threshold: StoredSession["threshold"] = { type: "absolute", value, participants };
 
-  const { items } = await provider.search({ radiusKm: area.radiusKm, filters });
-
-  const sessionId = "s_" + Math.random().toString(36).slice(2, 10);
-  const session: StoredSession = {
-    id: sessionId,
-    area,
-    filters,
-    threshold,
-    status: "open",
-    restaurants: items,
-    createdAt: new Date().toISOString(),
-    participants: {},
-    votes: {},
-    matchedIds: new Set(),
-    winners: [],
-  };
-
   try {
-    await saveSession(session);
-  } catch (e) {
-    req.log.error({ err: e }, "storage unavailable");
-    return reply.code(503).send({ error: "Storage unavailable" });
-  }
+    const { items } = await provider.search({ 
+      radiusKm: area.radiusKm, 
+      filters,
+      center 
+    });
 
-  return reply.send({
-    sessionId,
-    invitePath: `/s/${sessionId}`,
-    count: items.length,
-    session: {
-      id: session.id,
-      area: session.area,
-      filters: session.filters,
-      threshold: session.threshold,
-      status: session.status,
-    },
-    restaurants: items,
-  });
+    const sessionId = "s_" + Math.random().toString(36).slice(2, 10);
+    const session: StoredSession = {
+      id: sessionId,
+      area,
+      filters,
+      threshold,
+      status: "open",
+      restaurants: items,
+      createdAt: new Date().toISOString(),
+      participants: {},
+      votes: {},
+      matchedIds: new Set(),
+      winners: [],
+    };
+
+    await saveSession(session);
+
+    return reply.send({
+      sessionId,
+      invitePath: `/s/${sessionId}`,
+      count: items.length,
+      session: {
+        id: session.id,
+        area: session.area,
+        filters: session.filters,
+        threshold: session.threshold,
+        status: session.status,
+      },
+      restaurants: items,
+    });
+  } catch (e: any) {
+    req.log.error({ err: e }, "Failed to create session");
+    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+      return reply.code(503).send({ error: "Storage unavailable" });
+    }
+    return reply.code(500).send({ error: e?.message || "Cannot create session" });
+  }
 });
+
+// ...existing code (resto de rutas sin cambios)...
 
 app.post("/api/sessions/:id/join", async (req, reply) => {
   if (!requireStorage(reply)) return;
@@ -224,10 +281,6 @@ app.post("/api/sessions/:id/join", async (req, reply) => {
   });
 });
 
-
-
-
-
 app.get("/api/sessions/:id", async (req, reply) => {
   if (!requireStorage(reply)) return;
   const { id } = req.params as any;
@@ -266,8 +319,6 @@ app.get("/api/sessions/:id", async (req, reply) => {
     filters: s.filters,
   });
 });
-
-
 
 app.post("/api/sessions/:id/votes", async (req, reply) => {
   if (!requireStorage(reply)) return;
@@ -360,10 +411,6 @@ app.post("/api/sessions/:id/votes", async (req, reply) => {
   });
 });
 
-
-
-
-
 app.ready().then(() => {
   app.io.on("connection", (socket: Socket) => {
     app.log.info({ id: socket.id }, "socket connected");
@@ -438,8 +485,6 @@ app.ready().then(() => {
       }
     });
 
-
-
     socket.on("disconnect", () => {
       app.log.info({ id: socket.id }, "socket disconnected");
     });
@@ -451,7 +496,6 @@ app.listen({ port, host: "0.0.0.0" }).then(() => {
     app.log.info(`API on http://localhost:${port}`);
 });
 
-//Controlar el cierre de redis
 app.addHook("onClose", async () => {
   const r = getRedis();
   if (r?.isOpen) {
@@ -501,7 +545,6 @@ app.get("/api/sessions/:id/results", async (req, reply) => {
     results,
   });
 });
-
 
 app.post("/api/sessions/:id/done", async (req, reply) => {
   if (!requireStorage(reply)) return;
@@ -559,14 +602,7 @@ app.post("/api/sessions/:id/done", async (req, reply) => {
   return reply.send({ ok: true, status: newStatus, doneCount, min });
 });
 
-
-//DELETE
-//BORRAR
-//SOLO TEST
 app.get("/debug/redis", async () => {
   const r = getRedis();
   return { isOpen: !!r?.isOpen };
 });
-
-
-

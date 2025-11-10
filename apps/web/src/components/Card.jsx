@@ -27,6 +27,19 @@ export default function Card({ r, onNo, onYes, keySwipe, onKeyHandled }) {
     
     const hasVotedRef = useRef(false); 
 
+    const name = r?.name || "";
+    const img = r?.img || r?.photos?.[0] || "https://via.placeholder.com/480x360?text=Restaurant";
+    const cuisines = r?.cuisine || r?.cuisines || [];
+    const price = typeof r?.price === "number" ? r.price : undefined;
+    const rating = typeof r?.rating === "number" ? r.rating : undefined;
+    const openNow = r?.openNow === true;
+    const distanceKm = typeof r?.distanceKm === "number" ? r.distanceKm : null;
+
+    const priceSymbols = typeof price === "number" && price > 0 ? "€".repeat(Math.min(price, 4)) : "";
+    const distanceText = typeof distanceKm === "number" ? `${distanceKm.toFixed(1)} km` : "";
+    const ratingText = typeof rating === "number" ? `⭐ ${rating.toFixed(1)}` : "";
+    const metaText = [priceSymbols, distanceText, ratingText].filter(Boolean).join(" · ");
+    
     useEffect(() => {
         const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
         const update = () => setReduced(mq.matches);
@@ -174,7 +187,7 @@ export default function Card({ r, onNo, onYes, keySwipe, onKeyHandled }) {
             <div className="edge-halo edge-halo--right" style={{ opacity: likeOpacity }} />
 
             <div className="card" ref={ref} style={style}>
-                <img src={r.img} alt={r.name} className="card__img" />
+                <img src={img} alt={name} className="card__img" loading="lazy"/>
                 <div className="card__gradient" />
 
                 <div className="card__badge card__badge--yes" style={{ opacity: likeOpacity }}>{t("yes_label")}</div>
@@ -182,17 +195,17 @@ export default function Card({ r, onNo, onYes, keySwipe, onKeyHandled }) {
 
                 <div className="card__content">
                     <div className="row">
-                        <h3 className="card__title">{r.name}</h3>
-                        {r.openNow && <span className="pill pill--green">{t("open")}</span>}
+                        <h3 className="card__title">{name}</h3>
+                        {openNow && <span className="pill pill--green">{t("open")}</span>}
                     </div>
                     <div className="card__sub">
-                        {r.cuisine
+                        {cuisines
                             .map((c) => t(`${c.toLowerCase()}`))
                             .join(" · ")
                         }
                     </div>
                     <div className="card__meta">
-                        {"$".repeat(r.price)} · {r.distanceKm.toFixed(1)} km · ⭐ {r.rating.toFixed(1)}
+                        {metaText}
                     </div>
                     <div className="card__hint">{t("drag_hint")}</div>
                 </div>
