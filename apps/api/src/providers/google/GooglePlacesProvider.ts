@@ -2,7 +2,6 @@
 import { IRestaurantProvider, SearchParams, SearchResult, RestaurantDTO } from "../types";
 import { normalizeGooglePlaceSummary, normalizeGooglePlaceDetails } from "../utils/normalize";
 
-// Mapeo de cocinas a keywords que Google entiende mejor
 const CUISINE_KEYWORDS: Record<string, string> = {
   italian: "italian pizza pasta",
   japanese: "japanese sushi ramen",
@@ -37,7 +36,7 @@ const CUISINE_PATTERNS: Record<string, string[]> = {
  * Calcula distancia en metros entre dos coordenadas (Haversine)
  */
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371e3; // Radio de la Tierra en metros
+  const R = 6371e3;
   const φ1 = (lat1 * Math.PI) / 180;
   const φ2 = (lat2 * Math.PI) / 180;
   const Δφ = ((lat2 - lat1) * Math.PI) / 180;
@@ -51,9 +50,6 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * c;
 }
 
-/**
- * Google Places API (New) v1 Provider
- */
 export class GooglePlacesProvider implements IRestaurantProvider {
   private apiKey: string;
   private locale: string;
@@ -101,7 +97,6 @@ export class GooglePlacesProvider implements IRestaurantProvider {
 
     const selectedCuisines = filters?.cuisines || [];
 
-    // ESTRATEGIA ADAPTATIVA:
     
     // 1. Si NO hay cocinas → búsqueda genérica
     if (selectedCuisines.length === 0) {
@@ -159,7 +154,6 @@ export class GooglePlacesProvider implements IRestaurantProvider {
         filters
       );
       
-      // Combinar resultados (sin duplicados)
       const existingIds = new Set(result.items.map(r => r.id));
       fallbackResult.items.forEach(item => {
         if (!existingIds.has(item.id)) {
@@ -171,9 +165,6 @@ export class GooglePlacesProvider implements IRestaurantProvider {
     return result;
   }
 
-  /**
-   * Ejecuta una búsqueda simple
-   */
   private async executeSearch(
     query: string,
     center: { lat: number; lng: number },
@@ -193,12 +184,10 @@ export class GooglePlacesProvider implements IRestaurantProvider {
       .filter((n: number) => n >= 1 && n <= 4)
       .map((n: number) => priceMap[n])
       .filter(Boolean);
-
     if (priceLevels && priceLevels.length === 0) {
       priceLevels = undefined;
     }
   }
-
     const FIELD_MASK = [
       "places.id",
       "places.displayName",
@@ -229,14 +218,12 @@ export class GooglePlacesProvider implements IRestaurantProvider {
     };
 
     if (priceLevels) {
-    body.priceLevels = priceLevels; // ← FIX: priceLevels (L mayúscula)
+    body.priceLevels = priceLevels;
   }
 
-  // Solo añadir openNow si es true
   if (filters?.openNow) {
     body.openNow = true;
   }
-
     let json: any;
     try {
       const res = await fetch(url, {
@@ -262,14 +249,12 @@ export class GooglePlacesProvider implements IRestaurantProvider {
     const rawPlaces: any[] = Array.isArray(json?.places) ? json.places : [];
     let items: RestaurantDTO[] = rawPlaces.map(p => normalizeGooglePlaceSummary(p, this.locale));
 
-    // Filtrar por distancia real
     items = items.filter(r => {
       if (!r.location) return false;
       const distance = calculateDistance(center.lat, center.lng, r.location.lat, r.location.lng);
       return distance <= radiusM;
     });
 
-    // Filtros complementarios
     if (typeof filters?.minRating === "number") {
       items = items.filter(r => 
         typeof r.rating === "number" && r.rating >= filters.minRating

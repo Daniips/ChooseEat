@@ -1,15 +1,14 @@
 // apps/api/src/index.ts
-//apps/api/src/index.ts
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import fastifyIO from "fastify-socket.io";
 
 import { createRestaurantsProvider } from "./providers";
-import { Area, Filters} from "./types";
+import { Area, Filters } from "./types";
 import type { Server as IOServer, Socket } from "socket.io";
 
-import 'dotenv/config';
-import { ensureRedis, getRedis,  isRedisAvailable} from "./redis";
+import "dotenv/config";
+import { ensureRedis, getRedis, isRedisAvailable } from "./redis";
 import { resyncMemoryToRedis } from "./data/sessionRepo";
 
 import {
@@ -21,27 +20,28 @@ import {
   type Session as StoredSession,
   VoteBuckets,
 } from "./data/sessionRepo";
+import { CachedGooglePlacesProvider } from "./providers/google/CachedGooglePlacesProvider";
+import { redisCache } from "./cache/RedisCache";
 
 declare module "fastify" {
-    interface FastifyInstance {
-        io: IOServer;
-    }
+  interface FastifyInstance {
+    io: IOServer;
+  }
 }
-
 
 const app = Fastify({ logger: true });
 
 await app.register(cors, { origin: true });
 
 await app.register(fastifyIO, {
-    cors: { origin: true },
+  cors: { origin: true },
 
-    pingInterval: 25_000,
-    pingTimeout: 20_000,
+  pingInterval: 25_000,
+  pingTimeout: 20_000,
 
-    connectionStateRecovery: {
+  connectionStateRecovery: {
     maxDisconnectionDuration: 2 * 60 * 1000,
-    }
+  },
 });
 
 function requireStorage(reply: any) {
@@ -60,15 +60,26 @@ try {
     app.log.info(`[Redis] ready – resynced ${n} sessions from memory`);
   });
 } catch (err) {
-  app.log.error({ err }, "[Redis] failed to connect – running with in-memory store");
+  app.log.error(
+    { err },
+    "[Redis] failed to connect – running with in-memory store"
+  );
 }
 
-// Provider factory
-const provider = createRestaurantsProvider();
-const useMock = process.env.USE_MOCK !== "false";
-app.log.info(`[Provider] Using: ${useMock ? "In-Memory Mock" : "Google Places API"}`);
+await redisCache.connect();
+app.log.info("[Cache] connected");
 
-app.get("/health", async () => ({ 
+const useMock = process.env.USE_MOCK === "true";
+let provider: any;
+if (useMock) {
+  provider = createRestaurantsProvider();
+  app.log.info(`[Provider] Using: In-Memory Mock`);
+} else {
+  provider = new CachedGooglePlacesProvider();
+  app.log.info(`[Provider] Using: Google Places API (cached)`);
+}
+
+app.get("/health", async () => ({
   ok: true,
   redisOpen: !!getRedis()?.isOpen,
   mode: getRedis()?.isOpen ? "redis" : "memory-fallback",
@@ -76,33 +87,27 @@ app.get("/health", async () => ({
 
 app.get("/api/restaurants", async (req, reply) => {
   const q = (req as any).query || {};
-  
-  // Parse radiusKm
+
   const radiusKm = Number(q.radiusKm ?? 2);
-  
-  // Parse cuisines (CSV)
+
   const cuisines = q.cuisines
     ? String(q.cuisines)
         .split(",")
         .map((s: string) => s.trim())
         .filter(Boolean)
     : [];
-  
-  // Parse price (CSV → number[] 0–4)
+
   const price = q.price
     ? String(q.price)
         .split(",")
         .map((n: string) => Number(n))
         .filter((n: number) => !Number.isNaN(n) && n >= 0 && n <= 4)
     : undefined;
-  
-  // Parse openNow (boolean)
+
   const openNow = String(q.openNow) === "true";
-  
-  // Parse minRating (Number)
+
   const minRating = q.minRating ? Number(q.minRating) : undefined;
-  
-  // Parse center ("lat,lng" → { lat, lng })
+
   let center: { lat: number; lng: number } | undefined;
   if (q.center && typeof q.center === "string") {
     const [latStr, lngStr] = q.center.split(",");
@@ -112,18 +117,22 @@ app.get("/api/restaurants", async (req, reply) => {
       center = { lat, lng };
     }
   }
-  
-  // Si no es mock y no hay center ni PLACES_DEFAULT_CENTER
+
   if (!useMock && !center && !process.env.PLACES_DEFAULT_CENTER) {
-    return reply.code(400).send({ 
-      error: "Center required: provide ?center=lat,lng or set PLACES_DEFAULT_CENTER" 
+    return reply.code(400).send({
+      error:
+        "Center required: provide ?center=lat,lng or set PLACES_DEFAULT_CENTER",
     });
   }
 
   const filters: Filters = { cuisines, price, openNow, minRating };
-  
+
   try {
-    const { items, nextPageToken } = await provider.search({ radiusKm, filters, center });
+    const { items, nextPageToken } = await provider.search({
+      radiusKm,
+      filters,
+      center,
+    });
     return { count: items.length, items, nextPageToken };
   } catch (e: any) {
     req.log.error({ err: e }, "Provider search failed");
@@ -135,30 +144,42 @@ app.post("/api/sessions", async (req, reply) => {
   const body = (req.body as any) ?? {};
   const area: Area = body.area;
   const filters: Filters = body.filters;
-  const center = body.center; // { lat, lng } opcional
-  const rawThreshold = body.threshold as Partial<StoredSession["threshold"]> | undefined;
+  const center = body.center;
+  const rawThreshold = body.threshold as
+    | Partial<StoredSession["threshold"]>
+    | undefined;
 
-  if (!area?.radiusKm || !Array.isArray(filters?.cuisines) || filters.cuisines.length === 0) {
+  if (
+    !area?.radiusKm ||
+    !Array.isArray(filters?.cuisines) ||
+    filters.cuisines.length === 0
+  ) {
     return reply.code(400).send({ error: "Parámetros inválidos" });
   }
-  
-  // Validar center si no es mock
+
   if (!useMock && !center && !process.env.PLACES_DEFAULT_CENTER) {
-    return reply.code(400).send({ 
-      error: "Center required: provide center or set PLACES_DEFAULT_CENTER" 
+    return reply.code(400).send({
+      error: "Center required: provide center or set PLACES_DEFAULT_CENTER",
     });
   }
 
-  const participants = Math.max(2, Number(rawThreshold?.participants ?? 2) || 2);
+  const participants = Math.max(
+    2,
+    Number(rawThreshold?.participants ?? 2) || 2
+  );
   const valueRaw = Number(rawThreshold?.value ?? 2) || 2;
   const value = Math.min(Math.max(2, valueRaw), participants);
-  const threshold: StoredSession["threshold"] = { type: "absolute", value, participants };
+  const threshold: StoredSession["threshold"] = {
+    type: "absolute",
+    value,
+    participants,
+  };
 
   try {
-    const { items } = await provider.search({ 
-      radiusKm: area.radiusKm, 
+    const { items } = await provider.search({
+      radiusKm: area.radiusKm,
       filters,
-      center 
+      center,
     });
 
     const sessionId = "s_" + Math.random().toString(36).slice(2, 10);
@@ -193,14 +214,17 @@ app.post("/api/sessions", async (req, reply) => {
     });
   } catch (e: any) {
     req.log.error({ err: e }, "Failed to create session");
-    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+    if (
+      e?.message === "STORAGE_UNAVAILABLE" ||
+      e?.message === "REDIS_TIMEOUT"
+    ) {
       return reply.code(503).send({ error: "Storage unavailable" });
     }
-    return reply.code(500).send({ error: e?.message || "Cannot create session" });
+    return reply
+      .code(500)
+      .send({ error: e?.message || "Cannot create session" });
   }
 });
-
-// ...existing code (resto de rutas sin cambios)...
 
 app.post("/api/sessions/:id/join", async (req, reply) => {
   if (!requireStorage(reply)) return;
@@ -212,7 +236,10 @@ app.post("/api/sessions/:id/join", async (req, reply) => {
   try {
     s = await getSession(id);
   } catch (e: any) {
-    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+    if (
+      e?.message === "STORAGE_UNAVAILABLE" ||
+      e?.message === "REDIS_TIMEOUT"
+    ) {
       return reply.code(503).send({ error: "Storage unavailable" });
     }
     throw e;
@@ -245,11 +272,18 @@ app.post("/api/sessions/:id/join", async (req, reply) => {
   let after: StoredSession | null;
   try {
     after = await updateSession(id, (sess) => {
-    sess.participants[pid] = { id: pid, name: display, joinedAt: new Date().toISOString() };
+      sess.participants[pid] = {
+        id: pid,
+        name: display,
+        joinedAt: new Date().toISOString(),
+      };
       if (sess.status === "open") sess.status = "voting";
     });
   } catch (e: any) {
-    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+    if (
+      e?.message === "STORAGE_UNAVAILABLE" ||
+      e?.message === "REDIS_TIMEOUT"
+    ) {
       return reply.code(503).send({ error: "Storage unavailable" });
     }
     throw e;
@@ -288,16 +322,23 @@ app.get("/api/sessions/:id", async (req, reply) => {
   try {
     s = await getSession(id);
   } catch (e: any) {
-    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+    if (
+      e?.message === "STORAGE_UNAVAILABLE" ||
+      e?.message === "REDIS_TIMEOUT"
+    ) {
       return reply.code(503).send({ error: "Storage unavailable" });
     }
     throw e;
   }
   if (!s) return reply.code(404).send({ error: "Session not found" });
 
-  try { await touchSession(id); }
-  catch (e: any) {
-    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+  try {
+    await touchSession(id);
+  } catch (e: any) {
+    if (
+      e?.message === "STORAGE_UNAVAILABLE" ||
+      e?.message === "REDIS_TIMEOUT"
+    ) {
       return reply.code(503).send({ error: "Storage unavailable" });
     }
     throw e;
@@ -323,16 +364,20 @@ app.get("/api/sessions/:id", async (req, reply) => {
 app.post("/api/sessions/:id/votes", async (req, reply) => {
   if (!requireStorage(reply)) return;
   const { id } = req.params as any;
-  const { participantId, restaurantId, choice } = (req.body as any) as {
+  const { participantId, restaurantId, choice } = req.body as any as {
     participantId?: string;
     restaurantId?: string;
     choice?: "yes" | "no";
   };
 
   let s: StoredSession | null;
-  try { s = await getSession(id); }
-  catch (e: any) {
-    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+  try {
+    s = await getSession(id);
+  } catch (e: any) {
+    if (
+      e?.message === "STORAGE_UNAVAILABLE" ||
+      e?.message === "REDIS_TIMEOUT"
+    ) {
       return reply.code(503).send({ error: "Storage unavailable" });
     }
     throw e;
@@ -355,8 +400,10 @@ app.post("/api/sessions/:id/votes", async (req, reply) => {
   let updated: StoredSession | null;
   try {
     updated = await updateSession(id, (sess) => {
-      const bucket: VoteBuckets =
-        sess.votes[restaurantId] ?? { yes: new Set<string>(), no: new Set<string>() };
+      const bucket: VoteBuckets = sess.votes[restaurantId] ?? {
+        yes: new Set<string>(),
+        no: new Set<string>(),
+      };
       sess.votes[restaurantId] = bucket;
 
       bucket.yes.delete(participantId);
@@ -379,7 +426,10 @@ app.post("/api/sessions/:id/votes", async (req, reply) => {
       return sess;
     });
   } catch (e: any) {
-    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+    if (
+      e?.message === "STORAGE_UNAVAILABLE" ||
+      e?.message === "REDIS_TIMEOUT"
+    ) {
       return reply.code(503).send({ error: "Storage unavailable" });
     }
     throw e;
@@ -397,9 +447,13 @@ app.post("/api/sessions/:id/votes", async (req, reply) => {
       needed,
     });
     if (isNewlyMatched && winnerObj) {
-      app.io.to(updated.id).emit("session:matched", { sessionId: updated.id, winner: winnerObj });
+      app.io
+        .to(updated.id)
+        .emit("session:matched", { sessionId: updated.id, winner: winnerObj });
     }
-  } catch { /* noop */ }
+  } catch {
+    /* noop */
+  }
 
   return reply.send({
     ok: true,
@@ -417,7 +471,7 @@ app.ready().then(() => {
 
     socket.on("session:join", async (payload: { sessionId?: string }) => {
       const sessionId = payload?.sessionId;
-      if (!sessionId) return;                
+      if (!sessionId) return;
       socket.join(sessionId);
 
       const s = await getSession(sessionId);
@@ -429,61 +483,83 @@ app.ready().then(() => {
       }
     });
 
-    socket.on("vote", async (payload: {
-      sessionId?: string;
-      participantId?: string;
-      restaurantId?: string;
-      choice?: "yes" | "no";
-    }) => {
-      const { sessionId, participantId, restaurantId, choice } = payload || {};
-      if (!sessionId) return;
+    socket.on(
+      "vote",
+      async (payload: {
+        sessionId?: string;
+        participantId?: string;
+        restaurantId?: string;
+        choice?: "yes" | "no";
+      }) => {
+        const { sessionId, participantId, restaurantId, choice } =
+          payload || {};
+        if (!sessionId) return;
 
-      const s = await getSession(sessionId);
-      if (!s || !participantId || !s.participants?.[participantId] || !restaurantId || (choice !== "yes" && choice !== "no")) {
-        return;
-      }
-
-      const needed = s.threshold?.value ?? 2;
-
-      let yesCount = 0;
-      let isNewlyMatched = false;
-      let winnerObj: StoredSession["restaurants"][number] | null = null;
-
-      const updated = await updateSession(sessionId, (sess) => {
-        const bucket: VoteBuckets =
-          sess.votes[restaurantId] ?? { yes: new Set<string>(), no: new Set<string>() };
-        sess.votes[restaurantId] = bucket;
-
-        bucket.yes.delete(participantId);
-        bucket.no.delete(participantId);
-        (choice === "yes" ? bucket.yes : bucket.no).add(participantId);
-
-        yesCount = bucket.yes.size;
-
-        isNewlyMatched = yesCount >= needed && !sess.matchedIds.has(restaurantId);
-        if (isNewlyMatched) {
-          sess.matchedIds.add(restaurantId);
-          if (sess.status === "voting") sess.status = "matched";
-          const w = sess.restaurants.find((r) => r.id === restaurantId) || null;
-          if (w) {
-            if (!sess.winners) sess.winners = [];
-            if (!sess.winners.some((x) => x.id === w.id)) sess.winners.push(w);
-            winnerObj = w;
-          }
+        const s = await getSession(sessionId);
+        if (
+          !s ||
+          !participantId ||
+          !s.participants?.[participantId] ||
+          !restaurantId ||
+          (choice !== "yes" && choice !== "no")
+        ) {
+          return;
         }
-        return sess;
-      });
 
-      if (!updated) return;
+        const needed = s.threshold?.value ?? 2;
 
-      app.io.to(updated.id).emit("session:vote", {
-        participantId, restaurantId, choice, yesCount, needed
-      });
+        let yesCount = 0;
+        let isNewlyMatched = false;
+        let winnerObj: StoredSession["restaurants"][number] | null = null;
 
-      if (isNewlyMatched && winnerObj) {
-        app.io.to(updated.id).emit("session:matched", { sessionId: updated.id, winner: winnerObj });
+        const updated = await updateSession(sessionId, (sess) => {
+          const bucket: VoteBuckets = sess.votes[restaurantId] ?? {
+            yes: new Set<string>(),
+            no: new Set<string>(),
+          };
+          sess.votes[restaurantId] = bucket;
+
+          bucket.yes.delete(participantId);
+          bucket.no.delete(participantId);
+          (choice === "yes" ? bucket.yes : bucket.no).add(participantId);
+
+          yesCount = bucket.yes.size;
+
+          isNewlyMatched =
+            yesCount >= needed && !sess.matchedIds.has(restaurantId);
+          if (isNewlyMatched) {
+            sess.matchedIds.add(restaurantId);
+            if (sess.status === "voting") sess.status = "matched";
+            const w =
+              sess.restaurants.find((r) => r.id === restaurantId) || null;
+            if (w) {
+              if (!sess.winners) sess.winners = [];
+              if (!sess.winners.some((x) => x.id === w.id))
+                sess.winners.push(w);
+              winnerObj = w;
+            }
+          }
+          return sess;
+        });
+
+        if (!updated) return;
+
+        app.io.to(updated.id).emit("session:vote", {
+          participantId,
+          restaurantId,
+          choice,
+          yesCount,
+          needed,
+        });
+
+        if (isNewlyMatched && winnerObj) {
+          app.io.to(updated.id).emit("session:matched", {
+            sessionId: updated.id,
+            winner: winnerObj,
+          });
+        }
       }
-    });
+    );
 
     socket.on("disconnect", () => {
       app.log.info({ id: socket.id }, "socket disconnected");
@@ -493,46 +569,44 @@ app.ready().then(() => {
 
 const port = Number(process.env.PORT || 4000);
 app.listen({ port, host: "0.0.0.0" }).then(() => {
-    app.log.info(`API on http://localhost:${port}`);
-});
-
-app.addHook("onClose", async () => {
-  const r = getRedis();
-  if (r?.isOpen) {
-    try {
-      await r.quit();
-      console.info("[Redis] client quit");
-    } catch (e) {
-      console.warn("[Redis] quit failed:", (e as Error).message);
-    }
-  }
+  app.log.info(`API on http://localhost:${port}`);
 });
 
 app.get("/api/sessions/:id/results", async (req, reply) => {
   if (!requireStorage(reply)) return;
   const { id } = req.params as any;
   let s: StoredSession | null;
-  try { s = await getSession(id); }
-  catch (e: any) {
-    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+  try {
+    s = await getSession(id);
+  } catch (e: any) {
+    if (
+      e?.message === "STORAGE_UNAVAILABLE" ||
+      e?.message === "REDIS_TIMEOUT"
+    ) {
       return reply.code(503).send({ error: "Storage unavailable" });
     }
     throw e;
   }
   if (!s) return reply.code(404).send({ error: "Session not found" });
 
-  try { await touchSession(id); }
-  catch (e: any) {
-    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+  try {
+    await touchSession(id);
+  } catch (e: any) {
+    if (
+      e?.message === "STORAGE_UNAVAILABLE" ||
+      e?.message === "REDIS_TIMEOUT"
+    ) {
       return reply.code(503).send({ error: "Storage unavailable" });
     }
     throw e;
   }
 
-  const { totalParticipants, votersTarget, needed, results, winnerIds } = computeRepoResults(s);
-  const winners = (s.winners && s.winners.length)
-    ? s.winners
-    : s.restaurants.filter(r => s.matchedIds.has(r.id));
+  const { totalParticipants, votersTarget, needed, results, winnerIds } =
+    computeRepoResults(s);
+  const winners =
+    s.winners && s.winners.length
+      ? s.winners
+      : s.restaurants.filter((r) => s.matchedIds.has(r.id));
 
   return reply.send({
     sessionId: id,
@@ -552,9 +626,13 @@ app.post("/api/sessions/:id/done", async (req, reply) => {
   const { participantId } = (req.body as any) ?? {};
 
   let s: StoredSession | null;
-  try { s = await getSession(id); }
-  catch (e: any) {
-    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+  try {
+    s = await getSession(id);
+  } catch (e: any) {
+    if (
+      e?.message === "STORAGE_UNAVAILABLE" ||
+      e?.message === "REDIS_TIMEOUT"
+    ) {
       return reply.code(503).send({ error: "Storage unavailable" });
     }
     throw e;
@@ -573,27 +651,34 @@ app.post("/api/sessions/:id/done", async (req, reply) => {
       const p = sess.participants[participantId];
       if (p) p.done = true;
 
-      min = sess.threshold?.participants ?? Object.keys(sess.participants || {}).length;
+      min =
+        sess.threshold?.participants ??
+        Object.keys(sess.participants || {}).length;
       doneCount = Object.values(sess.participants).filter((x) => x.done).length;
 
       if (doneCount >= min && sess.status !== "finished") {
         sess.status = "finished";
         newStatus = "finished";
-        try { app.io.to(id).emit("session:finished", { sessionId: id }); } catch {}
+        try {
+          app.io.to(id).emit("session:finished", { sessionId: id });
+        } catch {}
       } else {
         newStatus = sess.status;
       }
     });
     try {
-      app.io.to(id).emit("participant:done", { 
-        sessionId: id, 
+      app.io.to(id).emit("participant:done", {
+        sessionId: id,
         participantId,
         doneCount,
-        min
+        min,
       });
     } catch {}
   } catch (e: any) {
-    if (e?.message === "STORAGE_UNAVAILABLE" || e?.message === "REDIS_TIMEOUT") {
+    if (
+      e?.message === "STORAGE_UNAVAILABLE" ||
+      e?.message === "REDIS_TIMEOUT"
+    ) {
       return reply.code(503).send({ error: "Storage unavailable" });
     }
     throw e;
@@ -605,4 +690,19 @@ app.post("/api/sessions/:id/done", async (req, reply) => {
 app.get("/debug/redis", async () => {
   const r = getRedis();
   return { isOpen: !!r?.isOpen };
+});
+
+//Cerrar cache al cerrar la app
+app.addHook("onClose", async () => {
+  const r = getRedis();
+  if (r?.isOpen) {
+    try {
+      await r.quit();
+    } catch {}
+  }
+  if (redisCache.ready()) {
+    try {
+      await redisCache.disconnect();
+    } catch {}
+  }
 });

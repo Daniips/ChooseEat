@@ -1,0 +1,42 @@
+// apps/api/src/providers/google/CachedGooglePlacesProvider.ts
+import { GooglePlacesProvider } from "./GooglePlacesProvider";
+import { redisCache } from "../../cache/RedisCache";
+import { searchCacheKey, detailsCacheKey } from "../../cache/cacheKeys";
+import { CACHE_TTL } from "../../cache/cacheConfig";
+import { SearchParams, SearchResult, RestaurantDTO } from "../types";
+
+export class CachedGooglePlacesProvider extends GooglePlacesProvider {
+  async search(params: SearchParams): Promise<SearchResult> {
+    const cacheKey = searchCacheKey(params);
+
+    const cached = await redisCache.get<SearchResult>(cacheKey);
+    if (cached) {
+      console.log(`✅ Cache HIT: ${cacheKey}`);
+      return cached;
+    }
+
+    console.log(`❌ Cache MISS: ${cacheKey}`);
+
+    const result = await super.search(params);
+
+    await redisCache.set(cacheKey, result, CACHE_TTL.SEARCH);
+    return result;
+  }
+
+  async getDetails(id: string): Promise<RestaurantDTO | null> {
+    const cacheKey = detailsCacheKey(id);
+    const cached = await redisCache.get<RestaurantDTO>(cacheKey);
+    if (cached) {
+      console.log(`✅ Cache HIT: ${cacheKey}`);
+      return cached;
+    }
+
+    console.log(`❌ Cache MISS: ${cacheKey}`);
+    const details = await super.getDetails(id);
+    if (details) {
+      await redisCache.set(cacheKey, details, CACHE_TTL.DETAILS);
+    }
+
+    return details;
+  }
+}
