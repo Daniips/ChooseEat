@@ -8,18 +8,15 @@ const TILT_MS = 140;
 const LEAVE_MS = 220;
 const PRE_TILT_FACTOR = 0.9;
 
-// Tipos genéricos que no aportan información de cocina
 const GENERIC_TYPES = ["restaurant", "food", "point_of_interest", "establishment"];
 
 function formatLabel(key, t) {
-  // Intenta traducir primero como cocina, luego como tipo
   const cuisineKey = `cuisines.${key}`;
   const typeKey = `types.${key}`;
   
   if (t(cuisineKey) !== cuisineKey) return t(cuisineKey);
   if (t(typeKey) !== typeKey) return t(typeKey);
   
-  // Fallback: formatear el texto
   return key.replace(/_/g, " ");
 }
 
@@ -83,14 +80,12 @@ export default function Card({ r, onNo, onYes, keySwipe, onKeyHandled }) {
     typeof price === "number" && price > 0
       ? "€".repeat(Math.min(price, 4))
       : "";
-  // Construir bloques separados para meta
   const distanceText = typeof distanceKm === "number" ? `${distanceKm.toFixed(1)} ${t("km")}` : "";
   const ratingText =
     typeof rating === "number"
       ? `⭐ ${rating.toFixed(1)}${userRatingsTotal ? ` (${userRatingsTotal})` : ""}`
       : "";
 
-  // Etiquetas de cocina: priorizar r.cuisines (filtrando genéricos); fallback a types
   const cuisineLabels = (Array.isArray(cuisines) ? cuisines : [])
     .filter((c) => !GENERIC_TYPES.includes(String(c)))
     .map((c) => formatLabel(c, t))
