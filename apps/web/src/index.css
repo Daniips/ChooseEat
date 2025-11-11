@@ -363,6 +363,23 @@ body {
   font-size: 13px;
   margin-top: 4px;
 }
+.card__cuisines {
+  font-size: 14px;
+  margin-top: 6px;
+  opacity: 0.95;
+}
+.card__meta-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  opacity: 0.9;
+  margin-top: 6px;
+}
+.card__meta--address {
+  opacity: 0.85;
+  margin-top: 6px;
+}
 .card__actions {
   display: flex;
   gap: 12px;
@@ -577,6 +594,7 @@ select.input {
 }
 
 input[type="number"].input {
+  appearance: textfield;
   -moz-appearance: textfield;
 }
 input[type="number"].input::-webkit-outer-spin-button,

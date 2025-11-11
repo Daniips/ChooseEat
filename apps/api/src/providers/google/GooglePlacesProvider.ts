@@ -194,10 +194,12 @@ export class GooglePlacesProvider implements IRestaurantProvider {
       "places.formattedAddress",
       "places.location",
       "places.rating",
+      "places.userRatingCount",
       "places.priceLevel",
       "places.photos",
       "places.types",
       "places.currentOpeningHours",
+      "places.businessStatus",
     ].join(",");
 
     const url = "https://places.googleapis.com/v1/places:searchText";
@@ -249,11 +251,16 @@ export class GooglePlacesProvider implements IRestaurantProvider {
     const rawPlaces: any[] = Array.isArray(json?.places) ? json.places : [];
     let items: RestaurantDTO[] = rawPlaces.map(p => normalizeGooglePlaceSummary(p, this.locale));
 
-    items = items.filter(r => {
-      if (!r.location) return false;
-      const distance = calculateDistance(center.lat, center.lng, r.location.lat, r.location.lng);
-      return distance <= radiusM;
-    });
+    items = items
+      .map(r => {
+        if (!r.location) return r;
+        const distanceM = calculateDistance(center.lat, center.lng, r.location.lat, r.location.lng);
+        return { ...r, distanceKm: distanceM / 1000 };
+      })
+      .filter(r => {
+        if (!r.location) return false;
+        return (r.distanceKm ?? 0) * 1000 <= radiusM;
+      });
 
     if (typeof filters?.minRating === "number") {
       items = items.filter(r => 

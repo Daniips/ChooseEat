@@ -81,14 +81,11 @@ export default function Vote() {
     const restaurants = Array.isArray(session?.restaurants)
       ? session.restaurants
       : [];
-    console.log("🔍 [DECK] session.restaurants:", session?.restaurants);
-    console.log("🔍 [DECK] list length:", restaurants.length);
     return restaurants;
   }, [session?.restaurants]);
 
   const total = list.length;
   const deckReady = total > 0;
-  console.log("🔍 [DECK STATE] total:", total, "deckReady:", deckReady);
   const current = deckReady ? list[index] || null : null;
   const currentNumber = deckReady
     ? Math.min(index + (current ? 1 : 0), total)
@@ -103,15 +100,6 @@ export default function Vote() {
     finishedRef.current = finished;
   }, [finished]);
 
-  console.log(
-    "🔍 [STATE] index:",
-    index,
-    "current:",
-    current?.name,
-    "finished:",
-    finished
-  );
-
   const [showOverlay, setShowOverlay] = useState(false);
   const overlayTimerRef = useRef(null);
   const triggerMatchFlash = () => {
@@ -125,12 +113,9 @@ export default function Vote() {
     if (!session?.id) return;
 
     try {
-      console.log("📊 [RESULTS] Loading results...");
       const data = await api(`/api/sessions/${session.id}/results`);
-      console.log("✅ [RESULTS] Results loaded:", data);
       setResults(data);
     } catch (e) {
-      console.error("❌ [RESULTS] Load results failed:", e);
       showToast("warn", errorToMessage(e, t, LOAD_RESULTS_ERROR_KEYS));
     }
   }, [session?.id, t]);
@@ -148,37 +133,24 @@ export default function Vote() {
   useEffect(() => {
     const restoreSession = async () => {
       if (!sessionId) {
-        console.log("⚠️ [RESTORE] No sessionId in URL");
         navigate("/");
         return;
       }
 
       if (session?.id === sessionId && session?.restaurants?.length > 0) {
-        console.log("✅ [RESTORE] Session already loaded");
         return;
       }
 
       const participant = getParticipant(sessionId);
 
       if (!participant?.id) {
-        console.log(
-          "⚠️ [RESTORE] No participant found for session:",
-          sessionId
-        );
         return;
       }
-
-      console.log("🔄 [RESTORE] Attempting to restore session:", sessionId);
 
       try {
         const response = await api(`/api/sessions/${sessionId}/join`, {
           method: "POST",
           body: JSON.stringify({ participantId: participant.id }),
-        });
-
-        console.log("✅ [RESTORE] Session restored:", {
-          sessionId: response.session?.id,
-          restaurants: response.restaurants?.length || 0,
         });
 
         hydrateFromJoin(response);
@@ -195,7 +167,6 @@ export default function Vote() {
   // 3) Guarda el sessionId actual en sessionStorage para facilitar futuras restauraciones.
   useEffect(() => {
     if (session?.id) {
-      console.log("💾 [SESSION] Saving current session ID:", session.id);
       sessionStorage.setItem("currentSessionId", session.id);
     }
   }, [session?.id]);
@@ -238,20 +209,11 @@ export default function Vote() {
         const me = getParticipant(session.id);
         const iAmDone = me?.id && s.participants?.[me.id]?.done;
 
-        console.log(
-          "🔍 [SESSION STATUS] status:",
-          s.status,
-          "iAmDone:",
-          iAmDone
-        );
-
         if (s.status === "finished") {
-          console.log("✅ [SESSION STATUS] Session finished globally");
           setForceFinished(true);
           return;
         }
         if (iAmDone) {
-          console.log("✅ [SESSION STATUS] I already finished voting");
           setForceFinished(true);
 
           const key = `vote-progress-${session.id}`;
@@ -263,10 +225,6 @@ export default function Vote() {
                 yesIds: savedYes,
                 noIds: savedNo,
               } = JSON.parse(saved);
-              console.log(
-                "✅ [RESTORE FINISHED] Restored finished state - index:",
-                savedIndex
-              );
               setIndex(savedIndex || total);
               setYesIds(savedYes || []);
               setNoIds(savedNo || []);
@@ -300,7 +258,6 @@ export default function Vote() {
       setParticipants(participants || []);
     const onVote = () => {
       if (finishedRef.current) {
-        console.log("🔄 [SOCKET] Vote received, reloading results...");
         reloadResults();
       }
     };
@@ -309,7 +266,6 @@ export default function Vote() {
     };
     const onFinished = () => setForceFinished(true);
     const onParticipantDone = () => {
-      console.log("🔄 [SOCKET] Participant done, reloading results...");
       if (finishedRef.current) {
         reloadResults();
       }
@@ -374,21 +330,10 @@ export default function Vote() {
       forceFinished ||
       progressRestored
     ) {
-      if (progressRestored) {
-        console.log("✅ [RESTORE PROGRESS] Already restored");
-      } else {
-        console.log(
-          "⏳ [RESTORE PROGRESS] Skipping restore - waiting for session or already finished"
-        );
-      }
       return;
     }
-
     const key = `vote-progress-${session.id}`;
     const saved = sessionStorage.getItem(key);
-    console.log("🔄 [RESTORE PROGRESS] sessionStorage key:", key);
-    console.log("🔄 [RESTORE PROGRESS] saved data:", saved);
-
     if (saved) {
       try {
         const {
@@ -396,14 +341,6 @@ export default function Vote() {
           yesIds: savedYes,
           noIds: savedNo,
         } = JSON.parse(saved);
-        console.log(
-          "✅ [RESTORE PROGRESS] Restored - index:",
-          savedIndex,
-          "yesIds:",
-          savedYes.length,
-          "noIds:",
-          savedNo.length
-        );
 
         isRestoring.current = true;
         setIndex(savedIndex || 0);
@@ -413,16 +350,12 @@ export default function Vote() {
 
         setTimeout(() => {
           isRestoring.current = false;
-          console.log(
-            "✅ [RESTORE PROGRESS] Restoration complete, can save now"
-          );
         }, 100);
       } catch (e) {
         console.error("❌ [RESTORE PROGRESS] Failed:", e);
         isRestoring.current = false;
       }
     } else {
-      console.log("⚠️ [RESTORE PROGRESS] No saved progress found");
       setProgressRestored(true);
     }
   }, [
@@ -436,15 +369,11 @@ export default function Vote() {
   // Se salta durante la restauración (isRestoring.current === true).
   useEffect(() => {
     if (!session?.id || isRestoring.current) {
-      if (isRestoring.current) {
-        console.log("⏸️ [SAVE] Skipping save during restoration");
-      }
       return;
     }
 
     const key = `vote-progress-${session.id}`;
     const data = JSON.stringify({ index, yesIds, noIds });
-    console.log("💾 [SAVE] Saving to sessionStorage:", data);
     sessionStorage.setItem(key, data);
   }, [session?.id, index, yesIds, noIds]);
 

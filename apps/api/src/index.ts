@@ -133,6 +133,21 @@ app.get("/api/restaurants", async (req, reply) => {
       filters,
       center,
     });
+    if (items.length) {
+      console.log("[RestaurantDTO sample]", {
+        id: items[0].id,
+        name: items[0].name,
+        rating: items[0].rating,
+        userRatingsTotal: items[0].userRatingsTotal,
+        price: items[0].price,
+        openNow: items[0].openNow,
+        businessStatus: items[0].businessStatus,
+        types: items[0].types?.slice(0, 5),
+        photos: items[0].photos?.length,
+        photoSample: items[0].photos?.[0],
+        vicinity: items[0].vicinity,
+      });
+    }
     return { count: items.length, items, nextPageToken };
   } catch (e: any) {
     req.log.error({ err: e }, "Provider search failed");
@@ -566,6 +581,34 @@ app.ready().then(() => {
     });
   });
 });
+
+app.get("/api/photos/proxy", async (req, reply) => {
+  const { url } = req.query as { url?: string };
+  if (!url || !url.startsWith("https://places.googleapis.com")) {
+    return reply.code(400).send({ error: "Invalid URL" });
+  }
+  try {
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      return reply.code(response.status).send({ error: "Failed to fetch image" });
+    }
+    
+    const buffer = await response.arrayBuffer();
+    const contentType = response.headers.get("content-type") || "image/jpeg";
+
+    reply.header("Content-Type", contentType);
+    reply.header("Cache-Control", "public, max-age=86400");
+    reply.header("Access-Control-Allow-Origin", "*");
+    
+    return Buffer.from(buffer);
+  } catch (error: any) {
+    req.log.error({ err: error }, "Photo proxy failed");
+    return reply.code(500).send({ error: "Failed to fetch image" });
+  }
+});
+
+
 
 const port = Number(process.env.PORT || 4000);
 app.listen({ port, host: "0.0.0.0" }).then(() => {

@@ -12,6 +12,11 @@ export type RestaurantDTO = {
   location?: { lat: number; lng: number };
   cuisines?: string[];
   openNow?: boolean;
+  userRatingsTotal?: number;
+  businessStatus?: string;
+  types?: string[];
+  vicinity?: string; 
+  distanceKm?: number;
   source?: 'mock' | 'google';
 };
 
