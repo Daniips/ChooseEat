@@ -6,7 +6,6 @@ import { useTranslation } from "react-i18next";
 function getPhotoUrl(restaurant) {
   const url = restaurant.photos?.[0] || restaurant.img;
   if (!url) return "";
-  // If it's a Google Places photo URL, route it through the proxy
   if (url.includes("places.googleapis.com")) {
     return `http://localhost:4000/api/photos/proxy?url=${encodeURIComponent(url)}`;
   }
@@ -14,15 +13,12 @@ function getPhotoUrl(restaurant) {
 }
 
 function getGoogleMapsUrl(restaurant) {
-  // Prefer using place_id (which is the restaurant.id from Google Places)
   if (restaurant.id && restaurant.source === 'google') {
     return `https://www.google.com/maps/place/?q=place_id:${restaurant.id}`;
   }
-  // Fallback to coordinates if available
   if (restaurant.location?.lat && restaurant.location?.lng) {
     return `https://www.google.com/maps/search/?api=1&query=${restaurant.location.lat},${restaurant.location.lng}`;
   }
-  // Last resort: search by name
   if (restaurant.name) {
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.name)}`;
   }
@@ -69,7 +65,7 @@ export default function Summary({
                               aria-label={t("view_on_maps")}
                               title={t("view_on_maps")}
                             >
-                              📍 {t("view_on_maps")}
+                              {t("view_on_maps")}
                             </Button>
                           </div>
                         )}
