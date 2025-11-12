@@ -55,6 +55,10 @@ export class GooglePlacesProvider implements IRestaurantProvider {
   private locale: string;
   private defaultRadiusM: number;
   private defaultCenter?: { lat: number; lng: number };
+  
+  // Configuración de knobs
+  private readonly MAX_CALLS = 2;
+  private readonly MIN_RESULTS = 10;
 
   constructor() {
     const key = process.env.GOOGLE_PLACES_API_KEY;
@@ -74,6 +78,14 @@ export class GooglePlacesProvider implements IRestaurantProvider {
         this.defaultCenter = { lat, lng };
       }
     }
+  }
+
+  // Construye query combinada con keywords de todas las cocinas
+  private buildCombinedQuery(cuisines: string[]): string {
+    const tokens = cuisines.flatMap(c => (CUISINE_KEYWORDS[c] || c).split(/\s+/));
+    const unique = Array.from(new Set(tokens.map(t => t.trim().toLowerCase()).filter(Boolean)));
+    const capped = unique.slice(0, 12);
+    return `restaurant ${capped.join(" ")}`;
   }
 
   async search(params: SearchParams): Promise<SearchResult> {
@@ -103,36 +115,80 @@ export class GooglePlacesProvider implements IRestaurantProvider {
       return this.executeSearch("restaurant", effectiveCenter, radiusM, filters);
     }
 
-    // 2. Si hay 1-2 cocinas → búsqueda con la cocina principal
-    if (selectedCuisines.length <= 2) {
-      const mainCuisine = CUISINE_KEYWORDS[selectedCuisines[0]] || selectedCuisines[0];
-      const query = `restaurant ${mainCuisine}`;
+    // 2. Si hay 1-4 cocinas → query combinada + filtrado + fallback opcional
+    if (selectedCuisines.length >= 1 && selectedCuisines.length <= 4) {
+      const combinedQuery = this.buildCombinedQuery(selectedCuisines);
+      let callsMade = 0;
       
-      const result = await this.executeSearch(query, effectiveCenter, radiusM, filters);
+      console.log(`🔍 Combined query: "${combinedQuery}"`);
       
-      // Si hay 2 cocinas, filtrar en memoria para incluir ambas
-      if (selectedCuisines.length === 2) {
-        result.items = result.items.filter(r => {
+      // Primera llamada con query combinada
+      const result = await this.executeSearch(combinedQuery, effectiveCenter, radiusM, filters);
+      callsMade++;
+      
+      // Filtrar en memoria por patrones de cocina (OR)
+      const beforeFilter = result.items.length;
+      result.items = result.items.filter(r => {
+        if (!r.cuisines?.length) return false;
+        return selectedCuisines.some(sc => {
+          const patterns = CUISINE_PATTERNS[sc] || [sc];
+          return r.cuisines!.some(c =>
+            patterns.some(p => c.toLowerCase().includes(p.toLowerCase()))
+          );
+        });
+      });
+      
+      console.log(`📊 After filtering: ${result.items.length}/${beforeFilter} (target: ${this.MIN_RESULTS})`);
+      
+      // Si quedan pocos resultados, hacer segunda búsqueda más genérica
+      if (result.items.length < this.MIN_RESULTS && callsMade < this.MAX_CALLS) {
+        console.log(`⚠️ Solo ${result.items.length} resultados, ejecutando búsqueda de rescate...`);
+        
+        // Estrategia de rescate: búsqueda genérica "restaurant" pero con los mismos filtros
+        const fallbackResult = await this.executeSearch(
+          "restaurant",
+          effectiveCenter,
+          radiusM,
+          filters
+        );
+        callsMade++;
+        
+        // Filtrar también el fallback por las cocinas seleccionadas
+        const fallbackFiltered = fallbackResult.items.filter(r => {
           if (!r.cuisines?.length) return false;
           return selectedCuisines.some(sc => {
             const patterns = CUISINE_PATTERNS[sc] || [sc];
-            return r.cuisines!.some(c => 
+            return r.cuisines!.some(c =>
               patterns.some(p => c.toLowerCase().includes(p.toLowerCase()))
             );
           });
         });
+        
+        // Merge sin duplicar por ID
+        const existingIds = new Set(result.items.map(r => r.id));
+        let addedCount = 0;
+        fallbackFiltered.forEach(item => {
+          if (!existingIds.has(item.id)) {
+            result.items.push(item);
+            addedCount++;
+          }
+        });
+        
+        console.log(`➕ Añadidos ${addedCount} restaurantes del rescate`);
       }
       
+      console.log(`✅ Search completed with ${callsMade} call(s), ${result.items.length} results`);
       return result;
     }
 
-    // 3. Si hay 3+ cocinas → búsqueda genérica + filtrado agresivo
+    // 3. Si hay 5+ cocinas → búsqueda genérica + filtrado agresivo
     const result = await this.executeSearch("restaurant", effectiveCenter, radiusM, {
       ...filters,
       cuisines: undefined,
     });
 
     // Filtrar solo restaurantes que cumplan AL MENOS UNA cocina
+    const beforeFilter = result.items.length;
     result.items = result.items.filter(r => {
       if (!r.cuisines?.length) return false;
       
@@ -143,9 +199,13 @@ export class GooglePlacesProvider implements IRestaurantProvider {
         );
       });
     });
+    
+    console.log(`📊 After filtering: ${result.items.length}/${beforeFilter} (target: ${this.MIN_RESULTS})`);
 
-    // Si quedan pocos resultados (<5), hacer segunda búsqueda con la cocina más popular
-    if (result.items.length < 5) {
+    // Si quedan pocos resultados, hacer segunda búsqueda con la cocina principal
+    if (result.items.length < this.MIN_RESULTS) {
+      console.log(`⚠️ Solo ${result.items.length} resultados, ejecutando búsqueda de rescate...`);
+      
       const mainCuisine = CUISINE_KEYWORDS[selectedCuisines[0]] || selectedCuisines[0];
       const fallbackResult = await this.executeSearch(
         `restaurant ${mainCuisine}`,
@@ -154,14 +214,31 @@ export class GooglePlacesProvider implements IRestaurantProvider {
         filters
       );
       
+      // Filtrar también el fallback
+      const fallbackFiltered = fallbackResult.items.filter(r => {
+        if (!r.cuisines?.length) return false;
+        return selectedCuisines.some(sc => {
+          const patterns = CUISINE_PATTERNS[sc] || [sc];
+          return r.cuisines!.some(c =>
+            patterns.some(p => c.toLowerCase().includes(p.toLowerCase()))
+          );
+        });
+      });
+      
       const existingIds = new Set(result.items.map(r => r.id));
-      fallbackResult.items.forEach(item => {
+      let addedCount = 0;
+      fallbackFiltered.forEach(item => {
         if (!existingIds.has(item.id)) {
           result.items.push(item);
+          addedCount++;
         }
       });
+      
+      console.log(`➕ Añadidos ${addedCount} restaurantes del rescate`);
+      console.log(`✅ Search completed with 2 call(s), ${result.items.length} results`);
+    } else {
+      console.log(`✅ Search completed with 1 call, ${result.items.length} results`);
     }
-
     return result;
   }
 
