@@ -3,6 +3,32 @@ import React from "react";
 import Button from "../components/Button";
 import { useTranslation } from "react-i18next";
 
+function getPhotoUrl(restaurant) {
+  const url = restaurant.photos?.[0] || restaurant.img;
+  if (!url) return "";
+  // If it's a Google Places photo URL, route it through the proxy
+  if (url.includes("places.googleapis.com")) {
+    return `http://localhost:4000/api/photos/proxy?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+}
+
+function getGoogleMapsUrl(restaurant) {
+  // Prefer using place_id (which is the restaurant.id from Google Places)
+  if (restaurant.id && restaurant.source === 'google') {
+    return `https://www.google.com/maps/place/?q=place_id:${restaurant.id}`;
+  }
+  // Fallback to coordinates if available
+  if (restaurant.location?.lat && restaurant.location?.lng) {
+    return `https://www.google.com/maps/search/?api=1&query=${restaurant.location.lat},${restaurant.location.lng}`;
+  }
+  // Last resort: search by name
+  if (restaurant.name) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.name)}`;
+  }
+  return "";
+}
+
 export default function Summary({
   liked = [],
   scores = [],
@@ -24,21 +50,43 @@ export default function Summary({
           <>
             <p className="muted">{t("liked")}</p>
             <ul className="list">
-              {liked.map((x) => (
-                <li key={x.id} className="list__item">
-                  <img src={x.img} alt="" />
-                  <div>
-                    <div className="name">{x.name}</div>
-                    <div className="small">
-                      {Array.isArray(x.cuisine)
-                        ? x.cuisine.map((c) => t(c.toLowerCase())).join(" · ")
-                        : null}
-                      {x.price ? ` · ${"$".repeat(x.price)}` : ""}
-                      {typeof x.rating === "number" ? ` · ⭐ ${x.rating.toFixed(1)}` : ""}
+              {liked.map((x) => {
+                const photoUrl = getPhotoUrl(x);
+                const mapsUrl = getGoogleMapsUrl(x);
+                
+                return (
+                  <li key={x.id} className="list__item">
+                    {photoUrl && <img src={photoUrl} alt="" />}
+                    <div className="list__item-content">
+                      <div className="res-title">
+                        <span className="name res-title__name">{x.name}</span>
+                        {mapsUrl && (
+                          <div className="res-title__right">
+                            <Button
+                              variant="ghost"
+                              size="mini"
+                              onClick={() => window.open(mapsUrl, "_blank", "noopener")}
+                              aria-label={t("view_on_maps")}
+                              title={t("view_on_maps")}
+                            >
+                              📍 {t("view_on_maps")}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="small">
+                        {Array.isArray(x.cuisines) && x.cuisines.length > 0
+                          ? x.cuisines.map((c) => t(`cuisines.${c}`, c)).join(" · ")
+                          : Array.isArray(x.cuisine)
+                          ? x.cuisine.map((c) => t(c.toLowerCase())).join(" · ")
+                          : null}
+                        {x.price ? ` · ${"$".repeat(x.price)}` : ""}
+                        {typeof x.rating === "number" ? ` · ⭐ ${x.rating.toFixed(1)}` : ""}
+                      </div>
                     </div>
-                  </div>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           </>
         ) : (
@@ -84,20 +132,39 @@ export default function Summary({
           const pendingPct = Math.max(0, 100 - yesPct - noPct);
 
           const isWinner = winners.has(r.id);
+          const photoUrl = getPhotoUrl(r);
+          const mapsUrl = getGoogleMapsUrl(r);
 
           return (
             <li key={r.id} className={`res-row${isWinner ? " res-row--winner" : ""}`}>
-              <img className="res-img" src={r.img} alt="" />
+              {photoUrl && <img className="res-img" src={photoUrl} alt="" />}
               <div className="res-main">
                 <div className="res-title">
-                  <span className="name">{r.name}</span>
-                  {isWinner && (
-                    <span className="badge" title={t("winner")} aria-label={t("winner")}>🏆</span>
-                  )}
+                  <span className="name res-title__name">{r.name}</span>
+                  <div className="res-title__right">
+                    {isWinner && (
+                      <span className="badge" title={t("winner")} aria-label={t("winner")}>
+                        🏆
+                      </span>
+                    )}
+                    {mapsUrl && (
+                      <Button
+                        variant="ghost"
+                        size="mini"
+                        onClick={() => window.open(mapsUrl, "_blank", "noopener")}
+                        aria-label={t("view_on_maps")}
+                        title={t("view_on_maps")}
+                      >
+                        📍 {t("view_on_maps")}
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="small res-meta">
-                  {Array.isArray(r.cuisine)
+                  {Array.isArray(r.cuisines) && r.cuisines.length > 0
+                    ? r.cuisines.map((c) => t(`cuisines.${c}`, c)).join(" · ")
+                    : Array.isArray(r.cuisine)
                     ? r.cuisine.map((c) => t(c.toLowerCase())).join(" · ")
                     : null}
                   {r.price ? ` · ${"$".repeat(r.price)}` : ""}
@@ -134,3 +201,4 @@ export default function Summary({
     </div>
   );
 }
+

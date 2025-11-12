@@ -84,6 +84,7 @@
   "threshold_reached_one": "Se alcanzó el umbral (≥ {{needed}}) en {{count}} lugar.",
   "threshold_reached_other": "Se alcanzó el umbral (≥ {{needed}}) en {{count}} lugares.",
   "threshold_not_reached": "Aún no se alcanzó el umbral (≥ {{needed}}).",
+  "view_on_maps": "Ver en Google Maps",
   "errors": {
     "network_down": "No se pudo conectar. Comprueba tu conexión e inténtalo de nuevo.",
     "session_not_found": "La sesión no existe o ha expirado.",

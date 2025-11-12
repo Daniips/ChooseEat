@@ -1234,7 +1234,10 @@ input[type="checkbox"] {
   display: flex;
   align-items: center;
   gap: 6px;
+  justify-content: space-between;
 }
+.res-title__name { flex: 1; min-width: 0; }
+.res-title__right { display: inline-flex; gap: 8px; align-items: center; margin-left: 8px; }
 .badge {
   font-size: 14px;
   line-height: 1;
@@ -1277,6 +1280,27 @@ input[type="checkbox"] {
 
 .res-counts {
   color: var(--muted);
+}
+
+.maps-link {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color 0.2s ease;
+  font-weight: 500;
+}
+
+.maps-link:hover {
+  color: var(--accent-hover, var(--accent));
+  text-decoration: underline;
+}
+
+.list__item-content {
+  flex: 1;
+}
+
+.list__item .maps-link {
+  margin-top: 4px;
+  display: inline-block;
 }
 
 @media (max-width: 560px) {

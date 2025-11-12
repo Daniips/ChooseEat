@@ -84,6 +84,7 @@
   "threshold_reached_one": "Threshold (≥ {{needed}}) was reached in {{count}} place.",
   "threshold_reached_other": "Threshold (≥ {{needed}}) was reached in {{count}} places.",
   "threshold_not_reached": "The threshold (≥ {{needed}}) has not been reached yet.",
+  "view_on_maps": "Open in Google Maps",
   "errors": {
     "network_down": "Could not connect. Check your connection and try again.",
     "session_not_found": "The session does not exist or has expired.",
