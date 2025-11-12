@@ -71,7 +71,6 @@
   --line: #2d2620;
   --cardSoft: #161310;
 
-
   --accent-ghost: rgba(99, 102, 241, 0.22);
   --ring: rgba(99, 102, 241, 0.45);
 
@@ -1236,8 +1235,16 @@ input[type="checkbox"] {
   gap: 6px;
   justify-content: space-between;
 }
-.res-title__name { flex: 1; min-width: 0; }
-.res-title__right { display: inline-flex; gap: 8px; align-items: center; margin-left: 8px; }
+.res-title__name {
+  flex: 1;
+  min-width: 0;
+}
+.res-title__right {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: 8px;
+}
 .badge {
   font-size: 14px;
   line-height: 1;
@@ -1462,7 +1469,7 @@ input[type="checkbox"] {
 }
 .vote-progress__bar {
   height: 100%;
-  width: 0%; 
+  width: 0%;
   background: var(--accent, #f97316);
   transition: width 0.2s ease;
 }
@@ -1480,7 +1487,7 @@ input[type="checkbox"] {
 
 /* =========================================================
     Normalización de wrapper y utilidades anti-scroll
-    ======================================================== */ 
+    ======================================================== */
 
 html,
 body {
@@ -1489,7 +1496,7 @@ body {
 
 .app-header {
   contain: paint;
-} 
+}
 
 /* =========================================================
     LANDING (HOME) – sin scroll residual
@@ -1515,7 +1522,6 @@ body {
   --vote-progress-h: 28px;
   --vote-actions-h: 88px;
   --vote-vert-margins: 36px;
-
 
   --vote-card-safe-h: max(
     340px,
@@ -1584,6 +1590,24 @@ body {
   margin-bottom: 0;
 }
 
+/* ========================================================
+  Map Picker 
+  =========================================================*/
+.map-picker {
+  width: 100%;
+}
+
+.map-picker__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.leaflet-container {
+  font-family: inherit;
+}
 /* =========================================================
    ACCESIBILIDAD – REDUCCIÓN DE MOVIMIENTO
    ========================================================= */

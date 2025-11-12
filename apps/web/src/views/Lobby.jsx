@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
 import { errorToMessage } from "../lib/errorToMessage";
 import { DEFAULT_ERROR_KEYS } from "../lib/errorKeys";
+import MapPicker from "../components/MapPicker";
 
 const PREVIEW_ERROR_KEYS = {
   ...DEFAULT_ERROR_KEYS,
@@ -49,6 +50,7 @@ export default function Lobby() {
 
   const cuisinesValid = selectedCuisines.length > 0;
   const thresholdValid = people >= 2 && (people === 2 ? true : (requiredYes >= 2 && requiredYes <= people));
+  const [center, setCenter] = useState({ lat: 41.3879, lng: 2.16992 });
 
   useEffect(() => {
     if (people <= 2) setRequiredYes(2);
@@ -76,7 +78,7 @@ export default function Lobby() {
 
     const params = new URLSearchParams();
     params.set("radiusKm", String(radiusKm));
-    params.set("center", "41.3879,2.16992");
+    params.set("center", `${center.lat},${center.lng}`);
     if (selectedCuisines.length) params.set("cuisines", selectedCuisines.join(","));
     if (price.length) params.set("price", price.join(","));
     if (openNow) params.set("openNow", "true");
@@ -102,8 +104,7 @@ export default function Lobby() {
     const filters = { cuisines: selectedCuisines, price, openNow, minRating };
     const finalRequired = people <= 2 ? 2 : Math.max(2, Math.min(people, Number(requiredYes) || 2));
     const threshold = { type: "absolute", value: finalRequired, participants: Number(people) };
-    // Por defecto
-    const center = { lat: 41.3879, lng: 2.16992 };
+
 
     try {
       const created = await api("/api/sessions", {
@@ -203,7 +204,12 @@ export default function Lobby() {
           {tab === "zona" && (
             <section className="panel">
               <h3>{t('zone')}</h3>
-              <label htmlFor="zone-radius" style={{ display: "grid", gap: 6 }}>
+              <MapPicker 
+                center={center} 
+                onCenterChange={setCenter}
+                radiusKm={radiusKm}
+              />
+              <label htmlFor="zone-radius" style={{ display: "grid", gap: 6, marginTop: 16 }}>
                 <div className="small">{t('radius')}: {radiusKm.toFixed(1)} km</div>
                 <input
                   id="zone-radius"

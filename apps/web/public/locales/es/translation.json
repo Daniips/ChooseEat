@@ -85,6 +85,10 @@
   "threshold_reached_other": "Se alcanzó el umbral (≥ {{needed}}) en {{count}} lugares.",
   "threshold_not_reached": "Aún no se alcanzó el umbral (≥ {{needed}}).",
   "view_on_maps": "Ver en Google Maps",
+  "use_my_location": "Usar mi ubicación",
+  "map_hint": "Haz clic en el mapa para cambiar la ubicación",
+  "geolocation_not_supported": "Tu navegador no soporta geolocalización",
+  "geolocation_error": "No se pudo obtener tu ubicación",
   "errors": {
     "network_down": "No se pudo conectar. Comprueba tu conexión e inténtalo de nuevo.",
     "session_not_found": "La sesión no existe o ha expirado.",
@@ -135,7 +139,13 @@
     "korean": "Coreana",
     "indian": "India",
     "asian": "Asiática",
-    "delivery": "A domicilio"
+    "delivery": "A domicilio",
+    "fast_food": "Comida rápida",
+    "vietnamese": "Vietnamita",
+    "ramen": "Ramen",
+    "hamburger": "Hamburguesería",
+    "fine_dining": "Alta cocina",
+    "sushi": "Sushi"
   },
   "types": {
     "bar": "Bar",
