@@ -37,7 +37,7 @@ export default function Lobby() {
   const [hostName, setHostName] = useState("");
   const [center, setCenter] = useState({ lat: 41.3879, lng: 2.16992 });
   const [radiusKm, setRadiusKm] = useState(2);
-  const [selectedCuisines, setSelectedCuisines] = useState([...allCuisinesKeys]);
+  const [selectedCuisines, setSelectedCuisines] = useState([]);
   const [price, setPrice] = useState([]);
   const [openNow, setOpenNow] = useState(false);
   const [minRating, setMinRating] = useState(0);
@@ -81,6 +81,63 @@ export default function Lobby() {
     return false;
   }
 
+  function canGoToStep(targetStep) {
+    if (targetStep < 0 || targetStep >= steps.length) return false;
+    if (targetStep < step) return true;
+    if (targetStep === step + 1) return canGoNext();
+    return false; 
+  }
+
+  function handleStepClick(targetStep) {
+    if (!canGoToStep(targetStep)) {
+      if (targetStep > step + 1) {
+        showToast("warn", t("complete_current_step_first") || "Completa el paso actual primero", 3000);
+      } else if (targetStep === step + 1 && !canGoNext()) {
+        if (step === 0) {
+          showToast("warn", t("enter_name_required") || "Introduce tu nombre", 3000);
+        } else if (step === 2) {
+          showToast("warn", t("select_one_cuisine"), 3000);
+        } else if (step === 4) {
+          showToast("warn", t("invalid_threshold") || "Configura correctamente el umbral de votantes", 3000);
+        }
+      }
+      return;
+    }
+    
+    if (targetStep === step + 1 && step === 4) {
+      preview();
+    }
+    setStep(targetStep);
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (step < 5) {
+        if (canGoNext()) {
+          handleNext();
+        } else {
+          if (step === 0) {
+            showToast("warn", t("enter_name_required") , 3000);
+          } else if (step === 2) {
+            showToast("warn", t("select_one_cuisine"), 3000);
+          } else if (step === 4) {
+            showToast("warn", t("invalid_threshold"), 3000);
+          }
+        }
+      } else if (step === 5 && previewCount && previewCount > 0) {
+        const form = document.querySelector('.lobby-wizard');
+        if (form) form.requestSubmit();
+      }
+    }
+  }
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, hostName, selectedCuisines, people, requiredYes, previewCount]);
+  
   async function handleNext() {
     if (step === 4) {
       await preview();
@@ -338,10 +395,13 @@ export default function Lobby() {
             {steps.map((s, idx) => {
               const isActive = idx === step;
               const isCompleted = idx < step;
+              const isClickable = canGoToStep(idx);
+              const isNextStep = idx === step + 1;
 
               return (
                 <div
                   key={s.id}
+                  onClick={() => isClickable && handleStepClick(idx)}
                   style={{
                     flex: 1,
                     display: "flex",
@@ -350,9 +410,11 @@ export default function Lobby() {
                     gap: 6,
                     position: "relative",
                     zIndex: 1,
+                    cursor: isClickable ? "pointer" : isNextStep ? "not-allowed" : "default",
                     opacity: 1,
                     transition: "opacity 0.3s ease"
                   }}
+                  title={isClickable ? undefined : isNextStep ? (t("complete_current_step_first") || "Completa el paso actual") : undefined}
                 >
                   <StepIcon icon={s.icon} active={isActive} completed={isCompleted} />
                   <div
@@ -441,7 +503,15 @@ export default function Lobby() {
               <p className="tiny muted" style={{ marginBottom: 12 }}>
                 {t('select_cuisine_types')}
               </p>
-              <div className="chips" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 6 }}>
+              <div
+                className="chips"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+                  gap: 10,
+                  alignItems: "stretch",
+                }}
+              >
                 {CUISINES.map(c => {
                   const active = selectedCuisines.includes(c.key);
                   return (
@@ -451,8 +521,27 @@ export default function Lobby() {
                       onClick={() => toggleCuisine(c.key)}
                       className={`chip${active ? " chip--active" : ""}`}
                       aria-pressed={active}
-                      style={{ fontSize: 13, padding: "6px 10px" }}
+                      style={{
+                        width: "100%",
+                        textAlign: "left",
+                        fontSize: 13,
+                        padding: "8px 10px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
                     >
+                      <span
+                        aria-hidden
+                        style={{
+                          width: 12,
+                          height: 12,
+                          borderRadius: "50%",
+                          border: `2px solid var(--accent)` ,
+                          background: active ? "var(--accent)" : "transparent",
+                          transition: "all .2s ease",
+                        }}
+                      />
                       {t(c.key)}
                     </button>
                   );
@@ -469,113 +558,174 @@ export default function Lobby() {
           {step === 3 && (
             <div className="step-panel">
               <h3 style={{ marginBottom: 12, fontSize: 18 }}>{t('filters')}</h3>
-              <p className="tiny muted" style={{ marginBottom: 16 }}>
+              <p className="tiny muted" style={{ marginBottom: 20 }}>
                 {t('optional_filters_refine')}
               </p>
 
-              <section style={{ marginBottom: 20 }}>
-                <div className="small" style={{ marginBottom: 6, fontWeight: 600 }}>{t('price')}</div>
-                <div className="chips" style={{ gap: 6 }}>
-                  {[1, 2, 3, 4].map(n => {
-                    const active = price.includes(n);
-                    return (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() => togglePrice(n)}
-                        className={`chip${active ? " chip--active" : ""}`}
-                        aria-pressed={active}
-                        style={{ fontSize: 14, padding: "6px 12px" }}
+              <div style={{ display: "grid", gap: 24 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "start" }}>
+                  <section>
+                    <div className="small" style={{ marginBottom: 8, fontWeight: 600 }}>{t('price')}</div>
+                    <div className="chips" style={{ gap: 8, display: "flex", flexWrap: "wrap" }}>
+                      {[1, 2, 3, 4].map(n => {
+                        const active = price.includes(n);
+                        return (
+                          <button
+                            key={n}
+                            type="button"
+                            onClick={() => togglePrice(n)}
+                            className={`chip${active ? " chip--active" : ""}`}
+                            aria-pressed={active}
+                            style={{ fontSize: 14, padding: "8px 16px" }}
+                          >
+                            {"$".repeat(n)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  <section>
+                    <div className="small" style={{ marginBottom: 8, fontWeight: 600 }}>{t('open_now')}</div>
+                    <label
+                      htmlFor="open-now"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        cursor: "pointer",
+                        position: "relative"
+                      }}
+                    >
+                      <input
+                        id="open-now"
+                        type="checkbox"
+                        checked={openNow}
+                        onChange={(e) => setOpenNow(e.target.checked)}
+                        style={{ display: "none" }}
+                      />
+                      <div
+                        style={{
+                          width: 48,
+                          height: 26,
+                          borderRadius: 13,
+                          background: openNow ? "var(--accent)" : "#ccc",
+                          position: "relative",
+                          transition: "background 0.3s ease",
+                          boxShadow: "inset 0 1px 3px rgba(0,0,0,0.2)"
+                        }}
                       >
-                        {"$".repeat(n)}
-                      </button>
-                    );
-                  })}
+                        <div
+                          style={{
+                            width: 20,
+                            height: 20,
+                            borderRadius: "50%",
+                            background: "white",
+                            position: "absolute",
+                            top: 3,
+                            left: openNow ? 25 : 3,
+                            transition: "left 0.3s ease",
+                            boxShadow: "0 1px 3px rgba(0,0,0,0.3)"
+                          }}
+                        />
+                      </div>
+                    </label>
+                  </section>
                 </div>
-              </section>
 
-              <section style={{ marginBottom: 20 }}>
-                <label htmlFor="open-now" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <input
-                    id="open-now"
-                    type="checkbox"
-                    checked={openNow}
-                    onChange={(e) => setOpenNow(e.target.checked)}
-                  />
-                  <span className="small">{t('open_now')}</span>
-                </label>
-              </section>
-
-              <section>
-                <label htmlFor="min-rating" style={{ display: "grid", gap: 4 }}>
-                  <div className="small" style={{ fontWeight: 600 }}>
-                    {t('minimum_rating')}: <strong>{minRating.toFixed(1)}★</strong>
-                  </div>
-                  <input
-                    id="min-rating"
-                    type="range"
-                    min={0}
-                    max={5}
-                    step={0.1}
-                    value={minRating}
-                    onChange={(e) => setMinRating(Number(e.target.value))}
-                    className="range"
-                  />
-                </label>
-              </section>
+                <section>
+                  <label htmlFor="min-rating" style={{ display: "grid", gap: 8 }}>
+                    <div className="small" style={{ fontWeight: 600 }}>
+                      {t('minimum_rating')}: <strong style={{ fontSize: 16, color: "var(--accent)" }}>{minRating.toFixed(1)}★</strong>
+                    </div>
+                    <input
+                      id="min-rating"
+                      type="range"
+                      min={0}
+                      max={5}
+                      step={0.1}
+                      value={minRating}
+                      onChange={(e) => setMinRating(Number(e.target.value))}
+                      className="range"
+                    />
+                    <div className="tiny muted" style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span>0★</span>
+                      <span>5★</span>
+                    </div>
+                  </label>
+                </section>
+              </div>
             </div>
           )}
-
+          
           {step === 4 && (
-            <div className="step-panel" style={{ padding: "15px 0" }}>
+            <div className="step-panel">
               <h3 style={{ marginBottom: 12, fontSize: 18 }}>{t('voters')}</h3>
-              <p className="tiny muted" style={{ marginBottom: 16 }}>
+              <p className="tiny muted" style={{ marginBottom: 24 }}>
                 {t('define_voters_threshold')}
               </p>
-
-              <div style={{ display: "grid", gap: 20 }}>
-                <label htmlFor="people" style={{ display: "grid", gap: 6 }}>
-                  <div className="small" style={{ fontWeight: 600 }}>{t('voters_info')}</div>
+          
+              <div style={{ display: "grid", gap: 28 }}>
+                <label htmlFor="people" style={{ display: "grid", gap: 10 }}>
+                  <div className="small" style={{ fontWeight: 600 }}>
+                    {t('voters_info')}
+                  </div>
                   <input
                     id="people"
                     type="number"
                     min={2}
-                    max={50}
+                    max={20}
                     step={1}
                     value={people}
-                    onChange={(e) => setPeople(Math.max(2, Math.min(50, Number(e.target.value) || 2)))}
+                    onChange={(e) => setPeople(Number(e.target.value))}
                     className="input"
-                    style={{ maxWidth: 140, fontSize: 16, padding: 10 }}
+                    style={{ 
+                      fontSize: 16, 
+                      padding: "10px 12px",
+                      textAlign: "center",
+                      maxWidth: 120
+                    }}
                   />
                 </label>
-
-                {people > 2 ? (
-                  <label htmlFor="required-yes" style={{ display: "grid", gap: 6 }}>
-                    <div className="small" style={{ fontWeight: 600 }}>{t('need_yes_from')}</div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <input
-                        id="required-yes"
-                        type="number"
-                        min={2}
-                        max={people}
-                        step={1}
-                        value={requiredYes}
-                        onChange={(e) => {
-                          const v = Number(e.target.value) || 2;
-                          setRequiredYes(Math.max(2, Math.min(people, v)));
-                        }}
-                        className="input"
-                        style={{ width: 100, fontSize: 16, padding: 10 }}
-                      />
-                      <span className="tiny">{t('of_n_people', { count: people })}</span>
+          
+                {people > 2 && (
+                  <label htmlFor="required-yes" style={{ display: "grid", gap: 10 }}>
+                    <div className="small" style={{ fontWeight: 600 }}>
+                      {t('need_yes_from')}: <strong style={{ fontSize: 18, color: "var(--accent)" }}>{requiredYes}</strong> {t('of_n_people', { count: people })}
                     </div>
-                    <div className="tiny muted">
-                      💡 {t('tip_simple_majority', { majority: Math.ceil(people / 2), total: people })}
+                    <input
+                      id="required-yes"
+                      type="range"
+                      min={2}
+                      max={people}
+                      step={1}
+                      value={requiredYes}
+                      onChange={(e) => setRequiredYes(Number(e.target.value))}
+                      className="range"
+                    />
+                    <div className="tiny muted" style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span>2</span>
+                      <span>{people}</span>
+                    </div>
+                    <div className="tiny" style={{ 
+                      padding: 10, 
+                      background: "var(--cardSoft)", 
+                      borderRadius: 6, 
+                      border: "1px solid var(--border)",
+                      marginTop: 6
+                    }}>
+                      {t('tip_simple_majority', { majority: Math.ceil(people / 2), total: people })}
                     </div>
                   </label>
-                ) : (
-                  <div className="tiny" style={{ padding: 10, background: "var(--cardSoft)", borderRadius: 6, border: "1px solid var(--border)" }}>
-                    ℹ️ {t('two_people_threshold')}
+                )}
+          
+                {people === 2 && (
+                  <div className="tiny" style={{ 
+                    padding: 12, 
+                    background: "var(--cardSoft)", 
+                    borderRadius: 6, 
+                    border: "1px solid var(--border)" 
+                  }}>
+                    {t('two_people_threshold')}
                   </div>
                 )}
               </div>
@@ -583,16 +733,15 @@ export default function Lobby() {
           )}
 
           {step === 5 && (
-            <div className="step-panel" style={{ textAlign: "center", padding: "10px 0" }}>
+            <div className="step-panel" style={{ textAlign: "center"}}>
               {previewCount === null ? (
-                <div style={{ padding: 10 }}>
+                <div style={{ padding: 5 }}>
                   <div className="spinner" style={{ margin: "0 auto" }}></div>
                   <p className="tiny muted" style={{ marginTop: 12 }}>{t('searching_restaurants')}</p>
                 </div>
               ) : previewCount === 0 ? (
-                <div style={{ padding: 30 }}>
-                  <div style={{ fontSize: 40, marginBottom: 12 }}>😕</div>
-                  <p style={{ marginBottom: 6, fontSize: 15 }}>{t('no_restaurants_found')}</p>
+                <div style={{ padding: 5 }}>
+                  <p style={{ marginBottom: 6, fontSize: 24 }}>{t('no_restaurants_found')}</p>
                   <p className="tiny muted">{t('adjust_filters_or_radius')}</p>
                   <button
                     type="button"
@@ -604,9 +753,8 @@ export default function Lobby() {
                   </button>
                 </div>
               ) : (
-                <div style={{ padding: 30 }}>
-                  <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
-                  <p style={{ fontSize: 20, marginBottom: 6 }}>
+                <div style={{ padding: 5 }}>
+                  <p style={{ fontSize: 20, marginBottom: 10 }}>
                     <strong>{previewCount}</strong> {t(previewCount === 1 ? 'restaurant_one' : 'restaurant_other')} {t(previewCount === 1 ? 'found_one' : 'found_other')}
                   </p>
                   <p className="tiny muted" style={{ marginBottom: 16 }}>
@@ -665,7 +813,7 @@ export default function Lobby() {
               disabled={!previewCount || previewCount === 0}
               style={{ fontSize: 15, padding: "10px 24px" }}
             >
-              🚀 {t('start_voting')}
+              {t('start_voting')}
             </button>
           )}
         </div>

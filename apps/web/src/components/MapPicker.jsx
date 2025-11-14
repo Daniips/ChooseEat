@@ -43,7 +43,7 @@ function LocationMarker({ position, setPosition, radiusKm }) {
       <Circle
         center={[position.lat, position.lng]}
         radius={radiusKm * 1000}
-        pathOptions={{ color: '#ff6b35', fillColor: '#ff6b35', fillOpacity: 0.1 }}
+        pathOptions={{ color: 'var(--accent)', fillColor: 'var(--accent)', fillOpacity: 0.1 }}
       />
     </>
   ) : null;
@@ -63,7 +63,6 @@ export default function MapPicker({ center, onCenterChange, radiusKm = 2 }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [center]);
 
-  // Forzar re-render del mapa cuando cambia la posición
   useEffect(() => {
     setMapKey(prev => prev + 1);
   }, [position]);
@@ -124,7 +123,7 @@ export default function MapPicker({ center, onCenterChange, radiusKm = 2 }) {
             maxWidth: 480
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'var(--primary-color, #ff6b35)';
+            e.currentTarget.style.borderColor = 'var(--accent)';
             e.currentTarget.style.transform = 'scale(1.02)';
           }}
           onMouseLeave={(e) => {
@@ -152,7 +151,7 @@ export default function MapPicker({ center, onCenterChange, radiusKm = 2 }) {
             <Circle
               center={[position.lat, position.lng]}
               radius={radiusKm * 1000}
-              pathOptions={{ color: '#ff6b35', fillColor: '#ff6b35', fillOpacity: 0.1 }}
+              pathOptions={{ color: 'var(--accent)', fillColor: 'var(--accent)', fillOpacity: 0.1 }}
             />
           </MapContainer>
           
@@ -179,7 +178,6 @@ export default function MapPicker({ center, onCenterChange, radiusKm = 2 }) {
         </div>
       </div>
 
-      {/* Modal expandido */}
       {isExpanded && (
         <div
           className="map-modal-overlay"
@@ -216,8 +214,18 @@ export default function MapPicker({ center, onCenterChange, radiusKm = 2 }) {
               animation: 'slideUp 0.3s ease-out'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ margin: 0, fontSize: 18, color: 'var(--text-color)' }}>📍 {t('zone')}</h3>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 16, position: 'relative' }}>
+              <h3 style={{ 
+                margin: 0, 
+                fontSize: 18, 
+                color: 'var(--text-color)', 
+                position: 'absolute',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                pointerEvents: 'none'
+              }}>
+                {t('zone')}
+              </h3>
               <button
                 type="button"
                 className="btn btn--ghost"
