@@ -121,6 +121,7 @@
   "click_to_adjust": "Adjust",
   "enter_name_required": "You must enter your name to continue.",
   "invalid_threshold": "Please set the vote threshold correctly.",
+  "press_enter": "Press Enter",
   "errors": {
     "network_down": "Could not connect. Check your connection and try again.",
     "session_not_found": "The session does not exist or has expired.",

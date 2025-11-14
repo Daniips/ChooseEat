@@ -139,8 +139,9 @@
     "session_status_failed": "No se pudo comprobar el estado de la sesión.",
     "mark_done_failed": "No se pudo marcar como terminado.",
     "load_results_failed": "No se pudieron cargar los resultados.",
-    "vote_failed": "No se pudo registrar tu voto."
-  },
+    "vote_failed": "No se pudo registrar tu voto.",
+    "press_enter": "Presiona Enter"
+    },
   "queued_vote": "Sin conexión: tu voto se enviará al reconectar",
   "loading": "Cargando...",
   "progress_label": "Progreso",

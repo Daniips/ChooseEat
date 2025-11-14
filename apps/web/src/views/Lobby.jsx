@@ -353,7 +353,7 @@ export default function Lobby() {
           </div>
         </div>
 
-        <div className="progress-bar" style={{ marginBottom: 30 }}>
+        <div className="progress-bar" style={{ marginBottom: 20 }}>
           <div style={{
             display: "flex",
             justifyContent: "space-between",
@@ -459,8 +459,8 @@ export default function Lobby() {
 
           {step === 1 && (
             <div className="step-panel">
-              <h3 style={{ marginBottom: 12, fontSize: 18 }}>{t('zone')}</h3>
-              <p className="tiny muted" style={{ marginBottom: 12 }}>
+              <h3 style={{ marginBottom: 10, fontSize: 18 }}>{t('zone')}</h3>
+              <p className="tiny muted" style={{ marginBottom: 10 }}>
                 {t('select_location_radius')}
               </p>
   
@@ -797,24 +797,56 @@ export default function Lobby() {
           </button>
           
           {step < 5 ? (
-            <button
-              type="button"
-              className="btn btn--primary"
-              onClick={handleNext}
-              disabled={!canGoNext()}
-              style={{ padding: "10px 20px" }}
-            >
-              {step === 4 ? `${t('view_preview')} →` : `${t('next')} →`}
-            </button>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={handleNext}
+                disabled={!canGoNext()}
+                style={{ padding: "10px 20px" }}
+              >
+                {step === 4 ? `${t('view_preview')} →` : `${t('next')} →`}
+              </button>
+              {canGoNext() && (
+                <span
+                  className="tiny enter-hint"
+                  style={{
+                    marginTop: 6,
+                    color: "var(--muted)",
+                    fontSize: 10,
+                    opacity: 0.7,
+                    whiteSpace: "nowrap"
+                  }}
+                >
+                  {t('press_enter')}
+                </span>
+              )}
+            </div>
           ) : (
-            <button
-              type="submit"
-              className="btn btn--primary"
-              disabled={!previewCount || previewCount === 0}
-              style={{ fontSize: 15, padding: "10px 24px" }}
-            >
-              {t('start_voting')}
-            </button>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <button
+                type="submit"
+                className="btn btn--primary"
+                disabled={!previewCount || previewCount === 0}
+                style={{ fontSize: 15, padding: "10px 24px" }}
+              >
+                {t('start_voting')}
+              </button>
+              {previewCount && previewCount > 0 && (
+                <span
+                  className="tiny enter-hint"
+                  style={{
+                    marginTop: 6,
+                    color: "var(--muted)",
+                    fontSize: 10,
+                    opacity: 0.7,
+                    whiteSpace: "nowrap"
+                  }}
+                >
+                  Enter
+                </span>
+              )}
+            </div>
           )}
         </div>
       </form>
