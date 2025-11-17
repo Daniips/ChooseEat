@@ -124,9 +124,6 @@ body {
   padding-left: 24px;
   padding-right: 24px;
   padding-top: var(--wrap-py);
-  padding-bottom: var(--wrap-py);
-  min-height: 100svh;
-  overflow: clip;
 }
 
 .header h1 {
@@ -494,6 +491,41 @@ body {
 .swatch--pending {
   background: var(--bar-pending, #6b7280);
 }
+
+/* =========================================================
+   SUMMARY SCROLLBAR PERSONALIZADO
+   ========================================================= */
+
+.summary > div:first-of-type,
+.results {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+}
+
+.summary > div:first-of-type::-webkit-scrollbar,
+.results::-webkit-scrollbar {
+  width: 8px;
+}
+
+.summary > div:first-of-type::-webkit-scrollbar-track,
+.results::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.summary > div:first-of-type::-webkit-scrollbar-thumb,
+.results::-webkit-scrollbar-thumb {
+  background-color: var(--accent);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.summary > div:first-of-type::-webkit-scrollbar-thumb:hover,
+.results::-webkit-scrollbar-thumb:hover {
+  background-color: var(--accent);
+  opacity: 0.8;
+}
+
 
 /* ====================================================
    EFECTOS LATERALES (HALOS) + ACCIONES (SI/NO)
@@ -1542,15 +1574,16 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 8px 16px 10px;
+  justify-content: center;
+  gap: 8px;
+  padding: 4px 12px 4px;
   overflow: clip;
 }
 
 .vote-page .stage .card {
-  width: min(92vw, 520px);
-  height: clamp(340px, var(--vote-card-safe-h), 520px);
-  max-height: var(--vote-card-safe-h);
+  width: min(88vw, 420px);
+  height: clamp(280px, calc(var(--vote-card-safe-h) * 0.85), 380px);
+  max-height: calc(var(--vote-card-safe-h) * 0.85);
 }
 
 @media (max-height: 760px) {
@@ -1577,10 +1610,17 @@ body {
 /* ============================================
   HOME (landing) corrige overflow 
   ====================================*/
+.home-page {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
 .home-page .hero {
-  min-height: calc(100svh - var(--header-h) - (var(--wrap-py) * 2) - 1px);
-  padding: 20px 16px 16px;
-  overflow: clip;
+  overflow: visible;
+}
+
+.home-page .recent {
+  margin-top: 16px;
 }
 
 .home-page .hero > :first-child {
@@ -1608,6 +1648,122 @@ body {
 .leaflet-container {
   font-family: inherit;
 }
+
+/* =========================================================
+   PÁGINAS LEGALES
+   ========================================================= */
+.legal-page {
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.legal-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.legal-date {
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin-bottom: 32px;
+  font-style: italic;
+}
+
+.legal-section {
+  margin-bottom: 32px;
+}
+
+.legal-subtitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.legal-page h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.legal-page p {
+  margin-bottom: 12px;
+}
+
+.legal-page ul,
+.legal-page ol {
+  margin-left: 24px;
+  margin-bottom: 12px;
+}
+
+.legal-page li {
+  margin-bottom: 8px;
+}
+
+.legal-page strong {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.legal-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 0.9rem;
+  overflow-x: auto;
+  display: block;
+}
+
+.legal-table table {
+  width: 100%;
+  min-width: 500px;
+}
+
+.legal-table thead {
+  background-color: var(--cardSoft);
+  border-bottom: 2px solid var(--border);
+}
+
+.legal-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.legal-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.legal-table tbody tr:hover {
+  background-color: var(--ghost-hover-bg);
+}
+
+@media (max-width: 640px) {
+  .legal-title {
+    font-size: 1.5rem;
+  }
+  
+  .legal-subtitle {
+    font-size: 1.25rem;
+  }
+  
+  .legal-page {
+    font-size: 0.95rem;
+  }
+  
+  .legal-table {
+    font-size: 0.85rem;
+  }
+}
+
 /* =========================================================
    ACCESIBILIDAD – REDUCCIÓN DE MOVIMIENTO
    ========================================================= */
@@ -1619,3 +1775,4 @@ body {
     transition: none !important;
   }
 }
+

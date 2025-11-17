@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import Footer from "../components/Footer";
 import Card from "../components/Card";
 import Summary from "./Summary";
 import InviteBar from "../components/InviteBar";
@@ -436,10 +437,11 @@ export default function Vote() {
   }
 
   return (
-    <div className="wrap vote-page">
+    <div className="wrap vote-page" style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <Header />
 
-      <InviteBar inviteUrl={inviteUrl} connectedCount={participants.length} />
+      <div style={{ flex: 1, overflow: finished ? 'hidden' : 'auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        <InviteBar inviteUrl={inviteUrl} connectedCount={participants.length} />
 
       <div className="vote-progress">
         <div
@@ -521,6 +523,9 @@ export default function Vote() {
           }}
         />
       )}
+      </div>
+
+      <Footer />
 
       <Toast
         open={toast.open}

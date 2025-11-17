@@ -5,6 +5,7 @@ import { useSession } from "../context/SessionContext";
 import Toast from "../components/Toast";
 import { CUISINES } from "../data/cuisines";
 import Header from "../components/Header";
+import Footer from "../components/Footer";
 import { setParticipant } from "../lib/participant";
 import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
@@ -330,12 +331,12 @@ export default function Lobby() {
   };
 
   return (
-    <div className="wrap" style={{ overflow: "visible" }}>
+    <div className="wrap" style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <Header />
 
       <form
         className="lobby-wizard"
-        style={{ maxWidth: 700, margin: "12px auto", padding: "0 16px" }}
+        style={{ flex: 1, maxWidth: 'min(900px, 100%)', width: '100%', margin: "0 auto", padding: "0 clamp(16px, 3vw, 24px)", overflow: 'auto', minHeight: 0 }}
         onSubmit={applyAndStart}
       >
         <div className="lobby__header" style={{ textAlign: "center", marginBottom: 20, position: "relative" }}>
@@ -850,6 +851,8 @@ export default function Lobby() {
           )}
         </div>
       </form>
+
+      <Footer />
 
       <Toast
         open={toast.open}

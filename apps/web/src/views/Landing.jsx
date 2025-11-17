@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import Footer from "../components/Footer";
 import { listRememberedSessions, forgetSession } from "../lib/participant";
 import { useTranslation } from "react-i18next";
 
@@ -33,10 +34,10 @@ export default function Landing() {
   }
 
   return (
-    <div className="wrap home-page">
+    <div className="wrap home-page" style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <Header />
 
-      <main className="hero">
+      <main className="hero" style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
         <section className="hero__panel">
           <h1 className="hero__title">ChooseEat</h1>
 
@@ -112,6 +113,8 @@ export default function Landing() {
           )}
         </section>
       </main>
+
+      <Footer />
     </div>
   );
 }

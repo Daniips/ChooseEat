@@ -122,6 +122,11 @@
   "enter_name_required": "You must enter your name to continue.",
   "invalid_threshold": "Please set the vote threshold correctly.",
   "press_enter": "Press Enter",
+  "privacy_policy": "Privacy Policy",
+  "terms_of_service": "Terms of Service",
+  "cookie_policy": "Cookie Policy",
+  "legal_notice": "Legal Notice",
+  "all_rights_reserved": "All rights reserved",
   "errors": {
     "network_down": "Could not connect. Check your connection and try again.",
     "session_not_found": "The session does not exist or has expired.",

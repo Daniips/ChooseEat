@@ -121,6 +121,11 @@
   "click_to_adjust": "Ajustar",
   "enter_name_required": "Debes introducir tu nombre para continuar.",
   "invalid_threshold": "Configura correctamente el umbral de votantes.",
+  "privacy_policy": "Política de privacidad",
+  "terms_of_service": "Términos de servicio",
+  "cookie_policy": "Política de cookies",
+  "legal_notice": "Aviso legal",
+  "all_rights_reserved": "Todos los derechos reservados",
   "errors": {
     "network_down": "No se pudo conectar. Comprueba tu conexión e inténtalo de nuevo.",
     "session_not_found": "La sesión no existe o ha expirado.",

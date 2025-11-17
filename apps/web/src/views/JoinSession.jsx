@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Header from "../components/Header";
+import Footer from "../components/Footer";
 import { useSession } from "../context/SessionContext";
 import { api } from "../lib/api";
 import { getParticipantId, setParticipant, migrateFromLegacy } from "../lib/participant";
@@ -107,8 +108,10 @@ export default function JoinSession() {
   }
 
   return (
-    <div className="wrap">
+    <div className="wrap" style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <Header />
+
+      <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
 
       <div style={{ maxWidth: 520, margin: "12px auto 0" }}>
         <button
@@ -140,6 +143,9 @@ export default function JoinSession() {
           <button type="submit" className="btn btn--primary">{t("join")}</button>
         </div>
       </form>
+      </div>
+
+      <Footer />
 
       <Toast
         open={toast.open}

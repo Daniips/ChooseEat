@@ -4,7 +4,6 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useTranslation } from 'react-i18next';
 
-// Fix para iconos de Leaflet (Vite/Webpack issue)
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -97,16 +96,6 @@ export default function MapPicker({ center, onCenterChange, radiusKm = 2 }) {
   return (
     <>
       <div className="map-picker-compact" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <button
-          type="button"
-          className="btn btn--ghost btn--mini"
-          onClick={getCurrentLocation}
-          disabled={isLocating}
-          style={{ maxWidth: 240, marginBottom: 12, padding: '8px 16px' }}
-        >
-          {isLocating ? '⏳' : '📍'} {t('use_my_location')}
-        </button>
-
         <div
           className="map-preview"
           onClick={() => setIsExpanded(true)}
@@ -205,9 +194,9 @@ export default function MapPicker({ center, onCenterChange, radiusKm = 2 }) {
               background: "var(--cardSoft)",
               borderRadius: 12,
               padding: 20,
-              maxWidth: 'min(700px, 95vw)',
+              maxWidth: 'min(800px, 95vw)',
               width: '100%',
-              maxHeight: 'min(85vh, 650px)',
+              maxHeight: 'min(100vh, 1000px)',
               display: 'flex',
               flexDirection: 'column',
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
@@ -250,7 +239,7 @@ export default function MapPicker({ center, onCenterChange, radiusKm = 2 }) {
               <MapContainer
                 center={[position.lat, position.lng]}
                 zoom={14}
-                style={{ height: '100%', width: '100%', borderRadius: 8, minHeight: 300 }}
+                style={{ height: '100%', width: '100%', borderRadius: 8, minHeight: 400 }}
               >
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

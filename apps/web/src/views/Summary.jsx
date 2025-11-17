@@ -39,9 +39,17 @@ export default function Summary({
 
   if (!hasScores) {
     return (
-      <div className="summary">
+      <div className="summary" style={{ 
+        flex: 1,
+        display: 'flex', 
+        flexDirection: 'column',
+        overflow: 'hidden',
+        boxSizing: 'border-box',
+        minHeight: 0
+      }}>
         <h2>{t("finished")}</h2>
 
+        <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
         {liked.length ? (
           <>
             <p className="muted">{t("liked")}</p>
@@ -88,8 +96,9 @@ export default function Summary({
         ) : (
           <p className="muted">{t("no_liked")}</p>
         )}
+        </div>
 
-        <div className="summary__actions">
+        <div className="summary__actions" style={{ flexShrink: 0, marginTop: 16 }}>
           <Button variant="ghost" onClick={onRestart}>{t("restart")}</Button>
         </div>
       </div>
@@ -97,8 +106,18 @@ export default function Summary({
   }
 
   return (
-    <div className="summary">
-      <h2>{t("finished")}</h2>
+    <div className="summary" style={{ 
+      flex: 1,
+      display: 'flex', 
+      flexDirection: 'column',
+      overflow: 'hidden',
+      boxSizing: 'border-box',
+      minHeight: 0
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <h2 style={{ margin: 0 }}>{t("finished")}</h2>
+        <Button variant="ghost" onClick={onRestart}>{t("restart")}</Button>
+      </div>
 
       <p className="muted" style={{ marginTop: -4 }}>
         {winnerIds?.length
@@ -106,13 +125,13 @@ export default function Summary({
           : t("threshold_not_reached", { needed })}
       </p>
 
-      <div className="legend small muted">
+      <div className="legend small muted" style={{ flexShrink: 0, marginBottom: 12 }}>
         <span className="legend__item"><i className="swatch swatch--yes" /> {t("yes")}</span>
         <span className="legend__item"><i className="swatch swatch--no" /> {t("no")}</span>
         <span className="legend__item"><i className="swatch swatch--pending" /> {t("pending")}</span>
       </div>
 
-      <ul className="results">
+      <ul className="results" style={{ flex: 1, overflow: 'auto', minHeight: 0, margin: 0 }}>
         {scores.map((r) => {
           const yes = r.yes ?? 0;
           const no  = r.no  ?? 0;
@@ -151,7 +170,7 @@ export default function Summary({
                         aria-label={t("view_on_maps")}
                         title={t("view_on_maps")}
                       >
-                        📍 {t("view_on_maps")}
+                        {t("view_on_maps")}
                       </Button>
                     )}
                   </div>
@@ -190,10 +209,6 @@ export default function Summary({
           );
         })}
       </ul>
-
-      <div className="summary__actions">
-        <Button variant="ghost" onClick={onRestart}>{t("restart")}</Button>
-      </div>
     </div>
   );
 }
