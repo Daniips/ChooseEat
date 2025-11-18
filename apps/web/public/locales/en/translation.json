@@ -257,5 +257,10 @@
     "vegan_restaurant": "Vegan",
     "vegetarian_restaurant": "Vegetarian",
     "vietnamese_restaurant": "Vietnamese"
+  },
+  "notFound": {
+    "title": "Page Not Found",
+    "message": "The page you are looking for does not exist. You will be redirected to the home page in 5 seconds...",
+    "go_home": "Go to Home"
   }
 }

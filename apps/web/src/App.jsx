@@ -9,6 +9,7 @@ import Privacy from "./views/Privacy";
 import Terms from "./views/Terms";
 import Cookies from "./views/Cookies";
 import Legal from "./views/Legal";
+import NotFound from "./views/NotFound";    
 import "./index.css";
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/cookies" element={<Cookies />} />
                 <Route path="/legal" element={<Legal />} />
+                <Route path="*" element={<NotFound />} />
             </Routes>
         </SessionProvider>   
     );

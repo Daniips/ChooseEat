@@ -257,5 +257,10 @@
     "vegan_restaurant": "Vegano",
     "vegetarian_restaurant": "Vegetariano",
     "vietnamese_restaurant": "Vietnamita"
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "message": "La página que buscas no existe. Serás redirigido a la página principal en 5 segundos...",
+    "go_home": "Volver a inicio"
   }
 }
