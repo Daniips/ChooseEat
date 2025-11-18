@@ -102,12 +102,12 @@ export default function Card({ r, onNo, onYes, keySwipe, onKeyHandled }) {
   const statusBadge =
     businessStatus === "CLOSED_PERMANENTLY"
       ? {
-          label: t("closed_permanently", "Cerrado permanentemente"),
+          label: t("closed_permanently"),
           className: "pill pill--red",
         }
       : businessStatus === "CLOSED_TEMPORARILY"
       ? {
-          label: t("closed_temporarily", "Cerrado temporalmente"),
+          label: t("closed_temporarily"),
           className: "pill pill--yellow",
         }
       : openNow

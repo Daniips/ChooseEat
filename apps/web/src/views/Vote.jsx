@@ -109,6 +109,17 @@ export default function Vote() {
     overlayTimerRef.current = setTimeout(() => setShowOverlay(false), 1600);
   };
 
+  const [showHint, setShowHint] = useState(() => {
+    return localStorage.getItem("ce_drag_hint_dismissed") === "1" ? false : true;
+  });
+
+  const dismissHint = useCallback(() => {
+    if (!showHint) return;
+    setShowHint(false);
+    localStorage.setItem("ce_drag_hint_dismissed", "1");
+  }, [showHint]);
+
+
 
     const reloadResults = useCallback(async () => {
     if (!session?.id) return;
@@ -397,7 +408,25 @@ export default function Vote() {
     session.invitePath || `/s/${session.id}`
   }`;
 
+
+  //11) Hace dismiss del hint de voto
+  useEffect(() => {
+    if (!showHint || finished || !deckReady) return;
+    const to = setTimeout(dismissHint, 6000);
+    const onKey = (e) => {
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") dismissHint();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      clearTimeout(to);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [showHint, finished, deckReady, dismissHint]);
+
+
   async function vote(choice) {
+    dismissHint();
+
     if (!current || !session?.id) return;
 
     if (choice === "yes") setYesIds((s) => [...s, current.id]);
@@ -458,6 +487,43 @@ export default function Vote() {
           {currentNumber}/{total || 0}
         </div>
       </div>
+
+      {!finished && deckReady && showHint && (
+          <div
+            className="drag-hint"
+            role="note"
+            onClick={dismissHint}
+            style={{
+              alignSelf: "center",
+              margin: "6px 0 8px",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              color: "var(--muted)",
+              fontSize: "12px",
+              cursor: "default",
+              userSelect: "none",
+            }}
+          >
+            <span
+              style={{
+                padding: "6px 10px",
+                borderRadius: 9999,
+                background: "var(--ctrl-bg)",
+                border: "1px solid var(--border)",
+                lineHeight: 1,
+                boxShadow: "0 2px 8px rgba(0,0,0,.15)",
+                whiteSpace: "nowrap",
+              }}
+              title={t("drag_hint")}
+            >
+              ← {t("no_label", "No")} / → {t("yes_label", "Sí")}
+            </span>
+            <span style={{ whiteSpace: "nowrap" }}>
+              {t("drag_hint")}
+            </span>
+          </div>
+        )}
 
       <MatchOverlay
         visible={showOverlay}

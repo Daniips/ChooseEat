@@ -92,14 +92,14 @@ export default function Lobby() {
   function handleStepClick(targetStep) {
     if (!canGoToStep(targetStep)) {
       if (targetStep > step + 1) {
-        showToast("warn", t("complete_current_step_first") || "Completa el paso actual primero", 3000);
+        showToast("warn", t("complete_current_step_first"), 3000);
       } else if (targetStep === step + 1 && !canGoNext()) {
         if (step === 0) {
-          showToast("warn", t("enter_name_required") || "Introduce tu nombre", 3000);
+          showToast("warn", t("enter_name_required"), 3000);
         } else if (step === 2) {
           showToast("warn", t("select_one_cuisine"), 3000);
         } else if (step === 4) {
-          showToast("warn", t("invalid_threshold") || "Configura correctamente el umbral de votantes", 3000);
+          showToast("warn", t("invalid_threshold"), 3000);
         }
       }
       return;

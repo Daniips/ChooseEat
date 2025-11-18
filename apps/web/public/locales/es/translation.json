@@ -53,7 +53,7 @@
   "open": "Abierto",
   "distance_km": "{{km}} km",
   "rating_compact": "⭐ {{rating}}",
-  "drag_hint": "(Arrastra a izquierda/derecha o usa ← / →)",
+  "drag_hint": "(Arrastra a izquierda/derecha, usa los botones o usa ← / →)",
   "copy_link": "Copiar enlace",
   "copied": "¡Copiado!",
   "copied_to_clipboard": "Enlace copiado al portapapeles",
@@ -121,6 +121,7 @@
   "click_to_adjust": "Ajustar",
   "enter_name_required": "Debes introducir tu nombre para continuar.",
   "invalid_threshold": "Configura correctamente el umbral de votantes.",
+  "complete_current_step_first": "Completa el paso actual antes de continuar.",
   "privacy_policy": "Política de privacidad",
   "terms_of_service": "Términos de servicio",
   "cookie_policy": "Política de cookies",
@@ -183,7 +184,9 @@
     "ramen": "Ramen",
     "hamburger": "Hamburguesería",
     "fine_dining": "Alta cocina",
-    "sushi": "Sushi"
+    "sushi": "Sushi",
+    "seafood": "Marisco",
+    "middle_eastern": "Medio Oriente"
   },
   "types": {
     "bar": "Bar",
