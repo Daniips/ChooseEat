@@ -176,10 +176,10 @@ export default function Vote() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
 
-  // 3) Guarda el sessionId actual en sessionStorage para facilitar futuras restauraciones.
+  // 3) Guarda el sessionId actual en localstorage para facilitar futuras restauraciones.
   useEffect(() => {
     if (session?.id) {
-      sessionStorage.setItem("currentSessionId", session.id);
+      localStorage.setItem("currentSessionId", session.id);
     }
   }, [session?.id]);
 
@@ -229,7 +229,7 @@ export default function Vote() {
           setForceFinished(true);
 
           const key = `vote-progress-${session.id}`;
-          const saved = sessionStorage.getItem(key);
+          const saved = localStorage.getItem(key);
           if (saved) {
             try {
               const {
@@ -333,7 +333,7 @@ export default function Vote() {
   }, [session?.id, finished, winner, t, reloadResults]);
 
 
-  // 9)  Restaura tu progreso desde sessionStorage UNA sola vez por sesión.
+  // 9)  Restaura tu progreso desde localStorage UNA sola vez por sesión.
   // Usa isRestoring/progressRestored/forceFinished para evitar sobrescrituras y guardados prematuros.
   useEffect(() => {
     if (
@@ -345,7 +345,7 @@ export default function Vote() {
       return;
     }
     const key = `vote-progress-${session.id}`;
-    const saved = sessionStorage.getItem(key);
+    const saved = localStorage.getItem(key);
     if (saved) {
       try {
         const {
@@ -377,7 +377,7 @@ export default function Vote() {
     progressRestored,
   ]);
 
-  // 10) Guarda tu progreso en sessionStorage cada vez que cambia.
+  // 10) Guarda tu progreso en localStorage cada vez que cambia.
   // Se salta durante la restauración (isRestoring.current === true).
   useEffect(() => {
     if (!session?.id || isRestoring.current) {
@@ -386,7 +386,7 @@ export default function Vote() {
 
     const key = `vote-progress-${session.id}`;
     const data = JSON.stringify({ index, yesIds, noIds });
-    sessionStorage.setItem(key, data);
+    localStorage.setItem(key, data);
   }, [session?.id, index, yesIds, noIds]);
 
   // 10) Ajusta el índice si el tamaño del mazo cambia para no salirse de rango.
@@ -583,8 +583,8 @@ export default function Vote() {
             setProgressRestored(false);
             isRestoring.current = false;
             if (session?.id) {
-              sessionStorage.removeItem(`vote-progress-${session.id}`);
-              sessionStorage.removeItem("currentSessionId");
+              localStorage.removeItem(`vote-progress-${session.id}`);
+              localStorage.removeItem("currentSessionId");
             }
           }}
         />
