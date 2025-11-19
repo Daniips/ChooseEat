@@ -72,14 +72,6 @@ function extractCuisinesFromTypes(types: string[]): string[] {
 export function normalizeGooglePlaceSummary(place: any, locale?: string): RestaurantDTO {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY || "";
   
-  console.log("🔍 RAW PLACE DATA:", JSON.stringify({
-    name: place.displayName?.text,
-    rating: place.rating,
-    userRatingCount: place.userRatingCount,
-    priceLevel: place.priceLevel,
-    allFields: Object.keys(place).sort()
-  }, null, 2));
-
   return {
     id: place.id || `unknown_${Date.now()}`,
     name: place.displayName?.text || place.displayName || "Unknown",
