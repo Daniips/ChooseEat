@@ -127,6 +127,7 @@
   "cookie_policy": "Política de cookies",
   "legal_notice": "Aviso legal",
   "all_rights_reserved": "Todos los derechos reservados",
+  "no_votes": "No hay votos",
   "errors": {
     "network_down": "No se pudo conectar. Comprueba tu conexión e inténtalo de nuevo.",
     "session_not_found": "La sesión no existe o ha expirado.",

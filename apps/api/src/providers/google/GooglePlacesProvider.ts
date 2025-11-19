@@ -92,13 +92,6 @@ export class GooglePlacesProvider implements IRestaurantProvider {
     const { radiusKm, filters, center } = params;
     const effectiveCenter = center || this.defaultCenter;
     
-    console.log("🔍 Search params:", {
-      center: effectiveCenter,
-      radiusKm,
-      filters,
-      defaultCenter: this.defaultCenter,
-    });
-    
     if (!effectiveCenter) {
       throw new Error("Center required: provide center or set PLACES_DEFAULT_CENTER");
     }
@@ -120,8 +113,6 @@ export class GooglePlacesProvider implements IRestaurantProvider {
       const combinedQuery = this.buildCombinedQuery(selectedCuisines);
       let callsMade = 0;
       
-      console.log(`🔍 Combined query: "${combinedQuery}"`);
-      
       // Primera llamada con query combinada
       const result = await this.executeSearch(combinedQuery, effectiveCenter, radiusM, filters);
       callsMade++;
@@ -138,11 +129,8 @@ export class GooglePlacesProvider implements IRestaurantProvider {
         });
       });
       
-      console.log(`📊 After filtering: ${result.items.length}/${beforeFilter} (target: ${this.MIN_RESULTS})`);
-      
       // Si quedan pocos resultados, hacer segunda búsqueda más genérica
       if (result.items.length < this.MIN_RESULTS && callsMade < this.MAX_CALLS) {
-        console.log(`⚠️ Solo ${result.items.length} resultados, ejecutando búsqueda de rescate...`);
         
         // Estrategia de rescate: búsqueda genérica "restaurant" pero con los mismos filtros
         const fallbackResult = await this.executeSearch(
@@ -174,10 +162,8 @@ export class GooglePlacesProvider implements IRestaurantProvider {
           }
         });
         
-        console.log(`➕ Añadidos ${addedCount} restaurantes del rescate`);
       }
       
-      console.log(`✅ Search completed with ${callsMade} call(s), ${result.items.length} results`);
       return result;
     }
 
@@ -200,11 +186,9 @@ export class GooglePlacesProvider implements IRestaurantProvider {
       });
     });
     
-    console.log(`📊 After filtering: ${result.items.length}/${beforeFilter} (target: ${this.MIN_RESULTS})`);
 
     // Si quedan pocos resultados, hacer segunda búsqueda con la cocina principal
     if (result.items.length < this.MIN_RESULTS) {
-      console.log(`⚠️ Solo ${result.items.length} resultados, ejecutando búsqueda de rescate...`);
       
       const mainCuisine = CUISINE_KEYWORDS[selectedCuisines[0]] || selectedCuisines[0];
       const fallbackResult = await this.executeSearch(
@@ -233,12 +217,7 @@ export class GooglePlacesProvider implements IRestaurantProvider {
           addedCount++;
         }
       });
-      
-      console.log(`➕ Añadidos ${addedCount} restaurantes del rescate`);
-      console.log(`✅ Search completed with 2 call(s), ${result.items.length} results`);
-    } else {
-      console.log(`✅ Search completed with 1 call, ${result.items.length} results`);
-    }
+    } 
     return result;
   }
 

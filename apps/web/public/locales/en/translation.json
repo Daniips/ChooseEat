@@ -128,6 +128,7 @@
   "cookie_policy": "Cookie Policy",
   "legal_notice": "Legal Notice",
   "all_rights_reserved": "All rights reserved",
+  "no_votes": "No votes",
   "errors": {
     "network_down": "Could not connect. Check your connection and try again.",
     "session_not_found": "The session does not exist or has expired.",

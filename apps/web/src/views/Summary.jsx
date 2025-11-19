@@ -31,11 +31,19 @@ export default function Summary({
   winnerIds = [],
   needed,
   participantsTotal,
+  participants = {},
   onRestart,
 }) {
   const { t } = useTranslation();
   const hasScores = Array.isArray(scores) && scores.length > 0;
   const winners = new Set(winnerIds || []);
+
+  function getNames(ids) {
+    return Array.from(ids)
+      .map(id => participants[id]?.name)
+      .filter(Boolean)
+      .join(', ');
+  }
 
   if (!hasScores) {
     return (
@@ -135,11 +143,12 @@ export default function Summary({
         {scores.map((r) => {
           const yes = r.yes ?? 0;
           const no  = r.no  ?? 0;
-
+          const yesIds = r.yesIds || [];
+          const noIds = r.noIds || []; 
           const voters = (typeof participantsTotal === "number" && participantsTotal > 0)
             ? participantsTotal
             : 1;
-
+          
           const pending = Math.max(0, voters - (yes + no));
 
           const yesPct     = (100 * yes) / voters;
@@ -149,7 +158,6 @@ export default function Summary({
           const isWinner = winners.has(r.id);
           const photoUrl = getPhotoUrl(r);
           const mapsUrl = getGoogleMapsUrl(r);
-
           return (
             <li key={r.id} className={`res-row${isWinner ? " res-row--winner" : ""}`}>
               {photoUrl && <img className="res-img" src={photoUrl} alt="" />}
@@ -187,12 +195,79 @@ export default function Summary({
                 </div>
 
 
-                <div className="meter meter--stack" role="img" aria-label={t("vote_count")}>
+                <div
+                  className="meter meter--stack"
+                  role="img"
+                  aria-label={t("vote_count")}
+                  style={{ position: "relative" }}
+                  tabIndex={0}
+                >
                   {yesPct > 0 && (
-                    <div className="meter__seg meter__yes" style={{ flexBasis: `${yesPct}%` }} />
+                    <div
+                      className="meter__seg meter__yes"
+                      style={{ flexBasis: `${yesPct}%`, cursor: "pointer" }}
+                      title={getNames(yesIds) ? `${t("yes")}: ${getNames(yesIds)}` : ""}
+                      onMouseEnter={e => {
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'vote-tooltip';
+                        tooltip.innerText = getNames(yesIds) ? `${t("yes")}: ${getNames(yesIds)}` : t("no_votes");
+                        Object.assign(tooltip.style, {
+                          position: 'absolute',
+                          top: '-32px',
+                          left: '0',
+                          background: 'var(--ctrl-bg)',
+                          color: 'var(--fg)',
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          fontSize: '13px',
+                          boxShadow: '0 2px 8px rgba(0,0,0,.15)',
+                          zIndex: 10,
+                          pointerEvents: 'none'
+                        });
+                        e.currentTarget.parentNode.appendChild(tooltip);
+                        e.currentTarget._tooltip = tooltip;
+                      }}
+                      onMouseLeave={e => {
+                        if (e.currentTarget._tooltip) {
+                          e.currentTarget._tooltip.remove();
+                          e.currentTarget._tooltip = null;
+                        }
+                      }}
+                    />
                   )}
                   {noPct > 0 && (
-                    <div className="meter__seg meter__no" style={{ flexBasis: `${noPct}%` }} />
+                    <div
+                      className="meter__seg meter__no"
+                      style={{ flexBasis: `${noPct}%`, cursor: "pointer" }}
+                      title={getNames(noIds) ? `${t("no")}: ${getNames(noIds)}` : ""}
+                      onMouseEnter={e => {
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'vote-tooltip';
+                        tooltip.innerText = getNames(noIds) ? `${t("no")}: ${getNames(noIds)}` : t("no_votes");
+                        Object.assign(tooltip.style, {
+                          position: 'absolute',
+                          top: '-32px',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          background: 'var(--ctrl-bg)',
+                          color: 'var(--fg)',
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          fontSize: '13px',
+                          boxShadow: '0 2px 8px rgba(0,0,0,.15)',
+                          zIndex: 10,
+                          pointerEvents: 'none'
+                        });
+                        e.currentTarget.parentNode.appendChild(tooltip);
+                        e.currentTarget._tooltip = tooltip;
+                      }}
+                      onMouseLeave={e => {
+                        if (e.currentTarget._tooltip) {
+                          e.currentTarget._tooltip.remove();
+                          e.currentTarget._tooltip = null;
+                        }
+                      }}
+                    />
                   )}
                   {pendingPct > 0 && (
                     <div className="meter__seg meter__pending" style={{ flexBasis: `${pendingPct}%` }} />

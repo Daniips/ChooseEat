@@ -133,21 +133,6 @@ app.get("/api/restaurants", async (req, reply) => {
       filters,
       center,
     });
-    if (items.length) {
-      console.log("[RestaurantDTO sample]", {
-        id: items[0].id,
-        name: items[0].name,
-        rating: items[0].rating,
-        userRatingsTotal: items[0].userRatingsTotal,
-        price: items[0].price,
-        openNow: items[0].openNow,
-        businessStatus: items[0].businessStatus,
-        types: items[0].types?.slice(0, 5),
-        photos: items[0].photos?.length,
-        photoSample: items[0].photos?.[0],
-        vicinity: items[0].vicinity,
-      });
-    }
     return { count: items.length, items, nextPageToken };
   } catch (e: any) {
     req.log.error({ err: e }, "Provider search failed");
@@ -660,6 +645,7 @@ app.get("/api/sessions/:id/results", async (req, reply) => {
     winnerIds,
     winners,
     results,
+    participants: s.participants
   });
 });
 

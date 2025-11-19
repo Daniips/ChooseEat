@@ -191,6 +191,8 @@ export function computeResults(s: Session) {
         pending,
         total: yes + no,
         votersTarget,
+        yesIds: Array.from(b.yes),
+        noIds: Array.from(b.no), 
       };
     })
     .sort((a, b) => (b.yes - a.yes) || (a.no - b.no));

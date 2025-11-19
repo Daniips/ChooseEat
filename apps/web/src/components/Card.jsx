@@ -40,15 +40,6 @@ export default function Card({ r, onNo, onYes, keySwipe, onKeyHandled }) {
 
   const hasVotedRef = useRef(false);
 
-  console.log("🔍 DEBUG Card.jsx:", {
-    restaurantId: r?.id,
-    hasPhotos: !!r?.photos,
-    photosLength: r?.photos?.length,
-    firstPhotoURL: r?.photos?.[0],
-    imgField: r?.img,
-    fullRestaurant: r,
-  });
-
   const photos = useMemo(() => {
     if (!r?.photos || r.photos.length === 0) {
       return [`https://via.placeholder.com/480x360?text=${encodeURIComponent(t("error.image_placeholder"))}`];
@@ -113,14 +104,6 @@ export default function Card({ r, onNo, onYes, keySwipe, onKeyHandled }) {
       : openNow
       ? { label: t("open"), className: "pill pill--green" }
       : null;
-
-
-      console.log('🔍 Restaurant data:', { 
-  name: r?.name, 
-  price: r?.price, 
-  rating: r?.rating,
-  userRatingsTotal: r?.userRatingsTotal 
-});
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");

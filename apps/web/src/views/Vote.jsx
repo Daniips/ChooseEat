@@ -573,6 +573,7 @@ export default function Vote() {
             results?.votersTarget ?? 0,
             results?.totalParticipants ?? 1
           )}
+          participants={results?.participants ?? {}}
           onRestart={() => {
             setIndex(0);
             setYesIds([]);
