@@ -77,7 +77,7 @@ export default function Lobby() {
     if (step === 1) return true;
     if (step === 2) return cuisinesValid;
     if (step === 3) return true;
-    if (step === 4) return thresholdValid;
+    if (step === 4) return thresholdValid && people <= 20;
     if (step === 5) return previewCount !== null && previewCount > 0;
     return false;
   }
@@ -666,26 +666,42 @@ export default function Lobby() {
               </p>
           
               <div style={{ display: "grid", gap: 28 }}>
-                <label htmlFor="people" style={{ display: "grid", gap: 10 }}>
-                  <div className="small" style={{ fontWeight: 600 }}>
-                    {t('voters_info')}
+                <label htmlFor="people" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div>
+                    <div className="small" style={{ fontWeight: 600, marginBottom: 4 }}>
+                      {t('voters_info')}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <input
+                        id="people"
+                        type="number"
+                        min={2}
+                        max={20}
+                        step={1}
+                        value={people}
+                        onChange={(e) => setPeople(Number(e.target.value))}
+                        className="input"
+                        style={{
+                          fontSize: 16,
+                          padding: "10px 12px",
+                          textAlign: "center",
+                          maxWidth: 120
+                        }}
+                      />
+                      {people > 20 && (
+                        <div
+                          className="form-error"
+                          role="alert"
+                          style={{
+                            fontSize: 13,
+                            marginLeft: 4
+                          }}
+                        >
+                          {t('max_participants_error')}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <input
-                    id="people"
-                    type="number"
-                    min={2}
-                    max={20}
-                    step={1}
-                    value={people}
-                    onChange={(e) => setPeople(Number(e.target.value))}
-                    className="input"
-                    style={{ 
-                      fontSize: 16, 
-                      padding: "10px 12px",
-                      textAlign: "center",
-                      maxWidth: 120
-                    }}
-                  />
                 </label>
           
                 {people > 2 && (
@@ -792,7 +808,7 @@ export default function Lobby() {
             className="btn btn--ghost"
             onClick={handleBack}
             disabled={step === 0}
-            style={{ visibility: step === 0 ? "hidden" : "visible", padding: "10px 20px" }}
+            style={{ visibility: step === 0 ? "hidden" : "visible", padding: "10px 20px", height: "40px" }}
           >
             ← {t('back')}
           </button>
@@ -833,7 +849,7 @@ export default function Lobby() {
               >
                 {t('start_voting')}
               </button>
-              {previewCount && previewCount > 0 && (
+              {previewCount > 0 && (
                 <span
                   className="tiny enter-hint"
                   style={{
