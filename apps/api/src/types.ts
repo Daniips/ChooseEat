@@ -2,12 +2,21 @@
 export type Restaurant = {
     id: string;
     name: string;
-    cuisine: string[];
-    price: number;
-    distanceKm: number;
-    rating: number;
-    openNow: boolean;
-    img: string;
+    address?: string;
+    rating?: number;
+    price?: number;
+    photos?: string[];
+    location?: { lat: number; lng: number };
+    cuisines?: string[];
+    cuisine?: string[]; // deprecated, use cuisines
+    openNow?: boolean;
+    userRatingsTotal?: number;
+    businessStatus?: string;
+    types?: string[];
+    vicinity?: string;
+    distanceKm?: number;
+    source?: 'mock' | 'google';
+    img?: string; // deprecated, use photos
 };
 
 export type Area = { radiusKm: number };

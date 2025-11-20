@@ -185,17 +185,14 @@ export function computeResults(s: Session) {
       const no = b.no.size;
       const pending = Math.max(0, votersTarget - yes - no);
       return {
-        id: r.id,
-        name: r.name,
-        img: r.img,
-        cuisine: r.cuisine,
-        price: r.price,
-        rating: r.rating,
+        ...r, // include all restaurant fields (photos, location, address, etc.)
         yes,
         no,
         pending,
         total: yes + no,
         votersTarget,
+        yesIds: Array.from(b.yes),
+        noIds: Array.from(b.no), 
       };
     })
     .sort((a, b) => (b.yes - a.yes) || (a.no - b.no));

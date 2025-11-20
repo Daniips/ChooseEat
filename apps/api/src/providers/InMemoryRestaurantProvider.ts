@@ -1,32 +1,43 @@
-//apps/api/src/providers/InMemoryRestaurantProvider.ts
-import { Filters, Restaurant } from "../types";
+// src/providers/InMemoryRestaurantProvider.ts
+import { Restaurant } from "../types";
+import { IRestaurantProvider, SearchParams, SearchResult, RestaurantDTO } from "./types";
+import { normalizeMock } from "./utils/normalize";
 
-export class InMemoryRestaurantProvider {
+export class InMemoryRestaurantProvider implements IRestaurantProvider {
   private data: Restaurant[];
 
   constructor(data: Restaurant[]) {
     this.data = data;
   }
 
-  async search(params: { radiusKm: number; filters: Filters }): Promise<{ items: Restaurant[] }> {
-    const { radiusKm, filters } = params;
+
+  async search(params: SearchParams): Promise<SearchResult> {
+    const { /* radiusKm, */ filters } = params;
     const { cuisines, price, openNow, minRating } = filters;
 
-    const byRadius = this.data.filter((r) => r.distanceKm <= radiusKm);
-
-    const items = byRadius.filter((r) => {
+    const filtered = this.data.filter((r) => {
+      const cuisineList = r.cuisine || [];
       const okCuisine =
-        cuisines && cuisines.length
-          ? r.cuisine.some((c) => cuisines.includes(c))
+        Array.isArray(cuisines) && cuisines.length > 0
+          ? cuisineList.some((c) => cuisines.includes(c))
           : true;
 
-      const okPrice = price?.length ? price.includes(r.price) : true;
-      const okOpen = openNow ? r.openNow : true;
-      const okRating = r.rating >= (minRating ?? 0);
+      const okPrice =
+        Array.isArray(price) && price.length > 0
+          ? price.includes(r.price)
+          : true;
 
-      return okCuisine && okPrice && okOpen && okRating;
+      const okRating =
+        typeof minRating === "number"
+          ? (typeof r.rating === "number" ? r.rating >= minRating : false)
+          : true;
+
+      const okOpen =
+        openNow === true ? (r.openNow !== false) : true;
+
+      return okCuisine && okPrice && okRating && okOpen;
     });
-
-    return { items };
+    const items: RestaurantDTO[] = filtered.map((r) => normalizeMock(r));
+    return { items, nextPageToken: undefined };
   }
 }

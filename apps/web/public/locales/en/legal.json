@@ -1,0 +1,362 @@
+{
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: {{date}}",
+    "section1": {
+      "title": "1. Introduction and Data Controller Identity",
+      "content": "In accordance with Regulation (EU) 2016/679 of the European Parliament and of the Council of 27 April 2016 on the protection of natural persons with regard to the processing of personal data and on the free movement of such data (GDPR), we inform you of the following:",
+      "responsible": "Data Controller",
+      "company": "[COMPANY_NAME]",
+      "nif": "Tax ID: [TAX_ID]",
+      "address": "Address: [FULL_POSTAL_ADDRESS]",
+      "email": "Email: [CONTACT_EMAIL]",
+      "website": "Website: [WEBSITE_URL]",
+      "app": "This Privacy Policy governs the processing of personal data through the ChooseEat application."
+    },
+    "section2": {
+      "title": "2. Personal Data Processed",
+      "intro": "Through ChooseEat we may collect and process the following categories of personal data:",
+      "registration": "Registration data: username, email address, password (encrypted).",
+      "preferences": "Usage preferences: favorite cuisines, search filters, user settings.",
+      "location": "Location data: approximate location used to show nearby restaurants (if authorized by the user).",
+      "technical": "Technical data: IP address, device identifiers, browser type, operating system, access logs.",
+      "usage": "Usage-derived data: created sessions, votes or swipes on restaurants, basic activity history.",
+      "sensitive": "We do not collect special categories of personal data (sensitive data) within the meaning of Article 9 GDPR, unless you provide them voluntarily and explicitly."
+    },
+    "section3": {
+      "title": "3. Processing Purposes",
+      "intro": "Personal data will be processed for the following purposes:",
+      "service": {
+        "title": "3.1. Service provision",
+        "content": "Create voting sessions, allow users to join sessions, display restaurant information, manage user accounts and provide ChooseEat functionalities."
+      },
+      "improvement": {
+        "title": "3.2. Service improvement and internal analytics",
+        "content": "Analyze application usage to improve user experience, optimize functionalities and develop new features."
+      },
+      "security": {
+        "title": "3.3. Security and abuse prevention",
+        "content": "Protect the integrity and security of the application, prevent fraud, abuse or unauthorized use."
+      },
+      "communications": {
+        "title": "3.4. Service-related communications",
+        "content": "Send technical notifications, service updates or relevant information about ChooseEat usage."
+      },
+      "automated": "No automated decisions are made that produce legal effects on the user or similarly significantly affect them."
+    },
+    "section4": {
+      "title": "4. Legal Basis for Processing (Art. 6 GDPR)",
+      "intro": "The legal basis for processing your personal data is:",
+      "contract": {
+        "title": "4.1. Contract performance (Art. 6.1.b GDPR)",
+        "content": "Processing of data necessary for service provision and ChooseEat operation is based on the performance of the terms of use you accept when using the application."
+      },
+      "consent": {
+        "title": "4.2. Consent (Art. 6.1.a GDPR)",
+        "content": "For processing location data, optional marketing communications or non-necessary cookies, we rely on your express consent. You may withdraw your consent at any time."
+      },
+      "legitimate": {
+        "title": "4.3. Legitimate interest (Art. 6.1.f GDPR)",
+        "content": "Some processing, such as service security, fraud prevention and basic analytics, is based on our legitimate interest in providing a secure and quality service."
+      }
+    },
+    "section5": {
+      "title": "5. Retention Periods",
+      "intro": "Personal data will be retained for the following periods:",
+      "account": "Account data: while your user account remains active or until you request its deletion.",
+      "sessions": "Session and activity data: for the time necessary to fulfill the stated purposes or for a reasonable period (6 months from last activity).",
+      "technical": "Technical data and logs: for a limited period necessary to ensure service security and comply with legal obligations (maximum 12 months).",
+      "anonymization": "After these periods, data will be anonymized or securely deleted."
+    },
+    "section6": {
+      "title": "6. Recipients and Data Processors",
+      "intro": "Your personal data may be shared with:",
+      "hosting": "Hosting and technology service providers: for application hosting and technical infrastructure management.",
+      "analytics": "Analytics and monitoring tools: for statistical analysis of service usage (if applicable).",
+      "contracts": "Data processing agreements are signed with all service providers in accordance with Article 28 GDPR.",
+      "google": "Google Places API usage: ChooseEat uses the Google Places API to obtain restaurant information. No personally identifiable user information is shared with Google beyond what is strictly necessary for service provision (approximate location for geographic searches).",
+      "noSale": "We do not sell or transfer your personal data to third parties for commercial purposes."
+    },
+    "section7": {
+      "title": "7. International Transfers",
+      "intro": "Some of our service providers may be located outside the European Economic Area (EEA).",
+      "guarantees": "In those cases, we ensure that appropriate security measures are applied in accordance with GDPR, such as:",
+      "clauses": "Standard Contractual Clauses approved by the European Commission.",
+      "frameworks": "Recognized adequacy frameworks (e.g., European Commission adequacy decisions).",
+      "info": "For more information about the applied guarantees, you can contact us at [CONTACT_EMAIL]."
+    },
+    "section8": {
+      "title": "8. User Rights",
+      "intro": "In accordance with GDPR, you have the right to:",
+      "access": "Right of access: obtain information about whether we are processing your personal data and, if so, access to it.",
+      "rectification": "Right of rectification: request correction of inaccurate or incomplete data.",
+      "deletion": "Right of erasure: request deletion of your data when no longer necessary for the purposes for which it was collected.",
+      "limitation": "Right of restriction: request restriction of processing under certain circumstances.",
+      "opposition": "Right to object: object to processing of your data based on legitimate interest.",
+      "portability": "Right to data portability: receive your data in a structured, commonly used format and transmit it to another controller.",
+      "withdraw": "Right to withdraw consent: at any time, without affecting the lawfulness of processing based on consent before its withdrawal.",
+      "exercise": "To exercise your rights, you can contact [CONTACT_EMAIL], indicating \"GDPR Rights Exercise\" in the subject and providing a copy of your ID or equivalent document.",
+      "complaint": "You also have the right to file a complaint with the Spanish Data Protection Agency (www.aepd.es) if you consider that the processing of your personal data does not comply with current regulations."
+    },
+    "section9": {
+      "title": "9. Security Measures",
+      "content": "We have adopted appropriate technical and organizational measures to protect your personal data against unauthorized access, loss, destruction or alteration, including:",
+      "encryption": "Encryption of sensitive data (passwords, communications).",
+      "access": "Restricted access control to systems and databases.",
+      "monitoring": "Access monitoring and logging to detect suspicious activities.",
+      "updates": "Regular system updates and security patch application.",
+      "note": "However, no Internet transmission is completely secure. We recommend taking precautions to protect your personal data."
+    },
+    "section10": {
+      "title": "10. Minors",
+      "content": "ChooseEat is not intended for minors under 14 years of age. We do not knowingly collect personal data from minors under that age. If you become aware that a minor has provided personal data without parental or guardian consent, please contact us at [CONTACT_EMAIL] to proceed with its deletion."
+    },
+    "section11": {
+      "title": "11. Privacy Policy Modifications",
+      "content": "We reserve the right to modify this Privacy Policy at any time to adapt it to regulatory changes, service improvements or other justified reasons. Any modification will be published on this page and, in case of substantial changes, we will notify you through a notice in the application or by email. We recommend reviewing this policy periodically."
+    }
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "lastUpdated": "Last updated: {{date}}",
+    "section1": {
+      "title": "1. Purpose and Acceptance",
+      "content": "These Terms of Service (hereinafter, \"Terms\") govern access to and use of the ChooseEat application, owned by [COMPANY_NAME].",
+      "acceptance": "Access to and use of ChooseEat implies full and unreserved acceptance of all Terms set forth herein. If you do not agree with these Terms, please do not use the application."
+    },
+    "section2": {
+      "title": "2. Service Description",
+      "intro": "ChooseEat is a web application that allows users to:",
+      "create": "Create voting sessions to decide which restaurant to visit.",
+      "join": "Join sessions created by other users through an invitation link.",
+      "vote": "Interact with restaurant proposals through \"swipe\" voting (like / dislike).",
+      "results": "View voting results and find the most popular restaurant among participants.",
+      "api": "Restaurant information (name, location, photos, ratings, etc.) is obtained through third-party services such as Google Places API."
+    },
+    "section3": {
+      "title": "3. User Registration and Account",
+      "intro": "To use certain ChooseEat functionalities, it may be necessary to create a user account.",
+      "accuracy": "When registering, you commit to providing truthful, accurate and updated information.",
+      "confidentiality": "You are responsible for maintaining the confidentiality of your access credentials (username and password) and all activities performed under your account.",
+      "notification": "You must immediately notify us of any unauthorized use of your account or any other security breach.",
+      "responsibility": "We are not responsible for losses or damages resulting from failure to comply with this obligation."
+    },
+    "section4": {
+      "title": "4. Usage Rules and User Conduct",
+      "intro": "When using ChooseEat, the user agrees to:",
+      "legal": "Use the application in accordance with law, morality, public order and these Terms.",
+      "respectful": "Not introduce, disseminate or make available to third parties illegal, offensive, defamatory, discriminatory, obscene content or content that violates third-party rights.",
+      "integrity": "Not manipulate, alter or attempt to access ChooseEat systems, servers or databases in an unauthorized manner.",
+      "misuse": "Not perform actions that may damage, overload or prevent normal operation of the application.",
+      "bots": "Not use robots, automated scripts or other means to access the service massively or automatically without express authorization.",
+      "consequences": "Failure to comply with these rules may result in suspension or cancellation of your account."
+    },
+    "section5": {
+      "title": "5. Intellectual and Industrial Property",
+      "intro": "All intellectual and industrial property rights over ChooseEat, including but not limited to:",
+      "software": "Source code, design, structure, databases and graphic elements.",
+      "brand": "Trademarks, trade names, logos and distinctive signs.",
+      "content": "Texts, images, icons and other proprietary content.",
+      "ownership": "Are the exclusive property of [COMPANY_NAME] or its licensors.",
+      "license": "The user only obtains a limited, non-exclusive, revocable and non-transferable license to access and use ChooseEat in accordance with these Terms.",
+      "prohibition": "Reproduction, distribution, public communication, transformation or any other form of exploitation of ChooseEat elements is expressly prohibited without prior written authorization from [COMPANY_NAME]."
+    },
+    "section6": {
+      "title": "6. Third-Party Content",
+      "intro": "ChooseEat displays restaurant information obtained from third-party services such as Google Places API.",
+      "accuracy": "The accuracy, truthfulness and updating of such information depends exclusively on these external providers.",
+      "responsibility": "[COMPANY_NAME] is not responsible for:",
+      "errors": "Errors, inaccuracies or omissions in restaurant information.",
+      "availability": "Availability or operation of third-party services.",
+      "changes": "Changes in schedules, prices, menus or any other data provided by restaurants.",
+      "verification": "Users are advised to verify information directly with the establishment before making decisions."
+    },
+    "section7": {
+      "title": "7. Liability and Limitation of Liability",
+      "intro": "[COMPANY_NAME] does not guarantee:",
+      "availability": "Uninterrupted service availability and continuity.",
+      "errors": "Absence of errors, defects or interruptions in ChooseEat operation.",
+      "security": "Absolute system invulnerability against unauthorized access.",
+      "limitation": "To the extent permitted by applicable law, [COMPANY_NAME] shall not be liable for:",
+      "indirect": "Indirect damages, loss of profits, loss of opportunities or any other damage arising from use or inability to use ChooseEat.",
+      "decisions": "Decisions made by the user based on information displayed in the application.",
+      "thirdParty": "Damages arising from third-party content or services.",
+      "own": "The user uses ChooseEat at their own risk."
+    },
+    "section8": {
+      "title": "8. Service Suspension and Termination",
+      "intro": "[COMPANY_NAME] reserves the right to suspend or cancel a user's access to ChooseEat, temporarily or permanently, in case of:",
+      "breach": "Breach of these Terms or applicable regulations.",
+      "fraud": "Fraudulent, abusive use or contrary to the interests of ChooseEat or other users.",
+      "inactivity": "Prolonged account inactivity.",
+      "notice": "Suspension or cancellation may be carried out without prior notice, without prejudice to the user's right to take legal action they deem appropriate.",
+      "deletion": "In case of account cancellation, personal data will be processed in accordance with our Privacy Policy."
+    },
+    "section9": {
+      "title": "9. Modifications to the Terms",
+      "content": "We reserve the right to modify these Terms at any time. Changes will take effect from their publication on this page. Substantial modifications will be notified through a notice in the application or by email. Continued use of ChooseEat after publication of changes implies acceptance of the new Terms."
+    },
+    "section10": {
+      "title": "10. Applicable Law and Jurisdiction",
+      "content": "These Terms are governed by Spanish law. For the resolution of any dispute arising from the interpretation or execution of these Terms, the parties submit, with express waiver of any other jurisdiction that may correspond to them, to the courts and tribunals of [COUNTRY/CITY]."
+    }
+  },
+  "cookies": {
+    "title": "Cookie Policy",
+    "lastUpdated": "Last updated: {{date}}",
+    "section1": {
+      "title": "1. What are Cookies?",
+      "content": "Cookies are small text files that are stored on your device (computer, tablet or mobile) when you visit a website or use an application. Cookies allow the website to recognize your device and remember information about your visit, such as your preferences or settings.",
+      "similar": "In addition to cookies, there are other similar technologies such as local storage (localStorage, sessionStorage) that perform analogous functions."
+    },
+    "section2": {
+      "title": "2. Types of Cookies Used",
+      "intro": "ChooseEat uses the following cookie categories:",
+      "technical": {
+        "title": "2.1. Technical or necessary cookies",
+        "content": "Essential for the application to function. They allow you to navigate ChooseEat and use its basic functionalities (e.g., maintain logged-in session, remember selected language)."
+      },
+      "preferences": {
+        "title": "2.2. Preference cookies",
+        "content": "Allow remembering your user preferences, such as color theme (light/dark), language or custom settings."
+      },
+      "analytics": {
+        "title": "2.3. Analytics or statistics cookies",
+        "content": "Help us understand how users interact with ChooseEat, which pages they visit, how long they stay, etc. This information is used aggregated and anonymously to improve the application."
+      },
+      "advertising": {
+        "title": "2.4. Advertising or third-party cookies",
+        "content": "Currently, ChooseEat does not use advertising cookies. If we do so in the future, this policy will be updated and your consent will be requested."
+      }
+    },
+    "section3": {
+      "title": "3. Cookie Details",
+      "intro": "Below is detailed information about the cookies used:",
+      "table": {
+        "name": "Name",
+        "type": "Type",
+        "purpose": "Purpose",
+        "duration": "Duration",
+        "owner": "Owner"
+      },
+      "cookies": {
+        "session": {
+          "name": "session_id",
+          "type": "Technical",
+          "purpose": "Identify user session",
+          "duration": "Session (deleted when browser is closed)",
+          "owner": "First-party"
+        },
+        "theme": {
+          "name": "theme",
+          "type": "Preferences",
+          "purpose": "Remember selected theme (light/dark)",
+          "duration": "1 year",
+          "owner": "First-party"
+        },
+        "language": {
+          "name": "i18nextLng",
+          "type": "Preferences",
+          "purpose": "Remember selected language",
+          "duration": "1 year",
+          "owner": "First-party"
+        },
+        "analytics": {
+          "name": "_ga, _gid (if applicable)",
+          "type": "Analytics",
+          "purpose": "Analyze application usage (Google Analytics)",
+          "duration": "Variable (2 years / 24 hours)",
+          "owner": "Third-party (Google)"
+        }
+      }
+    },
+    "section4": {
+      "title": "4. Legal Basis and Consent",
+      "technical": "Technical or necessary cookies are used based on the controller's legitimate interest to ensure proper service operation (Art. 6.1.f GDPR).",
+      "optional": "Preference, analytics or advertising cookies (if any) are used only if you give your express consent through the cookie banner that appears when accessing ChooseEat.",
+      "management": "You can manage your cookie preferences at any time through the cookie settings panel available in the application."
+    },
+    "section5": {
+      "title": "5. How to Manage or Disable Cookies",
+      "intro": "You can configure your cookie preferences in the following ways:",
+      "panel": "From ChooseEat's cookie management panel: you can access it by clicking the \"Manage Cookies\" button available in the footer or application settings.",
+      "browser": "From your browser settings: most browsers allow managing cookies through their configuration. You can consult specific instructions in:",
+      "chrome": "Google Chrome: Settings > Privacy and security > Cookies and other site data",
+      "firefox": "Mozilla Firefox: Options > Privacy and security > Cookies and site data",
+      "safari": "Safari: Preferences > Privacy > Cookies and website data",
+      "edge": "Microsoft Edge: Settings > Privacy, search and services > Cookies",
+      "warning": "Please note that disabling certain technical cookies may affect proper ChooseEat operation."
+    },
+    "section6": {
+      "title": "6. Transfers to Third Countries",
+      "content": "Some third-party cookies (such as Google Analytics, if active) may involve data transfers to countries outside the European Economic Area (EEA). These transfers are made with appropriate guarantees in accordance with GDPR, such as Standard Contractual Clauses or recognized adequacy frameworks. For more information, consult the privacy policies of the respective providers."
+    },
+    "section7": {
+      "title": "7. Cookie Policy Updates",
+      "content": "We may update this Cookie Policy periodically to reflect changes in technologies used or applicable regulations. Any modification will be published on this page with the corresponding update date. We recommend reviewing this policy regularly."
+    }
+  },
+  "legal": {
+    "title": "Legal Notice",
+    "lastUpdated": "Last updated: {{date}}",
+    "section1": {
+      "title": "1. Owner Identification Data",
+      "intro": "In compliance with Law 34/2002, of July 11, on Information Society Services and Electronic Commerce (LSSI-CE), the following data is provided:",
+      "company": "Owner: [COMPANY_NAME]",
+      "nif": "Tax ID: [TAX_ID]",
+      "address": "Registered office: [FULL_POSTAL_ADDRESS]",
+      "email": "Email: [CONTACT_EMAIL]",
+      "website": "Website: [WEBSITE_URL]",
+      "registry": "Commercial registration: [COMMERCIAL_REGISTRY] (if applicable)"
+    },
+    "section2": {
+      "title": "2. Purpose of the Site or Application",
+      "content": "ChooseEat is a web application whose purpose is to facilitate users' decision-making about which restaurant to visit through collaborative voting sessions. Users can create sessions, invite other participants and vote on restaurant proposals obtained through third-party services such as Google Places API."
+    },
+    "section3": {
+      "title": "3. Terms of Use",
+      "intro": "Access to and use of ChooseEat implies acceptance of the following conditions:",
+      "correct": "The user agrees to use the application correctly, lawfully and in accordance with current legislation, morality and public order.",
+      "prohibited": "It is prohibited to:",
+      "illegal": "Use ChooseEat for illegal purposes or detrimental to third-party rights and interests.",
+      "damage": "Perform actions that may damage, disable, overload or deteriorate the service or prevent its normal use.",
+      "unauthorized": "Access systems, servers or databases in an unauthorized manner.",
+      "disruptive": "Introduce viruses, malicious code or any other element that may cause damage.",
+      "consequences": "Failure to comply with these conditions may result in suspension or cancellation of access to the service."
+    },
+    "section4": {
+      "title": "4. Intellectual and Industrial Property",
+      "intro": "All ChooseEat content, including but not limited to:",
+      "elements": "Texts, designs, graphics, source code, databases, logos, trademarks, trade names and other distinctive elements.",
+      "ownership": "Are the property of [COMPANY_NAME] or its legitimate owners and are protected by national and international legislation on intellectual and industrial property.",
+      "prohibition": "Reproduction, distribution, public communication, transformation or any other form of exploitation, total or partial, of ChooseEat content is expressly prohibited without prior written authorization from the owner.",
+      "license": "The user has only a limited, personal, non-exclusive and revocable right of use, exclusively for accessing and using ChooseEat in accordance with its purpose."
+    },
+    "section5": {
+      "title": "5. Disclaimer",
+      "intro": "[COMPANY_NAME] is not responsible for:",
+      "availability": "Continuous and uninterrupted service availability, being able to suspend it temporarily or permanently for technical, maintenance reasons or causes beyond its control.",
+      "errors": "Errors, inaccuracies or omissions in content, especially in restaurant information provided by third parties.",
+      "decisions": "Decisions made by users based on information displayed in ChooseEat.",
+      "security": "Damage caused by viruses, malware or other harmful elements that may infect the user's equipment as a result of accessing or using the application.",
+      "misuse": "Misuse of ChooseEat by users or third parties.",
+      "guarantee": "[COMPANY_NAME] will make its best efforts to keep the service available, but does not guarantee the absence of interruptions or errors."
+    },
+    "section6": {
+      "title": "6. External Links",
+      "content": "ChooseEat may contain links to third-party websites (e.g., Google Maps, restaurant pages). [COMPANY_NAME] does not control and is not responsible for the content, privacy policies or practices of such third-party sites. Access to these links is the sole responsibility of the user. The inclusion of a link does not imply approval, recommendation or guarantee by [COMPANY_NAME]."
+    },
+    "section7": {
+      "title": "7. Personal Data Protection",
+      "content": "The processing of personal data carried out through ChooseEat is governed by the provisions of our Privacy Policy, which complies with Regulation (EU) 2016/679 (GDPR) and Organic Law 3/2018 (LOPDGDD). We recommend reading this policy carefully."
+    },
+    "section8": {
+      "title": "8. Legal Notice Modifications",
+      "content": "[COMPANY_NAME] reserves the right to modify this Legal Notice at any time, in order to adapt it to legislative, jurisprudential changes or modifications in the service. Modifications will be published on this same page and will be considered effective from their publication."
+    },
+    "section9": {
+      "title": "9. Applicable Law and Jurisdiction",
+      "content": "This Legal Notice is governed by Spanish law. For the resolution of any dispute arising from access to or use of ChooseEat, the parties submit, with express waiver of any other jurisdiction that may correspond to them, to the courts and tribunals of [COUNTRY/CITY]."
+    }
+  }
+}
