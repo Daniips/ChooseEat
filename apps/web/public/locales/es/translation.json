@@ -122,6 +122,7 @@
   "enter_name_required": "Debes introducir tu nombre para continuar.",
   "invalid_threshold": "Configura correctamente el umbral de votantes.",
   "complete_current_step_first": "Completa el paso actual antes de continuar.",
+  "press_enter": "Presiona Enter",
   "privacy_policy": "Política de privacidad",
   "terms_of_service": "Términos de servicio",
   "cookie_policy": "Política de cookies",
@@ -147,8 +148,7 @@
     "session_status_failed": "No se pudo comprobar el estado de la sesión.",
     "mark_done_failed": "No se pudo marcar como terminado.",
     "load_results_failed": "No se pudieron cargar los resultados.",
-    "vote_failed": "No se pudo registrar tu voto.",
-    "press_enter": "Presiona Enter"
+    "vote_failed": "No se pudo registrar tu voto."
     },
   "queued_vote": "Sin conexión: tu voto se enviará al reconectar",
   "loading": "Cargando...",

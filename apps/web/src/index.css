@@ -5,7 +5,7 @@
   --bg: #faf6f2;
   --card: #ffffff;
   --text: #1e1b16;
-  --muted: #7a6e65;
+  --muted: #5a5147;
   --border: #e7dcd2;
 
   --accent: #4f46e5;
@@ -111,9 +111,27 @@ body {
   margin: 0;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
     "Helvetica Neue", Arial;
-  background: var(--bg);
+
+  background-color: var(--bg);
   color: var(--text);
+
+  background-image: url("/patterns/i-like-food-light.svg");
+  background-repeat: repeat;
+  background-size: 340px;
+  background-position: center;
 }
+
+[data-theme="dark"] body {
+  background-color: var(--bg);
+  color: var(--text);
+
+  background-image: url("/patterns/i-like-food-dark.svg");
+  background-repeat: repeat;
+  background-size: 340px;
+  background-position: center;
+}
+
+/* Background pattern: "I like food" from Hero Patterns by Steve Schoger (MIT License) */
 
 /* ======================================================
    DISPOSICIÓN GENERAL (WRAP / HEADER / UTILIDADES)
@@ -123,7 +141,7 @@ body {
   margin: 0 auto;
   padding-left: 24px;
   padding-right: 24px;
-  padding-top: var(--wrap-py);
+  padding-top: 0px;
 }
 
 .header h1 {
@@ -153,7 +171,7 @@ body {
   top: 0;
   z-index: 100;
   backdrop-filter: saturate(1.1) blur(6px);
-  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  background: transparent;
   border-bottom: 1px solid var(--line);
   padding-top: env(safe-area-inset-top);
 }
@@ -1082,6 +1100,14 @@ input[type="checkbox"] {
   gap: 16px;
 }
 
+.lobby__panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px 0px;
+  margin-top: 10px;
+}
+
 .panel {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1476,7 +1502,6 @@ input[type="checkbox"] {
   cursor: pointer;
   line-height: 1;
   min-width: 120px;
-  /* chevron */
   background-image: linear-gradient(45deg, transparent 50%, var(--text) 50%),
     linear-gradient(135deg, var(--text) 50%, transparent 50%),
     linear-gradient(to right, var(--ctrl-bg), var(--ctrl-bg));
