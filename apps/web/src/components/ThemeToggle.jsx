@@ -1,11 +1,13 @@
 // src/components/ThemeToggle.jsx
 import React from "react";
 import { useUi } from "../context/UIContext";
+import { useTranslation } from "react-i18next";
 
 export default function ThemeToggle() {
   const { effectiveTheme, toggleTheme } = useUi();
+  const { t } = useTranslation();
   const isDark = effectiveTheme === "dark";
-  const label = isDark ? "Cambiar a tema claro" : "Cambiar a tema oscuro";
+  const label = isDark ? t("switch_light_mode") : t("switch_dark_mode");
 
 /*COLLECTION: Clarity Line Icons
   LICENSE: MIT License
