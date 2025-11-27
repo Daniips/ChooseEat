@@ -169,7 +169,8 @@ body {
 .app-header {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 2000;
+  overflow: visible;
   backdrop-filter: saturate(1.1) blur(6px);
   background: transparent;
   border-bottom: 1px solid var(--line);
@@ -205,6 +206,23 @@ body {
   order: 0;
 }
 
+.app-header__theme,
+.app-header__right {
+  display: flex;
+  align-items: center;
+}
+
+.theme-switch,
+.lang-select-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  height: var(--ctrl-h);
+  min-height: var(--ctrl-h);
+  padding: 0 8px;
+  box-sizing: border-box;
+}
 .brand {
   font-weight: 800;
   font-size: 18px;
@@ -1396,13 +1414,13 @@ input[type="checkbox"] {
     THEME SWITCH 
     ============================================= */
 .theme-switch {
-  --sw-w: 56px;
+  --sw-w: 60px;
   --sw-h: 30px;
-  --sw-pad: 3px;
+  --sw-pad: 2px;
   --sw-r: 999px;
 
   --sw-track-light: color-mix(in oklab, var(--card, #fff) 85%, black 8%);
-  --sw-track-dark: color-mix(in oklab, var(--bg, #0b0b0b) 80%, white 8%);
+  --sw-track-dark: #3b3b3b;
   --sw-border: color-mix(in oklab, var(--text, #111) 12%, transparent);
   --sw-thumb: #fff;
 
@@ -1445,35 +1463,48 @@ input[type="checkbox"] {
 
 .theme-switch__thumb {
   position: absolute;
-  top: var(--sw-pad);
+  top: 50%;
   left: var(--sw-pad);
   width: calc(var(--sw-h) - var(--sw-pad) * 2);
   height: calc(var(--sw-h) - var(--sw-pad) * 2);
   border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), 0 4px 10px rgba(0, 0, 0, 0.18);
-  transform: translateX(0);
+  background: var(--card);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25),
+              0 4px 10px rgba(0, 0, 0, 0.18);
+  transform: translate(0, -50%);    /* centrado vertical */
   transition: transform 0.22s cubic-bezier(0.25, 0.8, 0.25, 1);
   display: grid;
   place-items: center;
 }
 
-.theme-switch__thumb::before {
-  content: "☀️";
-  font-size: 14px;
-  line-height: 1;
-}
-
-.theme-switch.is-dark .theme-switch__thumb::before {
-  content: "🌙";
+.theme-switch__icon {
+  width: 16px;
+  height: 16px;
+  display: block;
 }
 
 .theme-switch.is-dark .theme-switch__thumb {
-  transform: translateX(calc(var(--sw-w) - var(--sw-h)));
+  transform: translate(calc(var(--sw-w) - var(--sw-h)), -50%);
 }
 
+.theme-switch:hover .theme-switch__track {
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--card, #fff) 92%, var(--accent) 8%);
+  box-shadow: 0 8px 24px rgba(79,70,229,0.08), inset 0 1px 0 rgba(255,255,255,0.06);
+}
 .theme-switch:hover .theme-switch__thumb {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.28), 0 6px 14px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 18px rgba(79,70,229,0.12), 0 2px 6px rgba(0,0,0,0.18);
+}
+
+.theme-switch.is-dark:hover .theme-switch__track {
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--sw-track-dark) 90%, white 10%);
+}
+
+
+
+.theme-switch.is-dark .theme-switch__icon {
+  filter: invert(1);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1485,42 +1516,95 @@ input[type="checkbox"] {
 }
 
 /* ====================================
-    LANG SELECT (mismo look&feel)
+    LANG SELECT
     ==================================== */
-.lang-select {
-  -webkit-appearance: none;
-  appearance: none;
-  height: var(--ctrl-h);
-  padding: 0 28px 0 10px;
+.lang-select-wrapper {
+  position: relative;
+}
+.lang-select-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
   background: var(--ctrl-bg);
-  color: var(--text);
   border: 1px solid var(--ctrl-border);
-  border-radius: var(--ctrl-br);
-  font: inherit;
+  padding: 4px 10px;
+  border-radius: 999px;
+
+  font-size: 0.85rem;
   font-weight: 600;
-  box-shadow: var(--ctrl-shadow);
+  color: var(--text);
   cursor: pointer;
-  line-height: 1;
-  min-width: 120px;
-  background-image: linear-gradient(45deg, transparent 50%, var(--text) 50%),
-    linear-gradient(135deg, var(--text) 50%, transparent 50%),
-    linear-gradient(to right, var(--ctrl-bg), var(--ctrl-bg));
-  background-position: calc(100% - 16px) 50%, calc(100% - 10px) 50%, 100% 0;
-  background-size: 6px 6px, 6px 6px, 2.2rem 100%;
-  background-repeat: no-repeat;
-}
-.lang-select:hover {
-  background-color: var(--ctrl-hover-bg);
-}
-.lang-select:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--ring);
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 
-@media (max-width: 420px) {
-  .lang-select {
-    min-width: 96px;
-  }
+.lang-select-trigger:hover {
+  background: var(--ghost-hover-bg);
+  border-color: var(--accent);
+  
+}
+
+.lang-select-trigger:active {
+  transform: scale(0.97);
+}
+
+.lang-select-icon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.9;
+}
+
+.lang-select-code {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+
+.lang-select-menu {
+  position: absolute;
+  right: 0;
+  margin-top: 4px;
+  min-width: 140px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--ctrl-bg);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+  border: 1px solid var(--ctrl-border);
+  z-index: 2100;
+  backdrop-filter: blur(0px);
+  list-style: none;
+}
+
+.lang-select-menu * {
+  list-style: none !important;
+}
+
+.lang-select-option {
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text);
+  border-radius: 8px;
+}
+
+.lang-select-option:hover {
+  background: var(--ghost-hover-bg);
+}
+
+.lang-select-option.is-active {
+  background: var(--accent-ghost);
+  font-weight: 600;
+}
+
+.lang-option-short {
+  font-size: 0.8rem;
+  opacity: 0.8;
 }
 /* ==============================================
    Vote – Progress bar (aislado)
@@ -1566,7 +1650,7 @@ body {
 }
 
 .app-header {
-  contain: paint;
+  contain: layout style;
 }
 
 /* =========================================================

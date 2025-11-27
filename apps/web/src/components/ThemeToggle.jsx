@@ -7,6 +7,13 @@ export default function ThemeToggle() {
   const isDark = effectiveTheme === "dark";
   const label = isDark ? "Cambiar a tema claro" : "Cambiar a tema oscuro";
 
+/*COLLECTION: Clarity Line Icons
+  LICENSE: MIT License
+  AUTHOR: vmware
+  SOURCE: https://svgrepo.com
+*/
+  const iconSrc = isDark ? "/icons/moon.svg" : "/icons/sun.svg";
+
   return (
     <button
       type="button"
@@ -18,7 +25,14 @@ export default function ThemeToggle() {
       title={label}
     >
       <span className="theme-switch__track">
-        <span className="theme-switch__thumb" />
+        <span className="theme-switch__thumb">
+          <img
+            src={iconSrc}
+            alt=""
+            aria-hidden="true"
+            className="theme-switch__icon"
+          />
+        </span>
       </span>
     </button>
   );
