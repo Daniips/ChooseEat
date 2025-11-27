@@ -214,6 +214,16 @@ export default function Lobby() {
     { id: 5, title: t('preview'), icon: "eye" }
   ];
 
+
+
+
+
+/* 
+  Icons from Lucide (ISC + MIT License)
+  Copyright © Lucide Contributors.
+  Portions copyright © 2013–2023 Cole Bemis (Feather Icons).
+  Source: https://lucide.dev
+*/
   const StepIcon = ({ icon, active, completed }) => {
     const icons = {
       "user": (
