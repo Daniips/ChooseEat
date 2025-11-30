@@ -28,6 +28,8 @@
   "korean": "Coreana",
   "vegetarian": "Vegetariana",
   "vegan": "Vegana",
+  "french": "Francés",
+  "burger": "Hamburguesas",
   "price": "Precio",
   "open_now": "Abierto ahora",
   "select_all": "Seleccionar todo",
@@ -130,6 +132,18 @@
   "all_rights_reserved": "Todos los derechos reservados",
   "no_votes": "No hay votos",
   "max_participants_error": "No se permiten más de 20 participantes.",
+  "partial_anonymous_hint": "Resultados parciales y anónimos, pueden cambiar conforme voten más participantes. Puedes reiniciar tus votos con el botón 'Reiniciar'.",
+  "final_results": "Resultados finales",
+  "final_results_hint": "Estos son los resultados definitivos de la sesión. Puedes compartir o exportar los resultados.",
+  "export": "Exportar",
+  "share_vote_finished": "La votación en ChooseEat ha acabado.",
+  "share_winner_none": "No hay ganador.",
+  "share_winner_one": "El ganador es {{winner}}.",
+  "share_winner_two": "Empate: {{winner1}} y {{winner2}}.",
+  "share_winner_many": "Empate entre {{winners}}.",
+  "share_winner_many_more": "Empate entre {{winners}} y {{count}} más.",
+  "view_results": "Ver resultados",
+  "copy_summary": "Copiar resumen",
   "errors": {
     "network_down": "No se pudo conectar. Comprueba tu conexión e inténtalo de nuevo.",
     "session_not_found": "La sesión no existe o ha expirado.",
@@ -188,7 +202,8 @@
     "fine_dining": "Alta cocina",
     "sushi": "Sushi",
     "seafood": "Marisco",
-    "middle_eastern": "Medio Oriente"
+    "middle_eastern": "Medio Oriente",
+    "french": "Francés"
   },
   "types": {
     "bar": "Bar",

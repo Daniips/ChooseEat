@@ -222,9 +222,10 @@ export default function Vote() {
         const iAmDone = me?.id && s.participants?.[me.id]?.done;
 
         if (s.status === "finished") {
-          setForceFinished(true);
+          navigate(`/s/${session.id}/results`, { replace: true });
           return;
         }
+        
         if (iAmDone) {
           setForceFinished(true);
 
@@ -250,7 +251,7 @@ export default function Vote() {
         showToast("warn", errorToMessage(e, t, STATUS_ERROR_KEYS));
       }
     })();
-  }, [session?.id, t, total]);
+  }, [navigate, session.id, t, total]);
 
   // 6) Conexión y listeners de Socket.IO para tiempo real:
   // - Participantes conectados
@@ -276,7 +277,9 @@ export default function Vote() {
     const onMatched = (evt) => {
       if (evt?.winner) setWinner(evt.winner);
     };
-    const onFinished = () => setForceFinished(true);
+    const onFinished = () => {
+      if (session?.id) navigate(`/s/${session.id}/results`, { replace: true });
+    };
     const onParticipantDone = () => {
       if (finishedRef.current) {
         reloadResults();

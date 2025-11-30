@@ -5,6 +5,7 @@ import Landing from "./views/Landing";
 import Lobby from "./views/Lobby";
 import Vote from "./views/Vote";
 import JoinSession from "./views/JoinSession";
+import Results from "./views/Results";
 import Privacy from "./views/Privacy";
 import Terms from "./views/Terms";
 import Cookies from "./views/Cookies";
@@ -20,6 +21,7 @@ export default function App() {
                 <Route path="/create" element={<Lobby />} />
                 <Route path="/vote/:sessionId" element={<Vote />} />
                 <Route path="/s/:id" element={<JoinSession />} />
+                <Route path="/s/:id/results" element={<Results />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/cookies" element={<Cookies />} />

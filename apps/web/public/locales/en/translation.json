@@ -28,6 +28,8 @@
   "korean": "Korean",
   "vegetarian": "Vegetarian",
   "vegan": "Vegan",
+  "french": "French",
+  "burger": "Burgers",
   "price": "Price",
   "open_now": "Open now",
   "select_all": "Select all",
@@ -130,6 +132,18 @@
   "all_rights_reserved": "All rights reserved",
   "no_votes": "No votes",
   "max_participants_error": "No more than 20 participants are allowed.",
+  "partial_anonymous_hint": "Preliminary anonymous results, may change as more participants vote. You can restart your votes using the 'Restart' button.",
+  "final_results": "Final results",
+  "final_results_hint": "These are the definitive session results. You can share or export the results.",
+  "export": "Export",
+  "share_vote_finished": "The voting in ChooseEat has ended.",
+  "share_winner_none": "No winner.",
+  "share_winner_one": "The winner is {{winner}}.",
+  "share_winner_two": "Tie: {{winner1}} and {{winner2}}.",
+  "share_winner_many": "Tie between {{winners}}.",
+  "share_winner_many_more": "Tie between {{winners}} and {{count}} more.",
+  "view_results": "View results",
+  "copy_summary": "Copy summary",
   "errors": {
     "network_down": "Could not connect. Check your connection and try again.",
     "session_not_found": "The session does not exist or has expired.",
@@ -188,7 +202,8 @@
     "fine_dining": "Fine Dining",
     "sushi": "Sushi",
     "seafood": "Seafood",
-    "middle_eastern": "Middle Eastern"
+    "middle_eastern": "Middle Eastern",
+    "french": "French"
   },
   "types": {
     "bar": "Bar",
