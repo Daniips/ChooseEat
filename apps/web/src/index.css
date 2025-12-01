@@ -855,92 +855,147 @@ input[type="checkbox"] {
 /* ===========================================
    OVERLAY DE CELEBRACIÓN (MATCH)
    =========================================== */
-.celebrate {
+.match-overlay {
   position: fixed;
   inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
   z-index: 9999;
-  display: grid;
-  place-items: center;
-  pointer-events: none;
-}
-.celebrate__burst {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    circle at center,
-    rgba(249, 115, 22, 0.35),
-    transparent 60%
-  );
-  animation: burst 700ms ease-out forwards;
-}
-@keyframes burst {
-  from {
-    transform: scale(0.8);
-    opacity: 0.8;
-  }
-  to {
-    transform: scale(1.2);
-    opacity: 0;
-  }
-}
-.celebrate__confetti {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-.celebrate__confetti i {
-  position: absolute;
-  left: calc(var(--x) * 100%);
-  top: -10px;
-  width: 8px;
-  height: 14px;
-  border-radius: 2px;
-  background: hsl(var(--hue), 85%, 55%);
-  transform: translate(-50%, 0) rotate(0deg);
-  animation: drop var(--duration) linear var(--delay) forwards;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.12);
-}
-@keyframes drop {
-  0% {
-    transform: translate(-50%, -30px) rotate(0deg);
-    opacity: 1;
-  }
-  80% {
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, 110vh) rotate(340deg);
-    opacity: 0;
-  }
-}
-.celebrate__card {
-  background: var(--card);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 18px 22px;
-  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.18);
-  display: grid;
-  place-items: center;
-  gap: 4px;
-  transform: scale(0.95);
-  animation: pop 220ms ease-out forwards;
-}
-@keyframes pop {
-  to {
-    transform: scale(1);
-  }
-}
-.celebrate__icon {
-  font-size: 28px;
-}
-.celebrate__title {
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  margin-top: 2px;
+  background: transparent;
+  backdrop-filter: blur(0px);
+  transition: backdrop-filter 280ms ease, background 280ms ease;
 }
 
+.match-overlay.is-open {
+  backdrop-filter: blur(8px);
+  background: color-mix(in srgb, rgba(255,215,0,0.08) 100%, transparent);
+}
+
+.match-card {
+  pointer-events: auto;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  background: var(--card);
+  color: var(--text);
+  border: 2px solid var(--accent);
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.1) inset;
+  transform: translateY(6px) scale(.96);
+  opacity: 0;
+  will-change: transform, opacity;
+  min-width: 300px;
+  max-width: calc(100% - 48px);
+  cursor: pointer;
+}
+
+.match-thumb {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  background-color: var(--img-fallback);
+  background-size: cover;
+  background-position: center;
+  flex: 0 0 80px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.match-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.match-tag {
+  font-size: 13px;
+  font-weight: 900;
+  color: color-mix(in srgb, var(--accent-2, #e3b341) 100%, transparent);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+
+.match-name {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+
+.match-overlay.is-open .match-card {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+  transition: transform 360ms cubic-bezier(.2,.9,.25,1), 
+              opacity 280ms ease,
+              box-shadow 360ms ease;
+}
+
+.match-overlay.is-close .match-card {
+  transform: translateY(8px) scale(.96);
+  opacity: 0;
+  transition: transform 240ms ease, 
+              opacity 200ms ease,
+              box-shadow 240ms ease;
+}
+
+.match-overlay.is-open .match-card::before {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  border-radius: 18px;
+  z-index: -1;
+  background: radial-gradient(
+    ellipse at center, 
+    rgba(255,215,0,0.18) 0%, 
+    rgba(255,215,0,0.10) 30%, 
+    rgba(255,215,0,0.04) 50%,
+    transparent 70%
+  );
+  filter: blur(14px);
+  opacity: 0;
+  animation: halo-pulse 360ms ease-out 80ms 1 forwards;
+}
+
+@keyframes halo-pulse {
+  0%   { opacity: 0; transform: scale(.92); }
+  60%  { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .match-overlay,
+  .match-overlay .match-card,
+  .match-overlay .match-card::before {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .match-card {
+    width: calc(100% - 32px);
+    padding: 14px 16px;
+    gap: 12px;
+    border-radius: 14px;
+  }
+  .match-thumb {
+    width: 68px;
+    height: 68px;
+    border-radius: 10px;
+  }
+  .match-name { font-size: 17px; }
+  .match-tag { font-size: 11px; letter-spacing: 0.14em; }
+}
 /* ======================================================
    LANDING / HERO (HOME)
    ================================================== */
