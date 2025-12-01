@@ -574,26 +574,26 @@ app.get("/api/photos/proxy", async (req, reply) => {
   }
   try {
     const response = await fetch(url);
-    
+
     if (!response.ok) {
-      return reply.code(response.status).send({ error: "Failed to fetch image" });
+      return reply
+        .code(response.status)
+        .send({ error: "Failed to fetch image" });
     }
-    
+
     const buffer = await response.arrayBuffer();
     const contentType = response.headers.get("content-type") || "image/jpeg";
 
     reply.header("Content-Type", contentType);
     reply.header("Cache-Control", "public, max-age=86400");
     reply.header("Access-Control-Allow-Origin", "*");
-    
+
     return Buffer.from(buffer);
   } catch (error: any) {
     req.log.error({ err: error }, "Photo proxy failed");
     return reply.code(500).send({ error: "Failed to fetch image" });
   }
 });
-
-
 
 const port = Number(process.env.PORT || 4000);
 app.listen({ port, host: "0.0.0.0" }).then(() => {
@@ -645,7 +645,7 @@ app.get("/api/sessions/:id/results", async (req, reply) => {
     winnerIds,
     winners,
     results,
-    participants: s.participants
+    participants: s.participants,
   });
 });
 
@@ -721,7 +721,6 @@ app.get("/debug/redis", async () => {
   return { isOpen: !!r?.isOpen };
 });
 
-//Cerrar cache al cerrar la app
 app.addHook("onClose", async () => {
   const r = getRedis();
   if (r?.isOpen) {

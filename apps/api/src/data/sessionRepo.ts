@@ -53,7 +53,6 @@ function key(id: string) {
   return SESSION_PREFIX + id;
 }
 
-// Fallback en memoria
 const mem = new Map<string, Session>();
 
 function dehydrate(s: Session) {
@@ -81,20 +80,25 @@ function rehydrate(obj: any): Session {
   } as Session;
 }
 
-
 export async function saveSession(s: Session): Promise<void> {
   const payload = JSON.stringify(dehydrate(s));
   const redis = getRedis();
   if (redis?.isOpen) {
     try {
-      await withTimeout(redis.set(key(s.id), payload, { EX: TTL_SECONDS }), 1200);
+      await withTimeout(
+        redis.set(key(s.id), payload, { EX: TTL_SECONDS }),
+        1200
+      );
       if (USE_MEMORY_FALLBACK) mem.set(s.id, s);
       return;
     } catch {
       //noop
     }
   }
-  if (USE_MEMORY_FALLBACK) { mem.set(s.id, s); return; }
+  if (USE_MEMORY_FALLBACK) {
+    mem.set(s.id, s);
+    return;
+  }
   throw new Error("Redis set failed and MEMORY_FALLBACK=false");
 }
 
@@ -122,7 +126,6 @@ export async function getSession(id: string): Promise<Session | null> {
   return null;
 }
 
-
 export async function updateSession(
   id: string,
   updater: (s: Session) => void | Session
@@ -143,7 +146,6 @@ export async function updateSession(
   return out;
 }
 
-
 export async function touchSession(id: string): Promise<void> {
   const redis = getRedis();
   if (!redis) {
@@ -161,11 +163,10 @@ export async function touchSession(id: string): Promise<void> {
   }
 }
 
-
 export async function deleteSession(id: string): Promise<void> {
   const redis = getRedis();
   try {
-    if (redis?.isOpen) await withTimeout(redis.del(key(id)),1200);
+    if (redis?.isOpen) await withTimeout(redis.del(key(id)), 1200);
   } finally {
     mem.delete(id);
   }
@@ -180,7 +181,10 @@ export function computeResults(s: Session) {
 
   const results = s.restaurants
     .map((r) => {
-      const b = s.votes[r.id] ?? { yes: new Set<string>(), no: new Set<string>() };
+      const b = s.votes[r.id] ?? {
+        yes: new Set<string>(),
+        no: new Set<string>(),
+      };
       const yes = b.yes.size;
       const no = b.no.size;
       const pending = Math.max(0, votersTarget - yes - no);
@@ -192,22 +196,26 @@ export function computeResults(s: Session) {
         total: yes + no,
         votersTarget,
         yesIds: Array.from(b.yes),
-        noIds: Array.from(b.no), 
+        noIds: Array.from(b.no),
       };
     })
-    .sort((a, b) => (b.yes - a.yes) || (a.no - b.no));
+    .sort((a, b) => b.yes - a.yes || a.no - b.no);
 
   const winnerIds = results.filter((x) => x.yes >= needed).map((x) => x.id);
 
   return { totalParticipants, votersTarget, needed, results, winnerIds };
 }
 
-
 function withTimeout<T>(p: Promise<T>, ms = 600): Promise<T> {
   return new Promise((resolve, reject) => {
     const t = setTimeout(() => reject(new Error("REDIS_TIMEOUT")), ms);
-    p.then((v) => { clearTimeout(t); resolve(v); })
-     .catch((e) => { clearTimeout(t); reject(e); });
+    p.then((v) => {
+      clearTimeout(t);
+      resolve(v);
+    }).catch((e) => {
+      clearTimeout(t);
+      reject(e);
+    });
   });
 }
 
@@ -216,7 +224,10 @@ export async function resyncMemoryToRedis(): Promise<number> {
   if (!redis?.isOpen) return 0;
   let count = 0;
   for (const [id, s] of mem.entries()) {
-    const elapsed = Math.max(0, (Date.now() - new Date(s.createdAt).getTime()) / 1000);
+    const elapsed = Math.max(
+      0,
+      (Date.now() - new Date(s.createdAt).getTime()) / 1000
+    );
     const ex = Math.max(60, Math.floor(TTL_SECONDS - elapsed));
     await redis.set(key(id), JSON.stringify(dehydrate(s)), { EX: ex });
     count++;

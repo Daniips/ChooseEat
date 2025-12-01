@@ -1163,6 +1163,17 @@ input[type="checkbox"] {
   .filters__row {
     grid-template-columns: 1fr;
   }
+  .chips {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .chips .chip {
+    padding: 8px 10px !important;
+    font-size: 14px !important;
+    align-items: center;
+  }
 }
 
 .seg {
@@ -1722,7 +1733,7 @@ input[type="checkbox"] {
 
 @media (max-width: 720px) {
   .res-row {
-    grid-template-columns: 1fr;     /* una columna */
+    grid-template-columns: 1fr;
     grid-auto-rows: auto;
     gap: 10px;
     align-items: start;
@@ -1731,10 +1742,10 @@ input[type="checkbox"] {
 
   .res-img {
     width: 100%;
-    height: 120px;                 /* ajustable */
+    height: 120px;
     object-fit: cover;
     border-radius: 12px;
-    grid-column: 1 / -1;           /* asegurar que ocupe toda la fila */
+    grid-column: 1 / -1;
   }
 
   .res-main {
@@ -1759,18 +1770,38 @@ input[type="checkbox"] {
     margin-left: 8px;
   }
 
-  /* ajustar el badge y botón para que no desborden */
   .res-badge {
     margin-right: 8px;
     flex-shrink: 0;
   }
 
-  /* adaptar la barra de progreso y metadatos */
   .meter { margin-top: 6px; margin-bottom: 4px; }
   .res-counts { display: block; margin-top: 6px; }
 
-  /* reducir paddings/borders para no generar scroll extra */
   .results { gap: 12px; }
+  
+  .res-row--winner::before {
+    left: 0;
+    right: 0;
+    top: -8px;
+    height: 34px;
+    border-radius: 12px 12px 0 0;
+    position: absolute;
+    content: "";
+    pointer-events: none;
+    z-index: 1010;
+    background: linear-gradient(
+      to bottom,
+      rgba(255,215,0,0.26) 0%,
+      rgba(255,215,0,0.16) 28%,
+      rgba(255,215,0,0.06) 60%,
+      transparent 100%
+    );
+    filter: blur(6px);
+    box-shadow: none;
+    transform: none;
+    will-change: opacity, transform;
+  }
 }
 
 
