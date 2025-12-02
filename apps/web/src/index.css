@@ -545,31 +545,34 @@ body {
 }
 
 /* =========================================================
-   SUMMARY SCROLLBAR PERSONALIZADO
+   SCROLLBAR PERSONALIZADO
    ========================================================= */
 
 .summary-scroll,
 .summary > div:first-of-type,
-.results {
+.results, .hero {
   scrollbar-width: thin;
   scrollbar-color: var(--accent) transparent;
 }
-
+  
 .summary-scroll::-webkit-scrollbar,
 .summary > div:first-of-type::-webkit-scrollbar,
-.results::-webkit-scrollbar {
+.results::-webkit-scrollbar,
+.hero::-webkit-scrollbar {
   width: 8px;
 }
 
 .summary-scroll::-webkit-scrollbar-track,
 .summary > div:first-of-type::-webkit-scrollbar-track,
-.results::-webkit-scrollbar-track {
+.results::-webkit-scrollbar-track,
+.hero::-webkit-scrollbar-track {
   background: transparent;
 }
 
 .summary-scroll::-webkit-scrollbar-thumb,
 .summary > div:first-of-type::-webkit-scrollbar-thumb,
-.results::-webkit-scrollbar-thumb {
+.results::-webkit-scrollbar-thumb,
+.hero::-webkit-scrollbar-thumb {
   background-color: var(--accent);
   border-radius: 4px;
   border: 2px solid transparent;
@@ -578,7 +581,8 @@ body {
 
 .summary-scroll::-webkit-scrollbar-thumb:hover,
 .summary > div:first-of-type::-webkit-scrollbar-thumb:hover,
-.results::-webkit-scrollbar-thumb:hover {
+.results::-webkit-scrollbar-thumb:hover,
+.hero::-webkit-scrollbar-thumb:hover {
   background-color: var(--accent);
   opacity: 0.8;
 }
@@ -1587,7 +1591,7 @@ input[type="checkbox"] {
   padding: 8px;
   border-radius: 8px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.14);
-  z-index: 40;
+  z-index: 40000;
   min-width: 240px;
   animation: fadeInUp 0.16s cubic-bezier(0.2, 0.9, 0.2, 1) both;
   will-change: transform, opacity;
