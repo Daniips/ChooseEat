@@ -40,6 +40,15 @@ export function searchCacheKey(params: {
       cuisines: Array.isArray(params.filters?.cuisines)
         ? [...params.filters.cuisines].map((s: any) => String(s).toLowerCase()).sort()
         : [],
+      customCuisines: Array.isArray(params.filters?.customCuisines)
+        ? [...params.filters.customCuisines].map((s: any) => String(s).toLowerCase()).sort()
+        : [],
+      dietaryFilters: Array.isArray(params.filters?.dietaryFilters)
+        ? [...params.filters.dietaryFilters].map((s: any) => String(s).toLowerCase()).sort()
+        : [],
+      customFilters: Array.isArray(params.filters?.customFilters)
+        ? [...params.filters.customFilters].map((s: any) => String(s).toLowerCase()).sort()
+        : [],
       price: Array.isArray(params.filters?.price)
         ? [...params.filters.price].map((n: any) => Number(n)).sort((a, b) => a - b)
         : [],

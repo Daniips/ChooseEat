@@ -97,6 +97,37 @@ app.get("/api/restaurants", async (req, reply) => {
         .filter(Boolean)
     : [];
 
+  const customCuisines = q.customCuisines
+    ? String(q.customCuisines)
+        .split(",")
+        .map((s: string) => {
+          const cleaned = s.trim().toLowerCase();
+          if (cleaned.length < 2 || cleaned.length > 40) return null;
+          return cleaned.replace(/[^a-záéíóúüñ\s]/gi, '') || null;
+        })
+        .filter((term): term is string => term !== null)
+        .slice(0, 3)
+    : [];
+
+  const customFilters = q.customFilters
+    ? String(q.customFilters)
+        .split(",")
+        .map((s: string) => {
+          const cleaned = s.trim().toLowerCase();
+          if (cleaned.length < 2 || cleaned.length > 40) return null;
+          return cleaned.replace(/[^a-záéíóúüñ\s]/gi, '') || null;
+        })
+        .filter((term): term is string => term !== null)
+        .slice(0, 3)
+    : [];
+
+  const dietaryFilters = q.dietaryFilters
+    ? String(q.dietaryFilters)
+        .split(",")
+        .map((s: string) => s.trim())
+        .filter(Boolean)
+    : [];
+
   const price = q.price
     ? String(q.price)
         .split(",")
@@ -125,7 +156,7 @@ app.get("/api/restaurants", async (req, reply) => {
     });
   }
 
-  const filters: Filters = { cuisines, price, openNow, minRating };
+  const filters: Filters = { cuisines, customCuisines, dietaryFilters, customFilters, price, openNow, minRating };
 
   try {
     const { items, nextPageToken } = await provider.search({
@@ -143,16 +174,59 @@ app.get("/api/restaurants", async (req, reply) => {
 app.post("/api/sessions", async (req, reply) => {
   const body = (req.body as any) ?? {};
   const area: Area = body.area;
-  const filters: Filters = body.filters;
+  const filtersRaw = body.filters || {};
   const center = body.center;
   const rawThreshold = body.threshold as
     | Partial<StoredSession["threshold"]>
     | undefined;
 
+  const cuisines = Array.isArray(filtersRaw.cuisines) ? filtersRaw.cuisines : [];
+  
+  let customCuisines: string[] = [];
+  if (Array.isArray(filtersRaw.customCuisines)) {
+    customCuisines = filtersRaw.customCuisines
+      .map((term: any) => {
+        if (typeof term !== 'string') return null;
+        const cleaned = term.trim().toLowerCase();
+        if (cleaned.length < 2 || cleaned.length > 40) return null;
+        const sanitized = cleaned.replace(/[^a-záéíóúüñ\s]/gi, '');
+        return sanitized || null;
+      })
+      .filter((term: string | null): term is string => term !== null)
+      .slice(0, 3);
+  }
+
+  let customFilters: string[] = [];
+  if (Array.isArray(filtersRaw.customFilters)) {
+    customFilters = filtersRaw.customFilters
+      .map((term: any) => {
+        if (typeof term !== 'string') return null;
+        const cleaned = term.trim().toLowerCase();
+        if (cleaned.length < 2 || cleaned.length > 40) return null;
+        const sanitized = cleaned.replace(/[^a-záéíóúüñ\s]/gi, '');
+        return sanitized || null;
+      })
+      .filter((term: string | null): term is string => term !== null)
+      .slice(0, 3);
+  }
+
+  const dietaryFilters = Array.isArray(filtersRaw.dietaryFilters)
+    ? filtersRaw.dietaryFilters.filter((f: any) => typeof f === 'string')
+    : [];
+
+  const filters: Filters = {
+    cuisines,
+    customCuisines,
+    dietaryFilters,
+    customFilters,
+    price: Array.isArray(filtersRaw.price) ? filtersRaw.price : [],
+    openNow: !!filtersRaw.openNow,
+    minRating: typeof filtersRaw.minRating === 'number' ? filtersRaw.minRating : 0,
+  };
+
   if (
     !area?.radiusKm ||
-    !Array.isArray(filters?.cuisines) ||
-    filters.cuisines.length === 0
+    (cuisines.length === 0 && customCuisines.length === 0)
   ) {
     return reply.code(400).send({ error: "Parámetros inválidos" });
   }

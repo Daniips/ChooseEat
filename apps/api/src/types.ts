@@ -8,7 +8,7 @@ export type Restaurant = {
     photos?: string[];
     location?: { lat: number; lng: number };
     cuisines?: string[];
-    cuisine?: string[]; // deprecated, use cuisines
+    cuisine?: string[]; 
     openNow?: boolean;
     userRatingsTotal?: number;
     businessStatus?: string;
@@ -16,13 +16,16 @@ export type Restaurant = {
     vicinity?: string;
     distanceKm?: number;
     source?: 'mock' | 'google';
-    img?: string; // deprecated, use photos
+    img?: string;
 };
 
 export type Area = { radiusKm: number };
 
 export type Filters = {
     cuisines: string[];
+    customCuisines?: string[];
+    dietaryFilters?: string[]; 
+    customFilters?: string[]; 
     price?: number[];
     openNow?: boolean;
     minRating?: number;

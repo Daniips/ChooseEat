@@ -10,6 +10,9 @@ export const CUISINES = [
   { key: "mediterranean" },
   { key: "spanish" },
   { key: "korean" },
+];
+
+export const DIETARY_FILTERS = [
   { key: "vegetarian" },
   { key: "vegan" },
 ];

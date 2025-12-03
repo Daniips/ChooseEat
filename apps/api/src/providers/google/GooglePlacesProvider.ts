@@ -116,14 +116,14 @@ export class GooglePlacesProvider implements IRestaurantProvider {
   }
 
   /**
-   * Construye la query de texto optimizada usando solo cocinas canónicas (sin sinónimos).
+   * Construye la query de texto optimizada usando cocinas canónicas + términos personalizados.
    * Esto reduce tokens y mejora precisión en Google Places API.
    */
-  private buildOptimizedQuery(cuisines: string[]): string {
-    if (cuisines.length === 0) return "restaurant";
+  private buildOptimizedQuery(cuisines: string[], customKeywords: string[] = []): string {
+    if (cuisines.length === 0 && customKeywords.length === 0) return "restaurant";
     
     const canonical = this.selectCanonicalCuisines(cuisines);
-    const terms = canonical.map(c => c); // Solo el término canónico, sin sinónimos
+    const terms = [...canonical, ...customKeywords];
     return `restaurant ${terms.join(" ")}`;
   }
 
@@ -144,6 +144,36 @@ export class GooglePlacesProvider implements IRestaurantProvider {
           patterns.some(pattern => cuisineType.toLowerCase().includes(pattern.toLowerCase()))
         );
       });
+    });
+  }
+
+  /**
+   * Verifica si un restaurante coincide con un término personalizado (keyword).
+   * Busca en múltiples campos: types, name, address.
+   */
+  private matchesCustomKeyword(restaurant: RestaurantDTO, keyword: string): boolean {
+    const lowerKeyword = keyword.toLowerCase();
+    
+    return (
+      restaurant.types?.some(t => t.toLowerCase().includes(lowerKeyword)) ||
+      restaurant.name?.toLowerCase().includes(lowerKeyword) ||
+      restaurant.address?.toLowerCase().includes(lowerKeyword) ||
+      false
+    );
+  }
+
+  /**
+   * Filtra restaurantes por términos personalizados.
+   * Verifica que coincidan con algunos de los términos (OR lógico).
+   */
+  private filterByCustomKeywords(items: RestaurantDTO[], customKeywords: string[]): RestaurantDTO[] {
+    if (customKeywords.length === 0) return items;
+
+    return items.filter(restaurant => {
+      // Debe coincidir con almenos uno de los términos personalizados
+      return customKeywords.some(keyword => 
+        this.matchesCustomKeyword(restaurant, keyword)
+      );
     });
   }
 
@@ -253,11 +283,12 @@ export class GooglePlacesProvider implements IRestaurantProvider {
       : this.defaultRadiusM;
 
     const selectedCuisines = filters?.cuisines || [];
+    const customKeywords = filters?.customCuisines || [];
     const cuisineCount = selectedCuisines.length;
     let callsMade = 0;
     const filtersWithoutPrice = { ...filters, price: undefined };
 
-    console.log(`[GooglePlaces] Búsqueda iniciada: ${cuisineCount} cocinas seleccionadas`);
+    console.log(`[GooglePlaces] Búsqueda iniciada: ${cuisineCount} cocinas, ${customKeywords.length} términos personalizados`);
 
     // ═══════════════════════════════════════════════════════════
     // ESTRATEGIA 1: 0-4 COCINAS → Query directa optimizada
@@ -265,15 +296,15 @@ export class GooglePlacesProvider implements IRestaurantProvider {
     if (cuisineCount <= 4) {
       console.log(`[GooglePlaces] Estrategia 1: Query directa (≤4 cocinas)`);
       
-      const query = this.buildOptimizedQuery(selectedCuisines);
+      const query = this.buildOptimizedQuery(selectedCuisines, customKeywords);
       let result = await this.executeSearch(query, effectiveCenter, radiusM, filtersWithoutPrice);
       callsMade++;
       
-      result.items = this.applyPostProcessing(result.items, selectedCuisines, filters, effectiveCenter, radiusM);
+      result.items = this.applyPostProcessing(result.items, selectedCuisines, customKeywords, filters, effectiveCenter, radiusM);
       
       // Fallback si resultados insuficientes
       if (result.items.length < MIN_RESULTS_THRESHOLD && callsMade < MAX_API_CALLS) {
-        result = await this.executeFallback(result, query, effectiveCenter, radiusM, filtersWithoutPrice, selectedCuisines, filters);
+        result = await this.executeFallback(result, query, effectiveCenter, radiusM, filtersWithoutPrice, selectedCuisines, customKeywords, filters);
         callsMade++;
       }
       
@@ -288,11 +319,11 @@ export class GooglePlacesProvider implements IRestaurantProvider {
       console.log(`[GooglePlaces] Estrategia 2: Híbrida inteligente (5-8 cocinas)`);
       
       // 1ª llamada: top 3-4 cocinas canónicas prioritarias
-      const initialQuery = this.buildOptimizedQuery(selectedCuisines);
+      const initialQuery = this.buildOptimizedQuery(selectedCuisines, customKeywords);
       let result = await this.executeSearch(initialQuery, effectiveCenter, radiusM, filtersWithoutPrice);
       callsMade++;
       
-      result.items = this.applyPostProcessing(result.items, selectedCuisines, filters, effectiveCenter, radiusM);
+      result.items = this.applyPostProcessing(result.items, selectedCuisines, customKeywords, filters, effectiveCenter, radiusM);
       
       // Detectar cocinas faltantes en los resultados
       const missingCuisines = this.findMissingCuisines(result.items, selectedCuisines);
@@ -302,11 +333,11 @@ export class GooglePlacesProvider implements IRestaurantProvider {
       if (missingCuisines.length > 0 && callsMade < MAX_API_CALLS) {
         console.log(`[GooglePlaces] 2ª llamada para cubrir faltantes: ${missingCuisines.join(', ')}`);
         
-        const missingQuery = this.buildOptimizedQuery(missingCuisines);
+        const missingQuery = this.buildOptimizedQuery(missingCuisines, customKeywords);
         const missingResult = await this.executeSearch(missingQuery, effectiveCenter, radiusM, filtersWithoutPrice);
         callsMade++;
         
-        let missingItems = this.applyPostProcessing(missingResult.items, selectedCuisines, filters, effectiveCenter, radiusM);
+        let missingItems = this.applyPostProcessing(missingResult.items, selectedCuisines, customKeywords, filters, effectiveCenter, radiusM);
         
         // Merge sin duplicados
         result.items = this.mergeResults(result.items, missingItems);
@@ -325,21 +356,23 @@ export class GooglePlacesProvider implements IRestaurantProvider {
     console.log(`[GooglePlaces] Estrategia 3: Query genérica + boost (≥9 cocinas)`);
     
     // 1ª llamada: query genérica "restaurant" (filtrado local exhaustivo)
-    const genericQuery = "restaurant";
+    const genericQuery = customKeywords.length > 0 
+      ? `restaurant ${customKeywords.join(' ')}`
+      : "restaurant";
     let result = await this.executeSearch(genericQuery, effectiveCenter, radiusM, filtersWithoutPrice);
     callsMade++;
     
-    result.items = this.applyPostProcessing(result.items, selectedCuisines, filters, effectiveCenter, radiusM);
+    result.items = this.applyPostProcessing(result.items, selectedCuisines, customKeywords, filters, effectiveCenter, radiusM);
     
     // 2ª llamada: boost con top 3-4 canónicas si resultados insuficientes
     if (result.items.length < MIN_RESULTS_THRESHOLD && callsMade < MAX_API_CALLS) {
       console.log(`[GooglePlaces] Boost: query con top 3-4 canónicas para mejorar resultados`);
       
-      const boostQuery = this.buildOptimizedQuery(selectedCuisines);
+      const boostQuery = this.buildOptimizedQuery(selectedCuisines, customKeywords);
       const boostResult = await this.executeSearch(boostQuery, effectiveCenter, radiusM, filtersWithoutPrice);
       callsMade++;
       
-      let boostItems = this.applyPostProcessing(boostResult.items, selectedCuisines, filters, effectiveCenter, radiusM);
+      let boostItems = this.applyPostProcessing(boostResult.items, selectedCuisines, customKeywords, filters, effectiveCenter, radiusM);
       
       result.items = this.mergeResults(result.items, boostItems);
       result.items = this.applyDiversity(result.items);
@@ -354,12 +387,14 @@ export class GooglePlacesProvider implements IRestaurantProvider {
   /**
    * Aplica el pipeline de post-procesado común a todos los resultados:
    * 1. Filtrado por cocinas seleccionadas
-   * 2. Filtrado suave de precio
-   * 3. Diversidad (limitar cadenas)
+   * 2. Filtrado por términos personalizados
+   * 3. Filtrado suave de precio
+   * 4. Diversidad (limitar cadenas)
    */
   private applyPostProcessing(
     items: RestaurantDTO[],
     selectedCuisines: string[],
+    customKeywords: string[],
     filters: any,
     center: { lat: number; lng: number },
     radiusM: number
@@ -370,11 +405,15 @@ export class GooglePlacesProvider implements IRestaurantProvider {
     items = this.filterByCuisines(items, selectedCuisines);
     console.log(`[GooglePlaces] Post-procesado: ${initialCount} → ${items.length} tras filtrado cocinas`);
     
-    // 2. Filtrado suave de precio
+    // 2. Filtrado por términos personalizados
+    items = this.filterByCustomKeywords(items, customKeywords);
+    console.log(`[GooglePlaces] Post-procesado: filtrado custom keywords → ${items.length}`);
+    
+    // 3. Filtrado suave de precio
     items = this.filterByPriceSoft(items, filters?.price);
     console.log(`[GooglePlaces] Post-procesado: filtrado precio → ${items.length}`);
     
-    // 3. Diversidad
+    // 4. Diversidad
     items = this.applyDiversity(items);
     console.log(`[GooglePlaces] Post-procesado: diversidad → ${items.length}`);
     
@@ -391,6 +430,7 @@ export class GooglePlacesProvider implements IRestaurantProvider {
     radiusM: number,
     filtersWithoutPrice: any,
     selectedCuisines: string[],
+    customKeywords: string[],
     filters: any
   ): Promise<SearchResult> {
     console.log(`[GooglePlaces] Fallback: ${currentResult.items.length} < ${MIN_RESULTS_THRESHOLD}`);
@@ -399,7 +439,7 @@ export class GooglePlacesProvider implements IRestaurantProvider {
     const fallbackRadiusM = Math.round(radiusM * FALLBACK_RADIUS_MULTIPLIER);
     
     const fallbackResult = await this.executeSearch(query, center, fallbackRadiusM, fallbackFilters);
-    let fallbackItems = this.applyPostProcessing(fallbackResult.items, selectedCuisines, filters, center, radiusM);
+    let fallbackItems = this.applyPostProcessing(fallbackResult.items, selectedCuisines, customKeywords, filters, center, radiusM);
     
     currentResult.items = this.mergeResults(currentResult.items, fallbackItems);
     currentResult.items = this.applyDiversity(currentResult.items);

@@ -1,9 +1,10 @@
 // src/views/Lobby.jsx
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../context/SessionContext";
 import Toast from "../components/Toast";
-import { CUISINES } from "../data/cuisines";
+import { CUISINES, DIETARY_FILTERS } from "../data/cuisines";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { setParticipant } from "../lib/participant";
@@ -12,6 +13,63 @@ import { api } from "../lib/api";
 import { errorToMessage } from "../lib/errorToMessage";
 import { DEFAULT_ERROR_KEYS } from "../lib/errorKeys";
 import MapPicker from "../components/MapPicker";
+
+const KEYWORD_TO_CUISINE = {
+  sushi: "japanese",
+  ramen: "japanese",
+  tempura: "japanese",
+  yakitori: "japanese",
+  udon: "japanese",
+  sashimi: "japanese",
+  teriyaki: "japanese",
+
+  pizza: "italian",
+  pasta: "italian",
+  risotto: "italian",
+  lasagna: "italian",
+  lasaña: "italian",
+  carbonara: "italian",
+  ravioli: "italian",
+  gnocchi: "italian",
+
+  burger: "american",
+  hamburger: "american",
+  hamburguer: "american",
+  "hot dog": "american",
+  hotdog: "american",
+  bbq: "american",
+  barbacoa: "american",
+
+  "dim sum": "chinese",
+  wonton: "chinese",
+  "chow mein": "chinese",
+
+  curry: "indian",
+  naan: "indian",
+  tandoori: "indian",
+  biryani: "indian",
+
+  tacos: "mexican",
+  taco: "mexican",
+  burrito: "mexican",
+  quesadilla: "mexican",
+  nachos: "mexican",
+  enchilada: "mexican",
+  guacamole: "mexican",
+
+  "pad thai": "thai",
+  "tom yum": "thai",
+
+  kimchi: "korean",
+  bibimbap: "korean",
+  bulgogi: "korean",
+
+  paella: "spanish",
+  tapas: "spanish",
+  tortilla: "spanish",
+  jamon: "spanish",
+  jamón: "spanish",
+};
 
 const PREVIEW_ERROR_KEYS = {
   ...DEFAULT_ERROR_KEYS,
@@ -39,32 +97,81 @@ export default function Lobby() {
   const [center, setCenter] = useState({ lat: 41.3879, lng: 2.16992 });
   const [radiusKm, setRadiusKm] = useState(2);
   const [selectedCuisines, setSelectedCuisines] = useState([]);
+  const [customCuisine, setCustomCuisine] = useState("");
+  const [customCuisines, setCustomCuisines] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [customFilter, setCustomFilter] = useState("");
+  const [customFilters, setCustomFilters] = useState([]);
+  const [selectedDietaryFilters, setSelectedDietaryFilters] = useState([]);
+  const [customInputFocused, setCustomInputFocused] = useState(false);
+  const [lastSuggestion, setLastSuggestion] = useState(null);
   const [price, setPrice] = useState([]);
   const [openNow, setOpenNow] = useState(false);
   const [minRating, setMinRating] = useState(0);
   const [people, setPeople] = useState(2);
   const [requiredYes, setRequiredYes] = useState(2);
   const [previewCount, setPreviewCount] = useState(null);
+  const inputAnchorRef = useRef(null);
+  const dropdownRef = useRef(null);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
 
   const [toast, setToast] = useState({
     open: false,
     variant: "warn",
     msg: "",
     duration: 5000,
+    action: null,
   });
-  const showToast = (variant, msg, duration = 5000) =>
-    setToast({ open: true, variant, msg, duration });
+  const showToast = (variant, msg, duration = 5000, action = null) =>
+    setToast({ open: true, variant, msg, duration, action });
 
-  const cuisinesValid = selectedCuisines.length > 0;
   const thresholdValid =
     people >= 2 &&
     (people === 2 ? true : requiredYes >= 2 && requiredYes <= people);
   const [showHint, setShowHint] = useState(false);
 
+  const cuisinesValid = useMemo(
+    () => selectedCuisines.length > 0 || customCuisines.length > 0,
+    [selectedCuisines, customCuisines]
+  );
+
   useEffect(() => {
     if (people <= 2) setRequiredYes(2);
     else if (requiredYes > people) setRequiredYes(people);
   }, [people, requiredYes]);
+
+  useEffect(() => {
+    if (!suggestions.length) return;
+    const update = () => {
+      const el = inputAnchorRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      setDropdownPos({
+        top: Math.round(r.bottom + 4),
+        left: Math.round(r.left),
+        width: Math.round(r.width),
+      });
+    };
+    update();
+    const onScroll = () => update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", onScroll, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", onScroll, true);
+    };
+  }, [suggestions]);
+
+  useEffect(() => {
+    if (!suggestions.length) return;
+    const onDocClick = (e) => {
+      const inAnchor = inputAnchorRef.current?.contains(e.target);
+      const inDrop = dropdownRef.current?.contains(e.target);
+      if (!inAnchor && !inDrop) setSuggestions([]);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [suggestions]);
 
   function toggleCuisine(key) {
     setSelectedCuisines((cs) => {
@@ -73,6 +180,140 @@ export default function Lobby() {
         : [...cs, key];
       return next;
     });
+  }
+
+  function handleCustomInputChange(e) {
+    const value = e.target.value;
+
+    if (value.length > 40) return;
+    const sanitized = value.replace(/[^a-záéíóúñ\s]/gi, "");
+
+    setCustomCuisine(sanitized);
+    setLastSuggestion(null);
+
+    if (sanitized.trim().length >= 2) {
+      const matches = CUISINES.filter(
+        (c) =>
+          t(c.key).toLowerCase().includes(sanitized.toLowerCase()) &&
+          !selectedCuisines.includes(c.key) &&
+          !customCuisines.includes(sanitized.trim().toLowerCase())
+      ).slice(0, 5);
+      setSuggestions(matches);
+    } else {
+      setSuggestions([]);
+    }
+  }
+
+  function addCustomCuisine(term = customCuisine) {
+    const cleaned = term.trim().toLowerCase();
+
+    if (customCuisines.length >= 3) {
+      showToast(
+        "warn",
+        t("custom_cuisine_max_limit"),
+        3000
+      );
+      return;
+    }
+
+    if (cleaned.length < 2) {
+      showToast(
+        "warn",
+        t("custom_cuisine_too_short"),
+        3000
+      );
+      return;
+    }
+
+    if (customCuisines.includes(cleaned)) {
+      showToast(
+        "warn",
+        t("custom_cuisine_duplicate"),
+        3000
+      );
+      return;
+    }
+
+    const existingCuisine = CUISINES.find(
+      (c) => t(c.key).toLowerCase() === cleaned
+    );
+
+    if (existingCuisine && !selectedCuisines.includes(existingCuisine.key)) {
+      setSelectedCuisines((cs) => [...cs, existingCuisine.key]);
+      showToast(
+        "ok",
+        t("cuisine_added_from_catalog"),
+        2000
+      );
+      setCustomCuisine("");
+      setSuggestions([]);
+      setLastSuggestion(null);
+      return;
+    }
+
+    const mappedCuisine = KEYWORD_TO_CUISINE[cleaned];
+
+    if (
+      mappedCuisine &&
+      !selectedCuisines.includes(mappedCuisine) &&
+      lastSuggestion !== cleaned
+    ) {
+      const cuisineName = t(mappedCuisine);
+      showToast(
+        "info",
+        t("cuisine_suggestion_short", { cuisine: cuisineName }),
+        5000,
+        {
+          label: t("add_as_custom"),
+          onClick: () => {
+            setCustomCuisines((prev) => [...prev, cleaned]);
+            setCustomCuisine("");
+            setSuggestions([]);
+            setLastSuggestion(null);
+          },
+        }
+      );
+      setLastSuggestion(cleaned);
+      return;
+    }
+
+    setCustomCuisines((prev) => [...prev, cleaned]);
+    showToast(
+      "ok",
+      t("custom_cuisine_added"),
+      2000
+    );
+    setCustomCuisine("");
+    setSuggestions([]);
+    setLastSuggestion(null);
+  }
+
+  function removeCustomCuisine(term) {
+    setCustomCuisines((prev) => prev.filter((t) => t !== term));
+  }
+
+  function selectSuggestion(cuisine) {
+    if (!selectedCuisines.includes(cuisine.key)) {
+      setSelectedCuisines((cs) => [...cs, cuisine.key]);
+    }
+    setCustomCuisine("");
+    setSuggestions([]);
+  }
+
+  function handleCustomKeyDown(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (suggestions.length > 0) {
+        selectSuggestion(suggestions[0]);
+      } else if (customCuisine.trim()) {
+        addCustomCuisine();
+      }
+    }
+    if (e.key === "Escape") {
+      setSuggestions([]);
+    }
   }
 
   function togglePrice(n) {
@@ -147,7 +388,18 @@ export default function Lobby() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, hostName, selectedCuisines, people, requiredYes, previewCount]);
+  }, [
+    step,
+    hostName,
+    customCuisines,
+    customFilters,
+    cuisinesValid,
+    selectedCuisines,
+    selectedDietaryFilters,
+    people,
+    requiredYes,
+    previewCount,
+  ]);
 
   async function handleNext() {
     if (step === 4) {
@@ -166,8 +418,15 @@ export default function Lobby() {
     const params = new URLSearchParams();
     params.set("radiusKm", String(radiusKm));
     params.set("center", `${center.lat},${center.lng}`);
+
     if (selectedCuisines.length)
       params.set("cuisines", selectedCuisines.join(","));
+    if (customCuisines.length)
+      params.set("customCuisines", customCuisines.join(","));
+    if (selectedDietaryFilters.length)
+      params.set("dietaryFilters", selectedDietaryFilters.join(","));
+    if (customFilters.length)
+      params.set("customFilters", customFilters.join(","));
     if (price.length) params.set("price", price.join(","));
     if (openNow) params.set("openNow", "true");
     if (minRating) params.set("minRating", String(minRating));
@@ -192,7 +451,15 @@ export default function Lobby() {
     if (!cuisinesValid || !thresholdValid || !previewCount) return;
 
     const area = { radiusKm };
-    const filters = { cuisines: selectedCuisines, price, openNow, minRating };
+    const filters = {
+      cuisines: selectedCuisines,
+      customCuisines: customCuisines.length > 0 ? customCuisines : undefined,
+      dietaryFilters: selectedDietaryFilters.length > 0 ? selectedDietaryFilters : undefined,
+      customFilters: customFilters.length > 0 ? customFilters : undefined,
+      price,
+      openNow,
+      minRating,
+    };
     const finalRequired =
       people <= 2 ? 2 : Math.max(2, Math.min(people, Number(requiredYes) || 2));
     const threshold = {
@@ -501,8 +768,7 @@ export default function Lobby() {
                       isClickable
                         ? undefined
                         : isNextStep
-                        ? t("complete_current_step_first") ||
-                          "Completa el paso actual"
+                        ? t("complete_current_step_first")
                         : undefined
                     }
                   >
@@ -620,7 +886,12 @@ export default function Lobby() {
                     <span> · </span>
                     <button
                       type="button"
-                      onClick={() => setSelectedCuisines([])}
+                      onClick={() => {
+                        setSelectedCuisines([]);
+                        setCustomCuisines([]);
+                        setCustomCuisine("");
+                        setSuggestions([]);
+                      }}
                       className="link"
                     >
                       {t("clean")}
@@ -630,6 +901,7 @@ export default function Lobby() {
                 <p className="tiny muted" style={{ marginBottom: 12 }}>
                   {t("select_cuisine_types")}
                 </p>
+
                 <div
                   className="chips"
                   style={{
@@ -677,7 +949,164 @@ export default function Lobby() {
                     );
                   })}
                 </div>
-                {!cuisinesValid && (
+
+                <div style={{ marginTop: 16, position: "relative" }}>
+                  <div
+                    className="small"
+                    style={{ marginBottom: 8, fontWeight: 600 }}
+                  >
+                    {t("custom_cuisines_section") ||
+                      "O añade tipos personalizados"}{" "}
+                    ({customCuisines.length}/3)
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 10,
+                      alignItems: "flex-start",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <div
+                      ref={inputAnchorRef}
+                      style={{
+                        position: "relative",
+                        flex: "0 1 auto",
+                        minWidth: 240,
+                        maxWidth: 320,
+                      }}
+                    >
+                      <input
+                        type="text"
+                        className="input"
+                        value={customCuisine}
+                        onChange={handleCustomInputChange}
+                        onKeyDown={handleCustomKeyDown}
+                        onFocus={() => setCustomInputFocused(true)}
+                        onBlur={() => setCustomInputFocused(false)}
+                        placeholder={
+                          t("custom_cuisine_placeholder")
+                        }
+                        disabled={customCuisines.length >= 3}
+                        style={{
+                          fontSize: 13,
+                          padding: "8px 10px",
+                          opacity: customCuisines.length >= 3 ? 0.5 : 1,
+                        }}
+                        maxLength={40}
+                      />
+                      {suggestions.length > 0 &&
+                        inputAnchorRef.current &&
+                        createPortal(
+                          <div
+                            ref={dropdownRef}
+                            className="autocomplete-dropdown"
+                            style={{
+                              position: "fixed",
+                              top: dropdownPos.top,
+                              left: dropdownPos.left,
+                              width: dropdownPos.width,
+                              background: "var(--card)",
+                              border: "1px solid var(--border)",
+                              borderRadius: 8,
+                              boxShadow: "0 8px 20px rgba(0,0,0,0.18)",
+                              zIndex: 9999,
+                              maxHeight: 280,
+                              overflowY: "auto",
+                            }}
+                          >
+                            {suggestions.map((c) => (
+                              <button
+                                key={c.key}
+                                type="button"
+                                onClick={() => selectSuggestion(c)}
+                                className="autocomplete-item"
+                                style={{
+                                  width: "100%",
+                                  textAlign: "left",
+                                  padding: "8px 10px",
+                                  background: "transparent",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  color: "var(--text)",
+                                  fontSize: 13,
+                                  transition: "background 0.2s ease",
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.background =
+                                    "var(--cardSoft)")
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.background =
+                                    "transparent")
+                                }
+                              >
+                                {t(c.key)}
+                              </button>
+                            ))}
+                          </div>,
+                          document.body
+                        )}
+                    </div>
+
+                    {customCuisines.length > 0 && (
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: 6,
+                          flex: 1,
+                          alignItems: "center",
+                        }}
+                      >
+                        {customCuisines.map((term) => (
+                          <div
+                            key={term}
+                            className="chip chip--custom"
+                            style={{
+                              fontSize: 12,
+                              padding: "6px 10px",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                              background: "var(--accent)",
+                              color: "white",
+                              borderRadius: "999px",
+                              boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+                            }}
+                          >
+                            <span>{term}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeCustomCuisine(term)}
+                              style={{
+                                background: "transparent",
+                                border: "none",
+                                color: "white",
+                                cursor: "pointer",
+                                padding: 0,
+                                fontSize: 16,
+                                lineHeight: 1,
+                                opacity: 0.9,
+                              }}
+                              aria-label={t("remove")}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {customCuisines.length === 0 && customInputFocused && (
+                    <div className="tiny muted" style={{ marginTop: 6, fontSize: 11 }}>
+                      {t("custom_cuisine_hint")}
+                    </div>
+                  )}
+                </div>
+                {!cuisinesValid && customCuisines.length === 0 && (
                   <div
                     className="form-error"
                     role="alert"
@@ -691,23 +1120,23 @@ export default function Lobby() {
 
             {step === 3 && (
               <div className="step-panel">
-                <h3 style={{ marginBottom: 12, fontSize: 18 }}>
+                <h3 style={{ marginBottom: 8, fontSize: 18 }}>
                   {t("filters")}
                 </h3>
-                <p className="tiny muted" style={{ marginBottom: 20 }}>
+                <p className="tiny muted" style={{ marginBottom: 16 }}>
                   {t("optional_filters_refine")}
                 </p>
 
-                <div style={{ display: "grid", gap: 24 }}>
+                <div style={{ display: "grid", gap: 16 }}>
                   <div
                     style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr auto",
-                      gap: 24,
-                      alignItems: "start",
+                      display: "flex",
+                      gap: 16,
+                      flexWrap: "wrap",
+                      alignItems: "flex-start",
                     }}
                   >
-                    <section>
+                    <section style={{ flex: "1 1 auto", minWidth: 200 }}>
                       <div
                         className="small"
                         style={{ marginBottom: 8, fontWeight: 600 }}
@@ -716,7 +1145,7 @@ export default function Lobby() {
                       </div>
                       <div
                         className="chips"
-                        style={{ gap: 8, display: "flex", flexWrap: "wrap" }}
+                        style={{ gap: 6, display: "flex", flexWrap: "wrap" }}
                       >
                         {[1, 2, 3, 4].map((n) => {
                           const active = price.includes(n);
@@ -727,7 +1156,7 @@ export default function Lobby() {
                               onClick={() => togglePrice(n)}
                               className={`chip${active ? " chip--active" : ""}`}
                               aria-pressed={active}
-                              style={{ fontSize: 14, padding: "8px 16px" }}
+                              style={{ fontSize: 13, padding: "6px 14px" }}
                             >
                               {"$".repeat(n)}
                             </button>
@@ -736,7 +1165,7 @@ export default function Lobby() {
                       </div>
                     </section>
 
-                    <section>
+                    <section style={{ flex: "0 0 auto" }}>
                       <div
                         className="small"
                         style={{ marginBottom: 8, fontWeight: 600 }}
@@ -787,16 +1216,15 @@ export default function Lobby() {
                       </label>
                     </section>
                   </div>
-
                   <section>
                     <label
                       htmlFor="min-rating"
-                      style={{ display: "grid", gap: 8 }}
+                      style={{ display: "grid", gap: 6 }}
                     >
                       <div className="small" style={{ fontWeight: 600 }}>
                         {t("minimum_rating")}:{" "}
                         <strong
-                          style={{ fontSize: 16, color: "var(--accent)" }}
+                          style={{ fontSize: 15, color: "var(--accent)" }}
                         >
                           {minRating.toFixed(1)}★
                         </strong>
@@ -823,6 +1251,206 @@ export default function Lobby() {
                       </div>
                     </label>
                   </section>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 16,
+                      alignItems: "flex-start",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <section style={{ flex: "1 1 300px", minWidth: 240 }}>
+                      <div
+                        className="small"
+                        style={{ marginBottom: 8, fontWeight: 600 }}
+                      >
+                        {t("dietary_filters")}
+                      </div>
+                      <div
+                        className="chips"
+                        style={{ gap: 6, display: "flex", flexWrap: "wrap" }}
+                      >
+                        {DIETARY_FILTERS.map((f) => {
+                          const active = selectedDietaryFilters.includes(f.key);
+                          return (
+                            <button
+                              key={f.key}
+                              type="button"
+                              onClick={() => {
+                                setSelectedDietaryFilters((prev) =>
+                                  prev.includes(f.key)
+                                    ? prev.filter((x) => x !== f.key)
+                                    : [...prev, f.key]
+                                );
+                              }}
+                              className={`chip${active ? " chip--active" : ""}`}
+                              aria-pressed={active}
+                              style={{ fontSize: 13, padding: "6px 12px" }}
+                            >
+                              <span
+                                aria-hidden
+                                style={{
+                                  width: 9,
+                                  height: 9,
+                                  borderRadius: "50%",
+                                  border: `2px solid var(--accent)`,
+                                  background: active
+                                    ? "var(--accent)"
+                                    : "transparent",
+                                  transition: "all .2s ease",
+                                  display: "inline-block",
+                                  marginRight: 5,
+                                }}
+                              />
+                              {t(f.key)}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
+                    <section style={{ flex: "1 1 300px", minWidth: 240 }}>
+                      <div
+                        className="small"
+                        style={{ marginBottom: 6, fontWeight: 600, fontSize: 11 }}
+                      >
+                        {t("custom_filters_section") ||
+                          "Filtros personalizados"}{" "}
+                        ({customFilters.length}/3)
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: 8,
+                          alignItems: "flex-start",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <input
+                          type="text"
+                          className="input"
+                          value={customFilter}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val.length <= 40) {
+                              setCustomFilter(
+                                val.replace(/[^a-záéíóúñ\s]/gi, "")
+                              );
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const cleaned = customFilter.trim().toLowerCase();
+                              if (
+                                cleaned.length >= 2 &&
+                                customFilters.length < 3 &&
+                                !customFilters.includes(cleaned)
+                              ) {
+                                setCustomFilters((prev) => [...prev, cleaned]);
+                                setCustomFilter("");
+                                showToast(
+                                  "ok",
+                                  t("custom_filter_added"),
+                                  2000
+                                );
+                              } else if (customFilters.length >= 3) {
+                                showToast(
+                                  "warn",
+                                  t("custom_filter_max_limit"),
+                                  3000
+                                );
+                              } else if (customFilters.includes(cleaned)) {
+                                showToast(
+                                  "warn",
+                                  t("custom_filter_duplicate"),
+                                  3000
+                                );
+                              }
+                            }
+                          }}
+                          placeholder={
+                            t("custom_filter_placeholder")
+                          }
+                          disabled={customFilters.length >= 3}
+                          style={{
+                            fontSize: 13,
+                            padding: "7px 10px",
+                            opacity: customFilters.length >= 3 ? 0.5 : 1,
+                            flex: "0 1 auto",
+                            minWidth: 200,
+                            maxWidth: 280,
+                          }}
+                          maxLength={40}
+                        />
+
+                        {customFilters.length > 0 && (
+                          <div
+                            style={{
+                              display: "flex",
+                              flexWrap: "wrap",
+                              gap: 6,
+                              flex: 1,
+                              alignItems: "center",
+                            }}
+                          >
+                            {customFilters.map((term) => (
+                              <div
+                                key={term}
+                                className="chip chip--custom"
+                                style={{
+                                  fontSize: 12,
+                                  padding: "5px 9px",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 5,
+                                  background: "var(--accent)",
+                                  color: "white",
+                                  borderRadius: "999px",
+                                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                                }}
+                              >
+                                <span>{term}</span>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setCustomFilters((prev) =>
+                                      prev.filter((t) => t !== term)
+                                    )
+                                  }
+                                  style={{
+                                    background: "transparent",
+                                    border: "none",
+                                    color: "white",
+                                    cursor: "pointer",
+                                    padding: 0,
+                                    fontSize: 15,
+                                    lineHeight: 1,
+                                    opacity: 0.9,
+                                  }}
+                                  aria-label={t("remove")}
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <p
+                        className="tiny muted"
+                        style={{ marginTop: 8, color: "#f59e0b", fontSize: 11 }}
+                      >
+                        ⚠️{" "}
+                        {t("custom_filters_warning")}
+                      </p>
+                      {customFilters.length === 0 && (
+                        <div className="tiny muted" style={{ marginTop: 5, fontSize: 11 }}>
+                          {t("custom_filter_hint")}
+                        </div>
+                      )}
+                    </section>
+                  </div>
                 </div>
               </div>
             )}
@@ -1019,13 +1647,23 @@ export default function Lobby() {
                           📍 {t("radius_km", { radius: radiusKm.toFixed(1) })}
                         </div>
                         <div>
-                          🍽️ {selectedCuisines.length}{" "}
+                          🍽️ {selectedCuisines.length + customCuisines.length}{" "}
                           {t(
-                            selectedCuisines.length === 1
+                            selectedCuisines.length + customCuisines.length ===
+                              1
                               ? "cuisine_type_one"
                               : "cuisine_type_other"
                           )}
                         </div>
+                        {selectedDietaryFilters.length > 0 && (
+                          <div>
+                            🥗{" "}
+                            {selectedDietaryFilters.map((k) => t(k)).join(", ")}
+                          </div>
+                        )}
+                        {customFilters.length > 0 && (
+                          <div>🔍 {customFilters.join(", ")}</div>
+                        )}
                         {minRating > 0 && (
                           <div>
                             ⭐{" "}
@@ -1159,6 +1797,7 @@ export default function Lobby() {
         open={toast.open}
         variant={toast.variant}
         duration={toast.duration}
+        action={toast.action}
         onClose={() => setToast((s) => ({ ...s, open: false }))}
       >
         {toast.msg}
