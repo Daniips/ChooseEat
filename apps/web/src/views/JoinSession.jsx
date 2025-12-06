@@ -5,7 +5,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useSession } from "../context/SessionContext";
 import { api } from "../lib/api";
-import { getParticipantId, setParticipant, migrateFromLegacy } from "../lib/participant";
+import { getParticipantId, setParticipant, migrateFromLegacy, rememberSession } from "../lib/participant";
 import { useTranslation } from "react-i18next";
 import Toast from "../components/Toast";
 import { errorToMessage } from "../lib/errorToMessage";
@@ -47,7 +47,7 @@ export default function JoinSession() {
             method: "POST",
             body: JSON.stringify({ participantId: existingId }),
           });
-          setParticipant(id, data.participant, data.invitePath)
+          setParticipant(id, data.participant, data.invitePath);
           hydrateFromJoin(data);
           navigate(`/vote/${id}`);
           return;
@@ -72,6 +72,7 @@ export default function JoinSession() {
         body: JSON.stringify({ name }),
       });
       setParticipant(id, data.participant, data.invitePath);
+      if (data?.session?.name) rememberSession(id, data.invitePath, data.session.name);
       hydrateFromJoin(data);
       navigate(`/vote/${id}`);
     } catch (err) {

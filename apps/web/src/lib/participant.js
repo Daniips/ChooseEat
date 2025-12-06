@@ -41,7 +41,6 @@ export function getParticipant(sessionId, { touch = true } = {}) {
       p.lastSeen = now();
       map[sessionId] = p;
       writeJSON(STORAGE_KEY, map);
-      rememberSession(sessionId);
     }
     return p;
   } catch (e) {
@@ -70,7 +69,6 @@ export function setParticipant(sessionId, participant, invitePath, { ttlDays = T
     };
     writeJSON(STORAGE_KEY, map);
 
-    rememberSession(sessionId, invitePath);
   } catch (e) {
     console.error("setParticipant failed:", e);
   }
@@ -88,7 +86,6 @@ export function touchParticipant(sessionId, { ttlDays = TTL_DAYS } = {}) {
       expiresAt: ts + dayMs(ttlDays),
     };
     writeJSON(STORAGE_KEY, map);
-    rememberSession(sessionId);
   } catch (e) {
     console.error("touchParticipant failed:", e);
   }
@@ -112,7 +109,7 @@ export function migrateFromLegacy(currentSessionId) {
   }
 }
 
-export function rememberSession(sessionId, invitePath) {
+export function rememberSession(sessionId, invitePath, name) {
   try {
     if (!sessionId) return;
     const list = readJSON(INDEX_KEY, []);
@@ -121,11 +118,17 @@ export function rememberSession(sessionId, invitePath) {
 
     const idx = list.findIndex((s) => s.id === sessionId);
     if (idx >= 0) {
-      list[idx] = { ...list[idx], invitePath: path, lastSeen: ts };
+    const existingName = list[idx].name;
+      list[idx] = { 
+        ...list[idx], 
+        invitePath: path, 
+        lastSeen: ts,
+        name: name !== undefined ? name : existingName
+      };
     } else {
-      list.push({ id: sessionId, invitePath: path, lastSeen: ts });
+      list.push({ id: sessionId, invitePath: path, lastSeen: ts, name });
     }
-
+    
     const cutoff = ts - dayMs(TTL_DAYS);
     const cleaned = list
       .filter((s) => (s.lastSeen ?? 0) >= cutoff)

@@ -7,7 +7,7 @@ import Toast from "../components/Toast";
 import { CUISINES, DIETARY_FILTERS } from "../data/cuisines";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { setParticipant } from "../lib/participant";
+import { setParticipant, rememberSession } from "../lib/participant";
 import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
 import { errorToMessage } from "../lib/errorToMessage";
@@ -94,6 +94,7 @@ export default function Lobby() {
   const [step, setStep] = useState(0);
 
   const [hostName, setHostName] = useState("");
+  const [sessionName, setSessionName] = useState("");
   const [center, setCenter] = useState({ lat: 41.3879, lng: 2.16992 });
   const [radiusKm, setRadiusKm] = useState(2);
   const [selectedCuisines, setSelectedCuisines] = useState([]);
@@ -124,6 +125,15 @@ export default function Lobby() {
   });
   const showToast = (variant, msg, duration = 5000, action = null) =>
     setToast({ open: true, variant, msg, duration, action });
+
+  const steps = [
+    { id: 0, title: t("ur_name"), icon: "user" },
+    { id: 1, title: t("zone"), icon: "map-pin" },
+    { id: 2, title: t("cuisine"), icon: "utensils" },
+    { id: 3, title: t("filters"), icon: "sliders" },
+    { id: 4, title: t("voters"), icon: "users" },
+    { id: 5, title: t("preview"), icon: "eye" },
+  ];
 
   const thresholdValid =
     people >= 2 &&
@@ -324,7 +334,7 @@ export default function Lobby() {
   }
 
   function canGoNext() {
-    if (step === 0) return hostName.trim().length > 0;
+    if (step === 0) return hostName.trim().length > 0 && sessionName.trim().length > 0;
     if (step === 1) return true;
     if (step === 2) return cuisinesValid;
     if (step === 3) return true;
@@ -340,13 +350,24 @@ export default function Lobby() {
     return false;
   }
 
+  function showMissingNameToast() {
+    const missingSession = !sessionName.trim();
+    const missingHost = !hostName.trim();
+
+    if (missingSession) {
+      showToast("warn", t("session_name_required"), 3000);
+    } else if (missingHost) {
+      showToast("warn", t("enter_name_required"), 3000);
+    }
+  }
+
   function handleStepClick(targetStep) {
     if (!canGoToStep(targetStep)) {
       if (targetStep > step + 1) {
         showToast("warn", t("complete_current_step_first"), 3000);
       } else if (targetStep === step + 1 && !canGoNext()) {
         if (step === 0) {
-          showToast("warn", t("enter_name_required"), 3000);
+          showMissingNameToast();
         } else if (step === 2) {
           showToast("warn", t("select_one_cuisine"), 3000);
         } else if (step === 4) {
@@ -370,7 +391,7 @@ export default function Lobby() {
           handleNext();
         } else {
           if (step === 0) {
-            showToast("warn", t("enter_name_required"), 3000);
+            showMissingNameToast();
           } else if (step === 2) {
             showToast("warn", t("select_one_cuisine"), 3000);
           } else if (step === 4) {
@@ -391,6 +412,7 @@ export default function Lobby() {
   }, [
     step,
     hostName,
+    sessionName,
     customCuisines,
     customFilters,
     cuisinesValid,
@@ -448,6 +470,11 @@ export default function Lobby() {
 
   async function applyAndStart(e) {
     e.preventDefault();
+    if (!sessionName.trim()) {
+      showToast("warn", t("session_name_required"));
+      setStep(0);
+      return;
+    }
     if (!cuisinesValid || !thresholdValid || !previewCount) return;
 
     const area = { radiusKm };
@@ -471,7 +498,7 @@ export default function Lobby() {
     try {
       const created = await api("/api/sessions", {
         method: "POST",
-        body: JSON.stringify({ area, filters, threshold, center }),
+        body: JSON.stringify({ area, filters, threshold, center, name: sessionName }),
       });
 
       const joined = await api(`/api/sessions/${created.sessionId}/join`, {
@@ -481,6 +508,10 @@ export default function Lobby() {
 
       setParticipant(created.sessionId, joined.participant, created.invitePath);
       hydrateFromJoin(joined);
+
+      const nameToRemember = sessionName.trim();
+      rememberSession(created.sessionId, created.invitePath, nameToRemember);
+
       navigate(`/vote/${created.sessionId}`);
     } catch (e) {
       console.error("Create/join session failed:", e);
@@ -488,21 +519,12 @@ export default function Lobby() {
     }
   }
 
-  const steps = [
-    { id: 0, title: t("ur_name"), icon: "user" },
-    { id: 1, title: t("zone"), icon: "map-pin" },
-    { id: 2, title: t("cuisine"), icon: "utensils" },
-    { id: 3, title: t("filters"), icon: "sliders" },
-    { id: 4, title: t("voters"), icon: "users" },
-    { id: 5, title: t("preview"), icon: "eye" },
-  ];
-
-  /* 
-  Icons from Lucide (ISC + MIT License)
-  Copyright © Lucide Contributors.
-  Portions copyright © 2013–2023 Cole Bemis (Feather Icons).
-  Source: https://lucide.dev
-*/
+    /* 
+      Icons from Lucide (ISC + MIT License)
+      Copyright © Lucide Contributors.
+      Portions copyright © 2013–2023 Cole Bemis (Feather Icons).
+      Source: https://lucide.dev
+    */
   const StepIcon = ({ icon, active, completed }) => {
     const icons = {
       user: (
@@ -806,27 +828,57 @@ export default function Lobby() {
                 className="step-panel"
                 style={{ textAlign: "center", padding: "30px 0" }}
               >
-                <h3 style={{ marginBottom: 16, fontSize: 18 }}>
-                  {t("ur_name")} (Host)
-                </h3>
-                <input
-                  id="host-name"
-                  className="input"
-                  value={hostName}
-                  onChange={(e) => setHostName(e.target.value)}
-                  placeholder={t("enter_name")}
-                  required
-                  autoFocus
+                <div
                   style={{
-                    maxWidth: 320,
+                    maxWidth: 360,
                     margin: "0 auto",
-                    fontSize: 16,
-                    padding: 12,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 14,
+                    textAlign: "left",
                   }}
-                />
-                <p className="tiny muted" style={{ marginTop: 12 }}>
-                  {t("host_name_hint")}
-                </p>
+                >
+                  <label style={{ display: "grid", gap: 6 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600 }}>
+                      {t("session_name")}
+                    </span>
+                    <input
+                      className="input"
+                      value={sessionName}
+                      onChange={e => setSessionName(e.target.value)}
+                      placeholder={t("session_name_placeholder")}
+                      required
+                      autoFocus
+                      style={{
+                        width: "100%",
+                        fontSize: 16,
+                        padding: 12,
+                      }}
+                    />
+                  </label>
+
+                  <label style={{ display: "grid", gap: 6 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600 }}>
+                      {t("ur_name")}
+                    </span>
+                    <input
+                      id="host-name"
+                      className="input"
+                      value={hostName}
+                      onChange={(e) => setHostName(e.target.value)}
+                      placeholder={t("enter_name")}
+                      required
+                      style={{
+                        width: "100%",
+                        fontSize: 16,
+                        padding: 12,
+                      }}
+                    />
+                    <p className="tiny muted" style={{ margin: 0 }}>
+                      {t("host_name_hint")}
+                    </p>
+                  </label>
+                </div>
               </div>
             )}
 

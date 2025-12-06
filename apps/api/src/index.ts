@@ -174,6 +174,7 @@ app.get("/api/restaurants", async (req, reply) => {
 app.post("/api/sessions", async (req, reply) => {
   const body = (req.body as any) ?? {};
   const area: Area = body.area;
+  const name: string | undefined = typeof body.name === 'string' && body.name.trim().length > 0 ? body.name.trim() : undefined;
   const filtersRaw = body.filters || {};
   const center = body.center;
   const rawThreshold = body.threshold as
@@ -259,6 +260,7 @@ app.post("/api/sessions", async (req, reply) => {
     const sessionId = "s_" + Math.random().toString(36).slice(2, 10);
     const session: StoredSession = {
       id: sessionId,
+      name,
       area,
       filters,
       threshold,
@@ -279,6 +281,7 @@ app.post("/api/sessions", async (req, reply) => {
       count: items.length,
       session: {
         id: session.id,
+        name: session.name,
         area: session.area,
         filters: session.filters,
         threshold: session.threshold,
@@ -331,6 +334,7 @@ app.post("/api/sessions/:id/join", async (req, reply) => {
       invitePath: `/s/${id}`,
       session: {
         id: s.id,
+        name: s.name,
         area: s.area,
         filters: s.filters,
         threshold: s.threshold,
@@ -380,6 +384,7 @@ app.post("/api/sessions/:id/join", async (req, reply) => {
     invitePath: `/s/${id}`,
     session: {
       id: after.id,
+      name: after.name,
       area: after.area,
       filters: after.filters,
       threshold: after.threshold,
@@ -427,6 +432,7 @@ app.get("/api/sessions/:id", async (req, reply) => {
 
   return reply.send({
     id: s.id,
+    name: s.name,
     status: s.status,
     threshold: s.threshold,
     participants,

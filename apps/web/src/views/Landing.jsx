@@ -91,7 +91,7 @@ export default function Landing() {
                       onClick={() => goToSession(s.id)}
                       title="Abrir"
                     >
-                      <span className="recent__id">{s.id}</span>
+                      {s.name && <span className="recent__name">{s.name}</span>}
                       <span className="recent__link">{s.invitePath || `/s/${s.id}`}</span>
                     </button>
                     <button

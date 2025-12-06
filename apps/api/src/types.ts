@@ -56,6 +56,7 @@ export interface Threshold {
 
 export interface Session {
     id: string;
+    name?: string;
     area: Area;
     filters: Filters;
     threshold: Threshold;

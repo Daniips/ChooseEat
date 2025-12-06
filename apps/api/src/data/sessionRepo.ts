@@ -25,6 +25,7 @@ export type SessionStatus = "open" | "voting" | "matched" | "finished";
 
 export interface Session {
   id: string;
+  name?: string;
   area: { radiusKm: number };
   filters: {
     cuisines: string[];
