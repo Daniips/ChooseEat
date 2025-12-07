@@ -109,7 +109,7 @@ export default function JoinSession() {
   }
 
   return (
-    <div className="wrap" style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div className="wrap" style={{ height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <Header />
 
       <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>

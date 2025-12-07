@@ -240,7 +240,7 @@ export default function Results() {
     <div
       className="wrap"
       style={{
-        height: "100vh",
+        height: "100dvh",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",

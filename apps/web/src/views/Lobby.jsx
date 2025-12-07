@@ -682,7 +682,7 @@ export default function Lobby() {
     <div
       className="wrap"
       style={{
-        height: "100vh",
+        height: "100dvh",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
@@ -725,10 +725,10 @@ export default function Lobby() {
               ← {t("home_button")}
             </button>
             <h2 style={{ margin: "0 0 4px", fontSize: 20 }}>
-              {t("create_session")}
+              {t("create_session")} 
             </h2>
             <div className="tiny muted">
-              {t("step")} {step + 1} {t("of")} {steps.length}
+              {steps[step].title} - {t("step")} {step + 1} {t("of")} {steps.length}
             </div>
           </div>
 
@@ -905,7 +905,6 @@ export default function Lobby() {
 
             {step === 1 && (
               <div className="step-panel">
-                <h3 style={{ marginBottom: 10, fontSize: 18 }}>{t("zone")}</h3>
                 <p className="tiny muted" style={{ marginBottom: 10 }}>
                   {t("select_location_radius")}
                 </p>
@@ -947,7 +946,6 @@ export default function Lobby() {
                     marginBottom: 12,
                   }}
                 >
-                  <h3 style={{ margin: 0, fontSize: 18 }}>{t("cuisine")}</h3>
                   <div className="tiny">
                     <button
                       type="button"
@@ -1193,9 +1191,6 @@ export default function Lobby() {
 
             {step === 3 && (
               <div className="step-panel">
-                <h3 style={{ marginBottom: 8, fontSize: 18 }}>
-                  {t("filters")}
-                </h3>
                 <p className="tiny muted" style={{ marginBottom: 16 }}>
                   {t("optional_filters_refine")}
                 </p>
@@ -1530,9 +1525,6 @@ export default function Lobby() {
 
             {step === 4 && (
               <div className="step-panel">
-                <h3 style={{ marginBottom: 12, fontSize: 18 }}>
-                  {t("voters")}
-                </h3>
                 <p className="tiny muted" style={{ marginBottom: 24 }}>
                   {t("define_voters_threshold")}
                 </p>
@@ -1776,6 +1768,7 @@ export default function Lobby() {
           gap: 10,
           justifyContent: "space-between",
           paddingTop: "10px",
+          background: "transparent",
         }}
       >
         <button

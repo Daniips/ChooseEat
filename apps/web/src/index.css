@@ -56,6 +56,15 @@
 
   --header-h: 56px;
   --wrap-py: 16px;
+  
+  /* Viewport height adaptable a navegadores móviles */
+  --vh-full: 100vh;
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --vh-full: 100dvh;
+  }
 }
 
 /* ======================================================
@@ -153,6 +162,28 @@ body {
 .muted {
   color: var(--muted);
   margin: 0;
+}
+
+/* ===========================================================
+   LAYOUT GENERAL - Altura adaptable móvil
+   ======================================================== */
+.wrap {
+  height: var(--vh-full);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --header-h: 52px;
+  }
+  
+  .wrap {
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 /* ===========================================================
@@ -1243,6 +1274,72 @@ input[type="checkbox"] {
   border-radius: 14px;
   padding: 10px 0px;
   margin-top: 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.lobby-wizard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Oculta scrollbar en Firefox */
+}
+
+/* Oculta scrollbar en Chrome/Safari */
+.lobby-wizard::-webkit-scrollbar {
+  display: none;
+}
+
+.lobby-wizard::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lobby-wizard::-webkit-scrollbar-thumb {
+  background-color: var(--accent);
+  border-radius: 3px;
+}
+
+.lobby-wizard::-webkit-scrollbar-thumb:hover {
+  background-color: var(--accent-600);
+}
+
+.lobby__header {
+  flex-shrink: 0;
+  padding: 12px 0;
+}
+
+.progress-bar {
+  flex-shrink: 0;
+  margin-bottom: 16px;
+}
+
+.step-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 16px;
+}
+
+.step-content::-webkit-scrollbar {
+  display: none;
+}
+
+.step-content {
+  scrollbar-width: none;
+}
+.step-nav {
+  flex-shrink: 0;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding: 12px 16px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
 }
 
 .panel {
@@ -1273,19 +1370,92 @@ input[type="checkbox"] {
   .lobby__hint {
     display: none;
   }
+  
+  .lobby__header h2 {
+    font-size: 18px;
+  }
+  
+  .lobby__header .btn--ghost {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+  
+  .progress-bar {
+    margin-bottom: 12px;
+  }
+  
+  .step-content {
+    min-height: auto !important;
+  }
+  
+  .step-panel {
+    padding: 16px 0 !important;
+  }
+  
+  .step-nav {
+    padding: 8px 12px;
+  }
+  
+  .step-nav .btn {
+    padding: 8px 16px !important;
+    font-size: 14px !important;
+  }
+  
   .filters__row {
     grid-template-columns: 1fr;
   }
+  
   .chips {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 8px !important;
+    gap: 6px !important;
   }
 
   .chips .chip {
-    padding: 8px 10px !important;
-    font-size: 14px !important;
+    padding: 6px 10px !important;
+    font-size: 13px !important;
     align-items: center;
+  }
+  
+  .input {
+    padding: 8px 10px !important;
+    font-size: 15px !important;
+  }
+  
+  label span {
+    font-size: 13px !important;
+  }
+  
+  .small {
+    font-size: 11px !important;
+  }
+  
+  .tiny {
+    font-size: 10px !important;
+  }
+  
+  .step-icon {
+    width: 24px !important;
+    height: 24px !important;
+  }
+  
+  .step-icon__svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+}
+
+@media (max-height: 700px) {
+  .lobby__header {
+    padding: 8px 0;
+  }
+  
+  .lobby__header h2 {
+    font-size: 16px;
+  }
+  
+  .progress-bar {
+    margin-bottom: 8px;
   }
 }
 
@@ -2327,6 +2497,29 @@ body {
 .leaflet-container {
   font-family: inherit;
 }
+
+
+/* =========================================================
+   FOOTER RESPONSIVE
+   ========================================================= */
+.footer-nav-desktop {
+  display: flex !important;
+}
+
+.footer-nav-mobile {
+  display: none !important;
+}
+
+@media (max-width: 640px) {
+  .footer-nav-desktop {
+    display: none !important;
+  }
+  
+  .footer-nav-mobile {
+    display: block !important;
+  }
+}
+
 
 /* =========================================================
    PÁGINAS LEGALES

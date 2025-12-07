@@ -34,7 +34,7 @@ export default function Landing() {
   }
 
   return (
-    <div className="wrap home-page" style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div className="wrap home-page" style={{ height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <Header />
 
       <main className="hero" style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>

@@ -8,7 +8,10 @@ export default function Privacy() {
   const currentDate = new Date().toLocaleDateString();
 
   return (
-    <div className="wrap" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div
+      className="wrap wrap--scrollable"
+      style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}
+    >
       <Header />
       
       <main className="legal-page" style={{ flex: 1, maxWidth: 800, margin: '0 auto', padding: '24px 16px' }}>
