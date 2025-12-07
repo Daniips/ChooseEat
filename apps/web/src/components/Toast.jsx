@@ -10,7 +10,7 @@ export default function Toast({ open, onClose, variant = "ok", duration = 2500, 
 
     if (!open) return null;
 
-    const icon = variant === "warn" ? "!" : variant === "info" ? "?" : "✓";
+    const icon = variant === "warn" ? "!" : variant === "info" ? "ℹ" : variant === "error" ? "✗" : variant === "success" ? "✓" : "✓";
 
     return (
         <div className={`toast toast--${variant}`} role="status" aria-live="polite">

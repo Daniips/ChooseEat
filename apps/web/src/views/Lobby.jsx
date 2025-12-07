@@ -470,11 +470,13 @@ export default function Lobby() {
 
   async function applyAndStart(e) {
     e.preventDefault();
+    
     if (!sessionName.trim()) {
       showToast("warn", t("session_name_required"));
       setStep(0);
       return;
     }
+    
     if (!cuisinesValid || !thresholdValid || !previewCount) return;
 
     const area = { radiusKm };
@@ -499,11 +501,13 @@ export default function Lobby() {
       const created = await api("/api/sessions", {
         method: "POST",
         body: JSON.stringify({ area, filters, threshold, center, name: sessionName }),
+        timeoutMs: 15000,
       });
 
       const joined = await api(`/api/sessions/${created.sessionId}/join`, {
         method: "POST",
         body: JSON.stringify({ name: hostName || "Host" }),
+        timeoutMs: 10000,
       });
 
       setParticipant(created.sessionId, joined.participant, created.invitePath);
@@ -1809,8 +1813,9 @@ export default function Lobby() {
         ) : (
           <div style={{ position: "relative", display: "inline-block" }}>
             <button
-              type="submit"
+              type="button"
               className="btn btn--primary"
+              onClick={applyAndStart}
               disabled={!previewCount || previewCount === 0}
               style={{ fontSize: 15, padding: "10px 24px" }}
               onMouseEnter={() => setShowHint(true)}

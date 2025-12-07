@@ -45,11 +45,11 @@ export default function Card({ r, onNo, onYes, keySwipe, onKeyHandled }) {
       return [`https://via.placeholder.com/480x360?text=${encodeURIComponent(t("error.image_placeholder"))}`];
     }
 
+    const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+
     return r.photos.map((url) =>
       url.startsWith("https://places.googleapis.com")
-        ? `http://localhost:4000/api/photos/proxy?url=${encodeURIComponent(
-            url
-          )}`
+        ? `${apiUrl}/api/photos/proxy?url=${encodeURIComponent(url)}`
         : url
     );
   }, [r?.photos, t]);
