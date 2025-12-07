@@ -114,6 +114,8 @@ export default function Lobby() {
   const [previewCount, setPreviewCount] = useState(null);
   const inputAnchorRef = useRef(null);
   const dropdownRef = useRef(null);
+  const sessionNameInputRef = useRef(null);
+  const hostNameInputRef = useRef(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
 
   const [toast, setToast] = useState({
@@ -385,14 +387,27 @@ export default function Lobby() {
 
   function handleKeyDown(e) {
     if (e.key === "Enter" && !e.shiftKey) {
+      if (step === 0) {
+        e.preventDefault();
+        
+        if (document.activeElement === sessionNameInputRef.current) {
+          hostNameInputRef.current?.focus();
+          return;
+        }
+        
+        if (document.activeElement === hostNameInputRef.current && canGoNext()) {
+          handleNext();
+          return;
+        }
+        showMissingNameToast();
+        return;
+      }
       e.preventDefault();
       if (step < 5) {
         if (canGoNext()) {
           handleNext();
         } else {
-          if (step === 0) {
-            showMissingNameToast();
-          } else if (step === 2) {
+          if (step === 2) {
             showToast("warn", t("select_one_cuisine"), 3000);
           } else if (step === 4) {
             showToast("warn", t("invalid_threshold"), 3000);
@@ -847,6 +862,7 @@ export default function Lobby() {
                       {t("session_name")}
                     </span>
                     <input
+                      ref={sessionNameInputRef}
                       className="input"
                       value={sessionName}
                       onChange={e => setSessionName(e.target.value)}
@@ -866,6 +882,7 @@ export default function Lobby() {
                       {t("ur_name")}
                     </span>
                     <input
+                      ref={hostNameInputRef}
                       id="host-name"
                       className="input"
                       value={hostName}
