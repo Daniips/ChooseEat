@@ -3,11 +3,13 @@ import React from "react";
 import Button from "../components/Button";
 import { useTranslation } from "react-i18next";
 
+const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+
 function getPhotoUrl(restaurant) {
   const url = restaurant.photos?.[0] || restaurant.img;
   if (!url) return "";
   if (url.includes("places.googleapis.com")) {
-    return `http://localhost:4000/api/photos/proxy?url=${encodeURIComponent(
+    return `${apiUrl}/api/photos/proxy?url=${encodeURIComponent(
       url
     )}`;
   }
