@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <mask id="pinCutout">
+      <rect width="735.072" height="332.195" fill="white" x="-99.68" y="-100.62"/>
+      <circle cx="230.678" cy="223.788" r="10" transform="matrix(0.398516, 0, 0, 0.364176, -75.940385, -72.91063)" fill="black"/>
+    </mask>
+  </defs>
+  <ellipse cx="16.018" cy="26.03" rx="12.753" ry="5.098" style="transform-origin: 16.018px 15.872px; stroke: rgba(0, 0, 0, 0.9); fill: rgb(255, 255, 255);"/>
+  <ellipse cx="16.018" cy="26.03" rx="8.768" ry="2.913" stroke="rgba(0, 0, 0, 0.9)" style="transform-origin: 16.018px 15.872px; fill: rgb(255, 255, 255);"/>
+  <path d="M 15.989 0.576 C 11.206 0.576 7.221 4.218 7.221 8.59 C 7.221 14.415 15.989 25.34 15.989 25.34 C 15.989 25.34 24.756 14.415 24.756 8.59 C 24.756 4.218 20.77 0.576 15.989 0.576 Z" fill="#4f46e5" stroke-linejoin="round" stroke="rgba(0, 0, 0, 0.9)" mask="url(#pinCutout)" style="transform-origin: 15.166px 15.873px;"/>
+  <circle cx="228.613" cy="223.935" r="10" fill="none" stroke="rgba(0, 0, 0, 0.9)" transform="matrix(0.398515, 0, 0, 0.364174, -212.42493, -227.807239)" style="stroke-width: 2.90625px; transform-origin: 228.613px 243.787px;"/>
+</svg>
