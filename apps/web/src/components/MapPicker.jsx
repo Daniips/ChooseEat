@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { MapContainer, TileLayer, Marker, Circle, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -167,7 +168,7 @@ export default function MapPicker({ center, onCenterChange, radiusKm = 2 }) {
         </div>
       </div>
 
-      {isExpanded && (
+      {isExpanded ? createPortal(
         <div
           className="map-modal-overlay"
           onClick={() => setIsExpanded(false)}
@@ -196,14 +197,14 @@ export default function MapPicker({ center, onCenterChange, radiusKm = 2 }) {
               padding: 20,
               maxWidth: 'min(800px, 95vw)',
               width: '100%',
-              maxHeight: 'min(100vh, 1000px)',
+              height: 'min(90dvh, 700px)',
               display: 'flex',
               flexDirection: 'column',
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
               animation: 'slideUp 0.3s ease-out'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 16, position: 'relative' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12, position: 'relative' }}>
               <h3 style={{ 
                 margin: 0, 
                 fontSize: 18, 
@@ -239,7 +240,7 @@ export default function MapPicker({ center, onCenterChange, radiusKm = 2 }) {
               <MapContainer
                 center={[position.lat, position.lng]}
                 zoom={14}
-                style={{ height: '100%', width: '100%', borderRadius: 8, minHeight: 400 }}
+                style={{ height: '100%', width: '100%' }}
               >
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -266,8 +267,7 @@ export default function MapPicker({ center, onCenterChange, radiusKm = 2 }) {
               ✓ {t('confirm_location')}
             </button>
           </div>
-        </div>
-      )}
+        </div>, document.body) : null}
     </>
   );
 }
