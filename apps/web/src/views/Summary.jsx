@@ -18,7 +18,7 @@ function getPhotoUrl(restaurant) {
 
 function getGoogleMapsUrl(restaurant) {
   if (restaurant.id && restaurant.source === "google") {
-    return `https://www.google.com/maps/place/?q=place_id:${restaurant.id}`;
+    return `https://www.google.com/maps/search/?api=1&query=Google&query_place_id=${restaurant.id}`;
   }
   if (restaurant.location?.lat && restaurant.location?.lng) {
     return `https://www.google.com/maps/search/?api=1&query=${restaurant.location.lat},${restaurant.location.lng}`;
