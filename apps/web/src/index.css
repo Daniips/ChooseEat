@@ -1989,8 +1989,8 @@ input[type="checkbox"] {
 
 @media (max-width: 540px) {
   .share-menu {
-    right: 8px;
-    left: 8px;
+    left: auto;
+    right: auto;
     min-width: auto;
   }
 }

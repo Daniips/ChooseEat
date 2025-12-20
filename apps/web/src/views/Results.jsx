@@ -243,7 +243,7 @@ export default function Results() {
         height: "100dvh",
         display: "flex",
         flexDirection: "column",
-        overflow: "hidden",
+        overflow: "visible",
       }}
     >
       <Header />
