@@ -2705,6 +2705,69 @@ body {
 }
 
 /* =========================================================
+   LOADER ANIMADO
+   ========================================================= */
+
+.loaderWrap { display: inline-block; }
+.loaderSvg  { overflow: visible; }
+
+.loaderPlate,
+.loaderPin {
+  transform-box: fill-box;
+  will-change: transform, opacity;
+  animation-timing-function: cubic-bezier(.22,.8,.2,1);
+}
+
+:root{
+  --plateShift: 16px;
+  --pinRun: 4px;
+  --pinPush: 3px;
+  --pinTilt: 14deg;
+}
+
+.loaderPlate {
+  transform-origin: center;
+  animation: plateSym 4s infinite;
+}
+
+.loaderPin {
+  transform-origin: 50% 78%;
+  animation: pinSym 4s infinite;
+}
+
+@keyframes plateSym {
+  0%   { transform: translateX(0) scaleY(1); opacity: 1; }
+  18%  { transform: translateX(0) scaleY(1); opacity: 1; }
+  40%  { transform: translateX(calc(var(--plateShift) * -1)) scaleY(0.94); opacity: 1; }
+
+  50%  { transform: translateX(0) scaleY(1); opacity: 0; }
+
+  50.1% { transform: translateX(0) scaleY(1); opacity: 1; }
+  68%  { transform: translateX(0) scaleY(1); opacity: 1; }
+  90%  { transform: translateX(var(--plateShift)) scaleY(0.94); opacity: 1; }
+
+  100% { transform: translateX(0) scaleY(1); opacity: 0; }
+}
+
+@keyframes pinSym {
+  0%   { transform: translateX(0) rotate(0deg); }
+  18%  { transform: translateX(var(--pinRun)) rotate(6deg); }
+  26%  { transform: translateX(calc(var(--pinPush) * -1)) rotate(calc(var(--pinTilt) * -1)); }
+  40%  { transform: translateX(0) rotate(0deg); }
+
+  50%  { transform: translateX(0) rotate(0deg); }
+  68%  { transform: translateX(calc(var(--pinRun) * -1)) rotate(-6deg); }
+  76%  { transform: translateX(var(--pinPush)) rotate(var(--pinTilt)); }
+  90%  { transform: translateX(0) rotate(0deg); }
+
+  100% { transform: translateX(0) rotate(0deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loaderPlate, .loaderPin { animation: none; }
+}
+
+/* =========================================================
    ACCESIBILIDAD – REDUCCIÓN DE MOVIMIENTO
    ========================================================= */
 @media (prefers-reduced-motion: reduce) {

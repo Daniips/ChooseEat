@@ -5,6 +5,7 @@ import Footer from "../components/Footer";
 import Summary from "./Summary";
 import { api } from "../lib/api";
 import { useTranslation } from "react-i18next";
+import Loader from "../components/Loader";
 
 export default function Results() {
   const { t } = useTranslation();
@@ -219,14 +220,40 @@ export default function Results() {
     return () => (mounted = false);
   }, [id]);
 
-  if (loading)
+  if (loading) {
     return (
-      <div>
+      <div
+        className="wrap"
+        style={{
+          height: "100dvh",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
         <Header />
-        <main>{t("loading")}</main>
+        <div
+          className="summary"
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 20,
+            padding: "60px 20px",
+            minHeight: 0,
+          }}
+        >
+          <Loader size={80} />
+          <p className="small" style={{ margin: 0, color: "var(--muted)", fontWeight: 500 }}>
+            {t("loading")}
+          </p>
+        </div>
         <Footer />
       </div>
     );
+  }
   if (!data)
     return (
       <div>

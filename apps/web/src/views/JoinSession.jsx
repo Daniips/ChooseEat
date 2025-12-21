@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import Loader from "../components/Loader";
 import { useSession } from "../context/SessionContext";
 import { api } from "../lib/api";
 import { getParticipantId, setParticipant, migrateFromLegacy, rememberSession } from "../lib/participant";
@@ -49,7 +50,11 @@ export default function JoinSession() {
           });
           setParticipant(id, data.participant, data.invitePath);
           hydrateFromJoin(data);
-          navigate(`/vote/${id}`);
+          if (data?.session?.status === "finished") {
+            navigate(`/s/${id}/results`, { replace: true });
+          } else {
+            navigate(`/vote/${id}`);
+          }
           return;
         }
       } catch (err) {
@@ -74,7 +79,11 @@ export default function JoinSession() {
       setParticipant(id, data.participant, data.invitePath);
       if (data?.session?.name) rememberSession(id, data.invitePath, data.session.name);
       hydrateFromJoin(data);
-      navigate(`/vote/${id}`);
+      if (data?.session?.status === "finished") {
+        navigate(`/s/${id}/results`, { replace: true });
+      } else {
+        navigate(`/vote/${id}`);
+      }
     } catch (err) {
       console.error("join error:", err);
       showError(errorToMessage(err, t, JOIN_ERROR_KEYS));
@@ -91,9 +100,11 @@ export default function JoinSession() {
           </button>
         </div>
 
-        <div className="summary" style={{ maxWidth: 520, margin: "12px auto" }}>
-          <h2>{t("resuming")}</h2>
-          <p className="muted">{t("checking_previous_session")}</p>
+        <div className="summary" style={{ maxWidth: 520, margin: "12px auto", minHeight: 320, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20, padding: "60px 20px" }}>
+          <Loader size={80} />
+          <p className="small" style={{ margin: 0, color: "var(--muted)", fontWeight: 500 }}>
+            {t("checking_previous_session")}
+          </p>
         </div>
 
         <Toast

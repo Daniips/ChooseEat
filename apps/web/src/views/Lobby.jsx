@@ -13,6 +13,7 @@ import { api } from "../lib/api";
 import { errorToMessage } from "../lib/errorToMessage";
 import { DEFAULT_ERROR_KEYS } from "../lib/errorKeys";
 import MapPicker from "../components/MapPicker";
+import Loader from "../components/Loader";
 
 const KEYWORD_TO_CUISINE = {
   sushi: "japanese",
@@ -95,28 +96,40 @@ export default function Lobby() {
 
   const [hostName, setHostName] = useState("");
   const [sessionName, setSessionName] = useState("");
+  const sessionNameInputRef = useRef(null);
+  const hostNameInputRef = useRef(null);
+  
+
   const [center, setCenter] = useState({ lat: 41.3879, lng: 2.16992 });
   const [radiusKm, setRadiusKm] = useState(2);
+
   const [selectedCuisines, setSelectedCuisines] = useState([]);
   const [customCuisine, setCustomCuisine] = useState("");
   const [customCuisines, setCustomCuisines] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
+
   const [customFilter, setCustomFilter] = useState("");
   const [customFilters, setCustomFilters] = useState([]);
   const [selectedDietaryFilters, setSelectedDietaryFilters] = useState([]);
+
   const [customInputFocused, setCustomInputFocused] = useState(false);
   const [lastSuggestion, setLastSuggestion] = useState(null);
+
   const [price, setPrice] = useState([]);
   const [openNow, setOpenNow] = useState(false);
   const [minRating, setMinRating] = useState(0);
   const [people, setPeople] = useState(2);
   const [requiredYes, setRequiredYes] = useState(2);
   const [previewCount, setPreviewCount] = useState(null);
+
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [loadingStart, setLoadingStart] = useState(false);
+
   const inputAnchorRef = useRef(null);
   const dropdownRef = useRef(null);
-  const sessionNameInputRef = useRef(null);
-  const hostNameInputRef = useRef(null);
+
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
+
 
   const [toast, setToast] = useState({
     open: false,
@@ -452,6 +465,7 @@ export default function Lobby() {
   }
 
   async function preview() {
+    setLoadingPreview(true);
     const params = new URLSearchParams();
     params.set("radiusKm", String(radiusKm));
     params.set("center", `${center.lat},${center.lng}`);
@@ -480,19 +494,26 @@ export default function Lobby() {
       console.error("Preview filters failed:", e);
       setPreviewCount(null);
       showToast("warn", errorToMessage(e, t, PREVIEW_ERROR_KEYS));
+    } finally {
+      setLoadingPreview(false);
     }
   }
 
   async function applyAndStart(e) {
     e.preventDefault();
+    setLoadingStart(true);
     
     if (!sessionName.trim()) {
       showToast("warn", t("session_name_required"));
       setStep(0);
+      setLoadingStart(false);
       return;
     }
     
-    if (!cuisinesValid || !thresholdValid || !previewCount) return;
+    if (!cuisinesValid || !thresholdValid || !previewCount) {
+      setLoadingStart(false);
+      return;
+    } 
 
     const area = { radiusKm };
     const filters = {
@@ -535,6 +556,8 @@ export default function Lobby() {
     } catch (e) {
       console.error("Create/join session failed:", e);
       showToast("warn", errorToMessage(e, t, CREATE_ERROR_KEYS));
+    } finally {
+      setLoadingStart(false);
     }
   }
 
@@ -842,7 +865,22 @@ export default function Lobby() {
             className="step-content"
             style={{ minHeight: 320, marginBottom: 20 }}
           >
-            {step === 0 && (
+            {loadingStart ? (
+              <div style={{ 
+                minHeight: 320, 
+                display: "flex", 
+                flexDirection: "column", 
+                alignItems: "center", 
+                justifyContent: "center",
+                gap: 20,
+                padding: "60px 20px"
+              }}>
+                <Loader size={80} />
+                <p className="small" style={{ margin: 0, color: "var(--muted)", fontWeight: 500 }}>
+                  {t("starting_session")}
+                </p>
+              </div>
+            ) : step === 0 && (
               <div
                 className="step-panel"
                 style={{ textAlign: "center", padding: "30px 0" }}
@@ -1650,11 +1688,19 @@ export default function Lobby() {
             )}
 
             {step === 5 && (
-              <div className="step-panel" style={{ textAlign: "center" }}>
-                {previewCount === null ? (
-                  <div style={{ padding: 5 }}>
-                    <div className="spinner" style={{ margin: "0 auto" }}></div>
-                    <p className="tiny muted" style={{ marginTop: 12 }}>
+              <div className="step-panel" style={{ textAlign: "center", minHeight: 320, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {loadingPreview ? (
+                  <div style={{ 
+                    padding: "60px 20px", 
+                    display: "flex", 
+                    flexDirection: "column", 
+                    alignItems: "center", 
+                    justifyContent: "center",
+                    gap: 20,
+                    width: "100%"
+                  }}>
+                    <Loader size={80} />
+                    <p className="small" style={{ margin: 0, color: "var(--muted)", fontWeight: 500 }}>
                       {t("searching_restaurants")}
                     </p>
                   </div>
@@ -1791,7 +1837,7 @@ export default function Lobby() {
               type="button"
               className="btn btn--primary"
               onClick={handleNext}
-              disabled={!canGoNext()}
+              disabled={!canGoNext() || loadingPreview}
               style={{ padding: "10px 20px" }}
               onMouseEnter={() => setShowHint(true)}
               onMouseLeave={() => setShowHint(false)}
@@ -1825,9 +1871,12 @@ export default function Lobby() {
             <button
               type="button"
               className="btn btn--primary"
+              disabled={!previewCount || previewCount === 0 || loadingStart}
               onClick={applyAndStart}
-              disabled={!previewCount || previewCount === 0}
-              style={{ fontSize: 15, padding: "10px 24px" }}
+              style={{ 
+                fontSize: 15, 
+                padding: "10px 24px"
+              }}
               onMouseEnter={() => setShowHint(true)}
               onMouseLeave={() => setShowHint(false)}
             >
