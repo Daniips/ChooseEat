@@ -6,10 +6,12 @@ import { applyTheme } from "./lib/theme";
 import './lib/i18n'; 
 import { UiProvider } from './context/UIContext.jsx';
 import LoadingScreen from './components/LoadingScreen.jsx';
+import { pruneParticipants } from './lib/participant.js';
 
 const App = lazy(() => import('./App.jsx'));
 
 applyTheme("system");
+pruneParticipants();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

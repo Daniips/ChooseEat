@@ -1,5 +1,6 @@
 // src/context/SessionContext.jsx
 import React, { createContext, useContext, useMemo, useState } from "react";
+import { setParticipant } from "../lib/participant";
 
 const SessionContext = createContext(null);
 
@@ -42,7 +43,7 @@ export function SessionProvider({ children }) {
       return false;
     }
 
-    const { session: s, restaurants, invitePath, participant, winner } = payload;
+    const { session: s, restaurants, invitePath, participant, winner, expiresAt } = payload;
 
     let safeRestaurants = [];
     if (Array.isArray(restaurants)) {
@@ -69,8 +70,12 @@ export function SessionProvider({ children }) {
 
     let stored = true;
     try {
-      localStorage.setItem("ce_participant", JSON.stringify(participant || null));
-      localStorage.setItem("ce_sessionId", s.id);
+      if (participant && s?.id) {
+        setParticipant(s.id, participant, invitePath, { expiresAt });
+      } else {
+        localStorage.setItem("ce_participant", JSON.stringify(participant || null));
+        localStorage.setItem("ce_sessionId", s.id);
+      }
     } catch (e) {
       stored = false;
       console.error("hydrateFromJoin: no se pudo persistir en localStorage:", e);

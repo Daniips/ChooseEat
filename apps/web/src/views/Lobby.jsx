@@ -546,7 +546,7 @@ export default function Lobby() {
         timeoutMs: 10000,
       });
 
-      setParticipant(created.sessionId, joined.participant, created.invitePath);
+      setParticipant(created.sessionId, joined.participant, created.invitePath, { expiresAt: joined.expiresAt });
       hydrateFromJoin(joined);
 
       const nameToRemember = sessionName.trim();

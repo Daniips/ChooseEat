@@ -2,7 +2,7 @@
 import { getRedis } from "../redis";
 
 const SESSION_PREFIX = "session:";
-const TTL_DAYS = Number(process.env.SESSION_TTL_DAYS || 7);
+export const TTL_DAYS = Number(process.env.SESSION_TTL_DAYS || 7);
 const TTL_SECONDS = TTL_DAYS * 24 * 60 * 60;
 
 const USE_MEMORY_FALLBACK = (process.env.MEMORY_FALLBACK || "true") === "true";
@@ -44,6 +44,7 @@ export interface Session {
     rating?: number;
   }>;
   createdAt: string;
+  updatedAt?: string;
   participants: Record<string, Participant>;
   votes: Record<string, VoteBuckets>;
   matchedIds: Set<string>;
@@ -54,7 +55,7 @@ function key(id: string) {
   return SESSION_PREFIX + id;
 }
 
-const mem = new Map<string, Session>();
+export const mem = new Map<string, Session>();
 
 function dehydrate(s: Session) {
   const votes: VotesJSON = {};
@@ -82,7 +83,8 @@ function rehydrate(obj: any): Session {
 }
 
 export async function saveSession(s: Session): Promise<void> {
-  const payload = JSON.stringify(dehydrate(s));
+  const sessionWithTimestamp = { ...s, updatedAt: new Date().toISOString() };
+  const payload = JSON.stringify(dehydrate(sessionWithTimestamp));
   const redis = getRedis();
   if (redis?.isOpen) {
     try {
@@ -190,7 +192,7 @@ export function computeResults(s: Session) {
       const no = b.no.size;
       const pending = Math.max(0, votersTarget - yes - no);
       return {
-        ...r, // include all restaurant fields (photos, location, address, etc.)
+        ...r,
         yes,
         no,
         pending,
@@ -225,12 +227,7 @@ export async function resyncMemoryToRedis(): Promise<number> {
   if (!redis?.isOpen) return 0;
   let count = 0;
   for (const [id, s] of mem.entries()) {
-    const elapsed = Math.max(
-      0,
-      (Date.now() - new Date(s.createdAt).getTime()) / 1000
-    );
-    const ex = Math.max(60, Math.floor(TTL_SECONDS - elapsed));
-    await redis.set(key(id), JSON.stringify(dehydrate(s)), { EX: ex });
+    await redis.set(key(id), JSON.stringify(dehydrate(s)), { EX: TTL_SECONDS });
     count++;
   }
   return count;

@@ -48,7 +48,7 @@ export default function JoinSession() {
             method: "POST",
             body: JSON.stringify({ participantId: existingId }),
           });
-          setParticipant(id, data.participant, data.invitePath);
+          setParticipant(id, data.participant, data.invitePath, { expiresAt: data.expiresAt });
           hydrateFromJoin(data);
           if (data?.session?.status === "finished") {
             navigate(`/s/${id}/results`, { replace: true });
@@ -76,7 +76,7 @@ export default function JoinSession() {
         method: "POST",
         body: JSON.stringify({ name }),
       });
-      setParticipant(id, data.participant, data.invitePath);
+      setParticipant(id, data.participant, data.invitePath, { expiresAt: data.expiresAt });
       if (data?.session?.name) rememberSession(id, data.invitePath, data.session.name);
       hydrateFromJoin(data);
       if (data?.session?.status === "finished") {

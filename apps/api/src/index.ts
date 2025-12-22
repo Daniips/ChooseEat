@@ -10,6 +10,7 @@ import type { Server as IOServer, Socket } from "socket.io";
 import "dotenv/config";
 import { ensureRedis, getRedis, isRedisAvailable } from "./redis";
 import { resyncMemoryToRedis } from "./data/sessionRepo";
+import { cleanupExpiredSessions } from "./jobs/cleanupSessions";
 
 import {
   saveSession,
@@ -17,6 +18,7 @@ import {
   updateSession,
   computeResults as computeRepoResults,
   touchSession,
+  TTL_DAYS,
   type Session as StoredSession,
   VoteBuckets,
 } from "./data/sessionRepo";
@@ -68,6 +70,13 @@ try {
 
 await redisCache.connect();
 app.log.info("[Cache] connected");
+
+// Job de limpieza periódica de sesiones expiradas (cada hora)
+const CLEANUP_INTERVAL = 60 * 60 * 1000; // 1 hora
+setInterval(() => {
+  cleanupExpiredSessions();
+}, CLEANUP_INTERVAL);
+app.log.info("[Cleanup] Background job started (runs every hour)");
 
 const useMock = process.env.USE_MOCK === "true";
 let provider: any;
@@ -328,10 +337,13 @@ app.post("/api/sessions/:id/join", async (req, reply) => {
     if (s.status === "open") s.status = "voting";
     await saveSession(s);
 
+    const expiresAt = Date.now() + (TTL_DAYS * 24 * 60 * 60 * 1000);
+
     return reply.send({
       sessionId: id,
       participant: { id: p.id, name: p.name },
       invitePath: `/s/${id}`,
+      expiresAt,
       session: {
         id: s.id,
         name: s.name,
@@ -378,10 +390,13 @@ app.post("/api/sessions/:id/join", async (req, reply) => {
     });
   } catch {}
 
+  const expiresAt = Date.now() + (TTL_DAYS * 24 * 60 * 60 * 1000);
+
   return reply.send({
     sessionId: id,
     participant: { id: pid, name: display },
     invitePath: `/s/${id}`,
+    expiresAt,
     session: {
       id: after.id,
       name: after.name,

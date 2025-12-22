@@ -39,6 +39,7 @@ export function getParticipant(sessionId, { touch = true } = {}) {
 
     if (touch) {
       p.lastSeen = now();
+      p.expiresAt = now() + dayMs(TTL_DAYS);
       map[sessionId] = p;
       writeJSON(STORAGE_KEY, map);
     }
@@ -58,14 +59,14 @@ export function getParticipantId(sessionId) {
   }
 }
 
-export function setParticipant(sessionId, participant, invitePath, { ttlDays = TTL_DAYS } = {}) {
+export function setParticipant(sessionId, participant, invitePath, { ttlDays = TTL_DAYS, expiresAt } = {}) {
   try {
     const map = readJSON(STORAGE_KEY, {});
     const ts = now();
     map[sessionId] = {
       ...participant,
       lastSeen: ts,
-      expiresAt: ts + dayMs(ttlDays),
+      expiresAt: expiresAt || (ts + dayMs(ttlDays)),
     };
     writeJSON(STORAGE_KEY, map);
 

@@ -197,6 +197,7 @@
     },
   "queued_vote": "Sin conexión: tu voto se enviará al reconectar",
   "loading": "Cargando...",
+  "starting_session": "Iniciando sesión...",
   "progress_label": "Progreso",
   "closed_permanently": "Cerrado permanentemente",
   "closed_temporarily": "Cerrado temporalmente",

@@ -200,7 +200,7 @@ export default function Vote() {
           body: JSON.stringify({ name: "Host" }),
         });
         if (data?.participant) {
-          setParticipant(session.id, data.participant);
+          setParticipant(session.id, data.participant, null, { expiresAt: data.expiresAt });
         }
       } catch (e) {
         console.error("Auto-join host failed:", e);

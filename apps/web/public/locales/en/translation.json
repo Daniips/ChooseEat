@@ -197,6 +197,7 @@
   },
   "queued_vote": "Offline: your vote will be submitted upon reconnecting",
   "loading": "Loading...",
+  "starting_session": "Starting session...",
   "progress_label": "Progress",
   "closed_permanently": "Permanently closed",
   "closed_temporarily": "Temporarily closed",
