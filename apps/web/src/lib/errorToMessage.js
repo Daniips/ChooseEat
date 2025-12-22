@@ -10,6 +10,7 @@ export function errorToMessage(err, t, overrides = {}) {
     timeout:   "errors.timeout",
     aborted:   "errors.aborted",
     network:   "errors.network_down",
+    sessionFull: "errors.session_full",
     generic:   "errors.generic",
     ...overrides
   };
@@ -21,7 +22,12 @@ export function errorToMessage(err, t, overrides = {}) {
   if (err instanceof HttpError) {
     const s = err.status || 0;
     if (s === 404) return t(keys.notFound);
-    if (s === 409) return t(keys.conflict);
+    if (s === 409) {
+      if (err.code === "SESSION_FULL") {
+        return t(keys.sessionFull);
+      }
+      return t(keys.conflict);
+    }
     if (s === 400) return t(keys.badRequest);
     if (s >= 500)  return t(keys.server);
   }

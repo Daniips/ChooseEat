@@ -8,4 +8,5 @@ export const DEFAULT_ERROR_KEYS = {
   aborted:   "errors.aborted",
   network:   "errors.network_down",
   generic:   "errors.generic",
+  sessionFull: "errors.session_full",
 };

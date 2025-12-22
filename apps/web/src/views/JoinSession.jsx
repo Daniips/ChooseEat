@@ -17,6 +17,7 @@ const JOIN_ERROR_KEYS = {
   ...DEFAULT_ERROR_KEYS,
   notFound: "errors.session_not_found",
   conflict: "errors.already_joined",
+  sessionFull: "errors.session_full",
 };
   
 export default function JoinSession() {
@@ -43,19 +44,32 @@ export default function JoinSession() {
       try {
         migrateFromLegacy(id);
         const existingId = getParticipantId(id);
+        console.log("[JoinSession] Auto-join: existingId =", existingId);
         if (existingId) {
-          const data = await api(`/api/sessions/${id}/join`, {
-            method: "POST",
-            body: JSON.stringify({ participantId: existingId }),
-          });
-          setParticipant(id, data.participant, data.invitePath, { expiresAt: data.expiresAt });
-          hydrateFromJoin(data);
-          if (data?.session?.status === "finished") {
-            navigate(`/s/${id}/results`, { replace: true });
-          } else {
-            navigate(`/vote/${id}`);
+          try {
+            console.log("[JoinSession] Sending auto-join with participantId:", existingId);
+            const data = await api(`/api/sessions/${id}/join`, {
+              method: "POST",
+              body: JSON.stringify({ participantId: existingId }),
+            });
+            console.log("[JoinSession] Auto-join success:", data);
+            setParticipant(id, data.participant, data.invitePath, { expiresAt: data.expiresAt });
+            hydrateFromJoin(data);
+            if (data?.session?.status === "finished") {
+              navigate(`/s/${id}/results`, { replace: true });
+            } else {
+              navigate(`/vote/${id}`);
+            }
+            return;
+          } catch (err) {
+            console.log("[JoinSession] Auto-join error:", err?.status, err?.code, err?.details);
+            if (err?.code === "SESSION_FULL") {
+              showError(errorToMessage(err, t, JOIN_ERROR_KEYS));
+              setAutoJoining(false);
+              return;
+            }
+            throw err;
           }
-          return;
         }
       } catch (err) {
         console.error("auto-join failed:", err);
@@ -72,10 +86,12 @@ export default function JoinSession() {
       return;
     }
     try {
+      console.log("[JoinSession] handleJoin: Sending join with name:", name, "sessionId:", id);
       const data = await api(`/api/sessions/${id}/join`, {
         method: "POST",
         body: JSON.stringify({ name }),
       });
+      console.log("[JoinSession] handleJoin success:", data);
       setParticipant(id, data.participant, data.invitePath, { expiresAt: data.expiresAt });
       if (data?.session?.name) rememberSession(id, data.invitePath, data.session.name);
       hydrateFromJoin(data);
@@ -85,6 +101,7 @@ export default function JoinSession() {
         navigate(`/vote/${id}`);
       }
     } catch (err) {
+      console.log("[JoinSession] handleJoin error:", err?.status, err?.code, err?.details);
       console.error("join error:", err);
       showError(errorToMessage(err, t, JOIN_ERROR_KEYS));
     }

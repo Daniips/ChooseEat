@@ -178,6 +178,7 @@
   "errors": {
     "network_down": "No se pudo conectar. Comprueba tu conexión e inténtalo de nuevo.",
     "session_not_found": "La sesión no existe o ha expirado.",
+    "session_full": "La sesión está llena. No puedes unirte con más participantes.",
     "already_joined": "Ya te has unido a esta sesión.",
     "bad_request": "El enlace no es válido.",
     "server": "Error del servidor. Vuelve a intentarlo en unos segundos.",

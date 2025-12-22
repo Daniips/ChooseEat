@@ -71,7 +71,6 @@ try {
 await redisCache.connect();
 app.log.info("[Cache] connected");
 
-// Job de limpieza periódica de sesiones expiradas (cada hora)
 const CLEANUP_INTERVAL = 60 * 60 * 1000; // 1 hora
 setInterval(() => {
   cleanupExpiredSessions();
@@ -331,6 +330,20 @@ app.post("/api/sessions/:id/join", async (req, reply) => {
     throw e;
   }
   if (!s) return reply.code(404).send({ error: "Session not found" });
+
+  // Validar límite de participantes PRIMERO (antes de cualquier otra lógica)
+  const currentParticipants = Object.keys(s.participants || {}).length;
+  const maxParticipants = s.threshold?.participants ?? 2;
+  
+  // Si intenta entrar con un participantId nuevo y ya hay máximo, rechazar
+  if (!participantId && currentParticipants >= maxParticipants) {
+    return reply.code(409).send({ 
+      error: "Session full",
+      code: "SESSION_FULL",
+      current: currentParticipants,
+      max: maxParticipants
+    });
+  }
 
   if (participantId && s.participants[participantId]) {
     const p = s.participants[participantId];

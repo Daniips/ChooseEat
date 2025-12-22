@@ -32,6 +32,7 @@ const AUTOJOIN_ERROR_KEYS = {
   ...DEFAULT_ERROR_KEYS,
   notFound: "errors.session_not_found",
   conflict: "errors.already_joined",
+  sessionFull: "errors.session_full",
 };
 
 const STATUS_ERROR_KEYS = {

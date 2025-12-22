@@ -178,6 +178,7 @@
   "errors": {
     "network_down": "Could not connect. Check your connection and try again.",
     "session_not_found": "The session does not exist or has expired.",
+    "session_full": "The session is full. You cannot join with more participants.",
     "already_joined": "You have already joined this session.",
     "bad_request": "The link is invalid.",
     "server": "Server error. Please try again in a few seconds.",
