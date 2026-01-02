@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    command: >
+      redis-server
+      --appendonly yes
+      --save "900 1 300 10 60 10000"
+      --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "PING"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - chooseeat-network
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - "${PORT:-4000}:4000"
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - GOOGLE_PLACES_API_KEY=${GOOGLE_PLACES_API_KEY}
+      - PLACES_LOCALE=${PLACES_LOCALE:-es}
+      - PLACES_DEFAULT_RADIUS_M=${PLACES_DEFAULT_RADIUS_M:-2000}
+      - PLACES_DEFAULT_CENTER=${PLACES_DEFAULT_CENTER}
+      - SESSION_TTL_DAYS=${SESSION_TTL_DAYS:-7}
+      - MEMORY_FALLBACK=${MEMORY_FALLBACK:-false}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - chooseeat-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:4000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  # Frontend NO se despliega con Docker
+  # El frontend es una aplicación estática que debe servirse desde:
+  # - CDN (Cloudflare Pages, Vercel, Netlify) - RECOMENDADO
+  # - Servidor estático (Nginx directo en el servidor)
+  # - Cualquier servicio de hosting estático
+  #
+  # Ver DEPLOY.md sección "Despliegue del Frontend" para más detalles
+
+volumes:
+  redis-data:
+    driver: local
+
+networks:
+  chooseeat-network:
+    driver: bridge
+
