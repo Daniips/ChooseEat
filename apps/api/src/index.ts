@@ -3,7 +3,7 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import fastifyIO from "fastify-socket.io";
 
-import { createRestaurantsProvider } from "./providers";
+import { createRestaurantsProvider } from "./providers/index.js";
 import { Area, Filters } from "./types";
 import type { Server as IOServer, Socket } from "socket.io";
 
