@@ -79,6 +79,7 @@ export class GooglePlacesProvider implements IRestaurantProvider {
   private locale: string;
   private defaultRadiusM: number;
   private defaultCenter?: { lat: number; lng: number };
+  private isDev: boolean;
   
   // Configuración de knobs
   private readonly MAX_CALLS = 2;
@@ -92,6 +93,7 @@ export class GooglePlacesProvider implements IRestaurantProvider {
     this.apiKey = key;
     this.locale = process.env.PLACES_LOCALE || "es";
     this.defaultRadiusM = Number(process.env.PLACES_DEFAULT_RADIUS_M || 2000);
+    this.isDev = process.env.NODE_ENV !== "production";
 
     const centerEnv = process.env.PLACES_DEFAULT_CENTER;
     if (centerEnv) {
@@ -288,13 +290,15 @@ export class GooglePlacesProvider implements IRestaurantProvider {
     let callsMade = 0;
     const filtersWithoutPrice = { ...filters, price: undefined };
 
-    console.log(`[GooglePlaces] Búsqueda iniciada: ${cuisineCount} cocinas, ${customKeywords.length} términos personalizados`);
+    if (this.isDev) {
+      console.log(`[GooglePlaces] Búsqueda iniciada: ${cuisineCount} cocinas, ${customKeywords.length} términos personalizados`);
+    }
 
     // ═══════════════════════════════════════════════════════════
     // ESTRATEGIA 1: 0-4 COCINAS → Query directa optimizada
     // ═══════════════════════════════════════════════════════════
     if (cuisineCount <= 4) {
-      console.log(`[GooglePlaces] Estrategia 1: Query directa (≤4 cocinas)`);
+      if (this.isDev) console.log(`[GooglePlaces] Estrategia 1: Query directa (≤4 cocinas)`);
       
       const query = this.buildOptimizedQuery(selectedCuisines, customKeywords);
       let result = await this.executeSearch(query, effectiveCenter, radiusM, filtersWithoutPrice);
@@ -308,7 +312,7 @@ export class GooglePlacesProvider implements IRestaurantProvider {
         callsMade++;
       }
       
-      console.log(`[GooglePlaces] Completado: ${result.items.length} resultados, ${callsMade} llamadas`);
+      if (this.isDev) console.log(`[GooglePlaces] Completado: ${result.items.length} resultados, ${callsMade} llamadas`);
       return result;
     }
 
@@ -316,7 +320,7 @@ export class GooglePlacesProvider implements IRestaurantProvider {
     // ESTRATEGIA 2: 5-8 COCINAS → Híbrida inteligente con detección de faltantes
     // ═══════════════════════════════════════════════════════════
     if (cuisineCount >= 5 && cuisineCount <= 8) {
-      console.log(`[GooglePlaces] Estrategia 2: Híbrida inteligente (5-8 cocinas)`);
+      if (this.isDev) console.log(`[GooglePlaces] Estrategia 2: Híbrida inteligente (5-8 cocinas)`);
       
       // 1ª llamada: top 3-4 cocinas canónicas prioritarias
       const initialQuery = this.buildOptimizedQuery(selectedCuisines, customKeywords);
@@ -327,11 +331,11 @@ export class GooglePlacesProvider implements IRestaurantProvider {
       
       // Detectar cocinas faltantes en los resultados
       const missingCuisines = this.findMissingCuisines(result.items, selectedCuisines);
-      console.log(`[GooglePlaces] Cocinas representadas: ${cuisineCount - missingCuisines.length}/${cuisineCount}`);
+      if (this.isDev) console.log(`[GooglePlaces] Cocinas representadas: ${cuisineCount - missingCuisines.length}/${cuisineCount}`);
       
       // 2ª llamada: específica para cocinas faltantes (si las hay y tenemos presupuesto)
       if (missingCuisines.length > 0 && callsMade < MAX_API_CALLS) {
-        console.log(`[GooglePlaces] 2ª llamada para cubrir faltantes: ${missingCuisines.join(', ')}`);
+        if (this.isDev) console.log(`[GooglePlaces] 2ª llamada para cubrir faltantes: ${missingCuisines.join(', ')}`);
         
         const missingQuery = this.buildOptimizedQuery(missingCuisines, customKeywords);
         const missingResult = await this.executeSearch(missingQuery, effectiveCenter, radiusM, filtersWithoutPrice);
@@ -343,17 +347,17 @@ export class GooglePlacesProvider implements IRestaurantProvider {
         result.items = this.mergeResults(result.items, missingItems);
         result.items = this.applyDiversity(result.items); // Re-aplicar diversidad tras merge
         
-        console.log(`[GooglePlaces] Tras 2ª llamada: ${result.items.length} resultados (+${missingItems.length} nuevos)`);
+        if (this.isDev) console.log(`[GooglePlaces] Tras 2ª llamada: ${result.items.length} resultados (+${missingItems.length} nuevos)`);
       }
       
-      console.log(`[GooglePlaces] Completado: ${result.items.length} resultados, ${callsMade} llamadas`);
+      if (this.isDev) console.log(`[GooglePlaces] Completado: ${result.items.length} resultados, ${callsMade} llamadas`);
       return result;
     }
 
     // ═══════════════════════════════════════════════════════════
     // ESTRATEGIA 3: 9+ COCINAS → Query genérica + boost prioritario
     // ═══════════════════════════════════════════════════════════
-    console.log(`[GooglePlaces] Estrategia 3: Query genérica + boost (≥9 cocinas)`);
+    if (this.isDev) console.log(`[GooglePlaces] Estrategia 3: Query genérica + boost (≥9 cocinas)`);
     
     // 1ª llamada: query genérica "restaurant" (filtrado local exhaustivo)
     const genericQuery = customKeywords.length > 0 
@@ -366,7 +370,7 @@ export class GooglePlacesProvider implements IRestaurantProvider {
     
     // 2ª llamada: boost con top 3-4 canónicas si resultados insuficientes
     if (result.items.length < MIN_RESULTS_THRESHOLD && callsMade < MAX_API_CALLS) {
-      console.log(`[GooglePlaces] Boost: query con top 3-4 canónicas para mejorar resultados`);
+      if (this.isDev) console.log(`[GooglePlaces] Boost: query con top 3-4 canónicas para mejorar resultados`);
       
       const boostQuery = this.buildOptimizedQuery(selectedCuisines, customKeywords);
       const boostResult = await this.executeSearch(boostQuery, effectiveCenter, radiusM, filtersWithoutPrice);
@@ -377,10 +381,10 @@ export class GooglePlacesProvider implements IRestaurantProvider {
       result.items = this.mergeResults(result.items, boostItems);
       result.items = this.applyDiversity(result.items);
       
-      console.log(`[GooglePlaces] Tras boost: ${result.items.length} resultados (+${boostItems.length} nuevos)`);
+      if (this.isDev) console.log(`[GooglePlaces] Tras boost: ${result.items.length} resultados (+${boostItems.length} nuevos)`);
     }
     
-    console.log(`[GooglePlaces] Completado: ${result.items.length} resultados, ${callsMade} llamadas`);
+    if (this.isDev) console.log(`[GooglePlaces] Completado: ${result.items.length} resultados, ${callsMade} llamadas`);
     return result;
   }
 
@@ -403,19 +407,19 @@ export class GooglePlacesProvider implements IRestaurantProvider {
     
     // 1. Filtrado por cocinas
     items = this.filterByCuisines(items, selectedCuisines);
-    console.log(`[GooglePlaces] Post-procesado: ${initialCount} → ${items.length} tras filtrado cocinas`);
+    if (this.isDev) console.log(`[GooglePlaces] Post-procesado: ${initialCount} → ${items.length} tras filtrado cocinas`);
     
     // 2. Filtrado por términos personalizados
     items = this.filterByCustomKeywords(items, customKeywords);
-    console.log(`[GooglePlaces] Post-procesado: filtrado custom keywords → ${items.length}`);
+    if (this.isDev) console.log(`[GooglePlaces] Post-procesado: filtrado custom keywords → ${items.length}`);
     
     // 3. Filtrado suave de precio
     items = this.filterByPriceSoft(items, filters?.price);
-    console.log(`[GooglePlaces] Post-procesado: filtrado precio → ${items.length}`);
+    if (this.isDev) console.log(`[GooglePlaces] Post-procesado: filtrado precio → ${items.length}`);
     
     // 4. Diversidad
     items = this.applyDiversity(items);
-    console.log(`[GooglePlaces] Post-procesado: diversidad → ${items.length}`);
+    if (this.isDev) console.log(`[GooglePlaces] Post-procesado: diversidad → ${items.length}`);
     
     return items;
   }
@@ -433,7 +437,7 @@ export class GooglePlacesProvider implements IRestaurantProvider {
     customKeywords: string[],
     filters: any
   ): Promise<SearchResult> {
-    console.log(`[GooglePlaces] Fallback: ${currentResult.items.length} < ${MIN_RESULTS_THRESHOLD}`);
+    if (this.isDev) console.log(`[GooglePlaces] Fallback: ${currentResult.items.length} < ${MIN_RESULTS_THRESHOLD}`);
     
     const fallbackFilters = { ...filtersWithoutPrice, openNow: false };
     const fallbackRadiusM = Math.round(radiusM * FALLBACK_RADIUS_MULTIPLIER);

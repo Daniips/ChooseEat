@@ -24,10 +24,14 @@ export async function ensureRedis() {
     },
   });
 
-  client.on("connect", () =>  console.info("[Redis] connecting…"));
-  client.on("ready",   () =>  console.info("[Redis] ready"));
-  client.on("end",     () =>  console.warn("[Redis] connection ended"));
-  client.on("reconnecting", () => console.warn("[Redis] reconnecting…"));
+  const isDev = process.env.NODE_ENV !== "production";
+  
+  if (isDev) {
+    client.on("connect", () =>  console.info("[Redis] connecting…"));
+    client.on("ready",   () =>  console.info("[Redis] ready"));
+    client.on("end",     () =>  console.warn("[Redis] connection ended"));
+    client.on("reconnecting", () => console.warn("[Redis] reconnecting…"));
+  }
   client.on("error",   (err) => console.warn("[Redis] error:", (err as Error)?.message || err));
 
   try { await client.connect(); } catch { /* a usar memoria */ }

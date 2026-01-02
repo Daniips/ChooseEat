@@ -31,12 +31,17 @@ declare module "fastify" {
   }
 }
 
-const app = Fastify({ logger: true });
+const isDev = process.env.NODE_ENV !== "production";
+const corsOrigin = process.env.CORS_ORIGIN || (isDev ? true : false);
 
-await app.register(cors, { origin: true });
+const app = Fastify({ 
+  logger: isDev ? true : { level: "info" },
+});
+
+await app.register(cors, { origin: corsOrigin });
 
 await app.register(fastifyIO, {
-  cors: { origin: true },
+  cors: { origin: corsOrigin },
 
   pingInterval: 25_000,
   pingTimeout: 20_000,
@@ -824,10 +829,12 @@ app.post("/api/sessions/:id/done", async (req, reply) => {
   return reply.send({ ok: true, status: newStatus, doneCount, min });
 });
 
-app.get("/debug/redis", async () => {
-  const r = getRedis();
-  return { isOpen: !!r?.isOpen };
-});
+if (isDev) {
+  app.get("/debug/redis", async () => {
+    const r = getRedis();
+    return { isOpen: !!r?.isOpen };
+  });
+}
 
 app.addHook("onClose", async () => {
   const r = getRedis();

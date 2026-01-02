@@ -130,9 +130,11 @@ Crea un archivo `.env` en la raíz del proyecto o en `apps/api/` con las siguien
 | `REDIS_PASSWORD` | Contraseña de Redis | No | - |
 | `SESSION_TTL_DAYS` | Días de vida de las sesiones | No | `7` |
 | `MEMORY_FALLBACK` | Activar fallback a memoria si Redis falla | No | `true` |
+| `CORS_ORIGIN` | Origen permitido para CORS (producción) | No* | `true` (dev) |
 
 \* Requerido solo si `USE_MOCK=false`  
-\** Requerido si `USE_MOCK=false` y no se proporciona `center` en las peticiones
+\** Requerido si `USE_MOCK=false` y no se proporciona `center` en las peticiones  
+\*** Requerido en producción (debe ser la URL del frontend, ej: `https://tudominio.com`)
 
 #### Frontend (Web)
 

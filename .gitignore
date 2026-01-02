@@ -1,5 +1,13 @@
 node_modules
 dist
 .env
+.env.local
+.env.*.local
 **/.env
+**/.env.local
+**/.env.*.local
 .DS_Store
+
+# Permitir archivos de ejemplo
+!.env.example
+!**/.env.example

@@ -18,7 +18,8 @@ export function cleanupExpiredSessions(): number {
     }
   }
 
-  if (cleaned > 0) {
+  const isDev = process.env.NODE_ENV !== "production";
+  if (cleaned > 0 && isDev) {
     console.info(`[Cleanup] Removed ${cleaned} expired session(s) from memory`);
   }
 
