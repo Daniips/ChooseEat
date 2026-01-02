@@ -1,8 +1,8 @@
 // apps/api/src/providers/index.ts
-import { InMemoryRestaurantProvider } from "./InMemoryRestaurantProvider";
-import { GooglePlacesProvider } from "./google/GooglePlacesProvider";
-import { IRestaurantProvider } from "./types";
-import { MOCK_RESTAURANTS } from "../data/restaurants";
+import { InMemoryRestaurantProvider } from "./InMemoryRestaurantProvider.js";
+import { GooglePlacesProvider } from "./google/GooglePlacesProvider.js";
+import { IRestaurantProvider } from "./types.js";
+import { MOCK_RESTAURANTS } from "../data/restaurants.js";
 
 
 export function createRestaurantsProvider(): IRestaurantProvider {

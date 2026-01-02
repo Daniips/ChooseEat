@@ -1,7 +1,7 @@
 // src/providers/InMemoryRestaurantProvider.ts
-import { Restaurant } from "../types";
-import { IRestaurantProvider, SearchParams, SearchResult, RestaurantDTO } from "./types";
-import { normalizeMock } from "./utils/normalize";
+import { Restaurant } from "../types.js";
+import { IRestaurantProvider, SearchParams, SearchResult, RestaurantDTO } from "./types.js";
+import { normalizeMock } from "./utils/normalize.js";
 
 export class InMemoryRestaurantProvider implements IRestaurantProvider {
   private data: Restaurant[];

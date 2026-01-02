@@ -1,6 +1,6 @@
 // apps/api/src/cache/RedisCache.ts
 import { createClient, RedisClientType } from "redis";
-import { ensureRedis, getRedis } from "../redis";
+import { ensureRedis, getRedis } from "../redis.js";
 
 export class RedisCache {
   private client: RedisClientType | null = null;

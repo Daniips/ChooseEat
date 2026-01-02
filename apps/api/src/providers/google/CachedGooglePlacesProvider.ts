@@ -1,9 +1,9 @@
 // apps/api/src/providers/google/CachedGooglePlacesProvider.ts
-import { GooglePlacesProvider } from "./GooglePlacesProvider";
-import { redisCache } from "../../cache/RedisCache";
-import { searchCacheKey, detailsCacheKey } from "../../cache/cacheKeys";
-import { CACHE_TTL } from "../../cache/cacheConfig";
-import { SearchParams, SearchResult, RestaurantDTO } from "../types";
+import { GooglePlacesProvider } from "./GooglePlacesProvider.js";
+import { redisCache } from "../../cache/RedisCache.js";
+import { searchCacheKey, detailsCacheKey } from "../../cache/cacheKeys.js";
+import { CACHE_TTL } from "../../cache/cacheConfig.js";
+import { SearchParams, SearchResult, RestaurantDTO } from "../types.js";
 
 const isDev = process.env.NODE_ENV !== "production";
 

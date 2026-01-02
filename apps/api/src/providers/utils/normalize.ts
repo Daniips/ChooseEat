@@ -1,5 +1,5 @@
 // apps/api/src/providers/utils/normalize.ts
-import type { RestaurantDTO } from "../types";
+import type { RestaurantDTO } from "../types.js";
 
 /**
  * Construye URL de foto desde resource name de Google Places v1

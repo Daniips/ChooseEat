@@ -1,6 +1,6 @@
 // apps/api/src/jobs/cleanupSessions.ts
-import { TTL_DAYS } from "../data/sessionRepo";
-import { mem } from "../data/sessionRepo";
+import { TTL_DAYS } from "../data/sessionRepo.js";
+import { mem } from "../data/sessionRepo.js";
 
 const TTL_SECONDS = TTL_DAYS * 24 * 60 * 60;
 

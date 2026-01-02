@@ -1,5 +1,5 @@
 // apps/api/src/sessionRepo.ts
-import { getRedis } from "../redis";
+import { getRedis } from "../redis.js";
 
 const SESSION_PREFIX = "session:";
 export const TTL_DAYS = Number(process.env.SESSION_TTL_DAYS || 7);

@@ -1,5 +1,5 @@
 //src/providers/types.ts
-import { Filters, Restaurant } from "../types";
+import { Filters, Restaurant } from "../types.js";
 
 
 export type RestaurantDTO = {

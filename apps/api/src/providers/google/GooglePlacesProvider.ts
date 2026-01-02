@@ -1,6 +1,6 @@
 // apps/api/src/providers/google/GooglePlacesProvider.ts
-import { IRestaurantProvider, SearchParams, SearchResult, RestaurantDTO } from "../types";
-import { normalizeGooglePlaceSummary, normalizeGooglePlaceDetails } from "../utils/normalize";
+import { IRestaurantProvider, SearchParams, SearchResult, RestaurantDTO } from "../types.js";
+import { normalizeGooglePlaceSummary, normalizeGooglePlaceDetails } from "../utils/normalize.js";
 
 /**
  * Mapeo de cocinas a sus keywords para búsqueda.

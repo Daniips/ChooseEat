@@ -4,13 +4,13 @@ import cors from "@fastify/cors";
 import fastifyIO from "fastify-socket.io";
 
 import { createRestaurantsProvider } from "./providers/index.js";
-import { Area, Filters } from "./types";
+import { Area, Filters } from "./types.js";
 import type { Server as IOServer, Socket } from "socket.io";
 
 import "dotenv/config";
-import { ensureRedis, getRedis, isRedisAvailable } from "./redis";
-import { resyncMemoryToRedis } from "./data/sessionRepo";
-import { cleanupExpiredSessions } from "./jobs/cleanupSessions";
+import { ensureRedis, getRedis, isRedisAvailable } from "./redis.js";
+import { resyncMemoryToRedis } from "./data/sessionRepo.js";
+import { cleanupExpiredSessions } from "./jobs/cleanupSessions.js";
 
 import {
   saveSession,
@@ -21,9 +21,9 @@ import {
   TTL_DAYS,
   type Session as StoredSession,
   VoteBuckets,
-} from "./data/sessionRepo";
-import { CachedGooglePlacesProvider } from "./providers/google/CachedGooglePlacesProvider";
-import { redisCache } from "./cache/RedisCache";
+} from "./data/sessionRepo.js";
+import { CachedGooglePlacesProvider } from "./providers/google/CachedGooglePlacesProvider.js";
+import { redisCache } from "./cache/RedisCache.js";
 
 declare module "fastify" {
   interface FastifyInstance {
