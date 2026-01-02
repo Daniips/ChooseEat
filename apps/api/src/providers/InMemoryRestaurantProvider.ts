@@ -24,7 +24,7 @@ export class InMemoryRestaurantProvider implements IRestaurantProvider {
 
       const okPrice =
         Array.isArray(price) && price.length > 0
-          ? price.includes(r.price)
+          ? typeof r.price === "number" && price.includes(r.price)
           : true;
 
       const okRating =
