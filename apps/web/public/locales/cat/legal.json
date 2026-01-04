@@ -1,0 +1,362 @@
+{
+  "privacy": {
+    "title": "Política de Privacitat",
+    "lastUpdated": "Última actualització: {{date}}",
+    "section1": {
+      "title": "1. Introducció i Identitat del Responsable",
+      "content": "D'acord amb el que s'estableix al Reglament (UE) 2016/679, del Parlament Europeu i del Consell, de 27 d'abril de 2016, relatiu a la protecció de les persones físiques pel que fa al tractament de dades personals i a la lliure circulació d'aquestes dades (en endavant, RGPD), i la Llei Orgànica 3/2018, de 5 de desembre, de Protecció de Dades Personals i garantia dels drets digitals (LOPDGDD), us informem del següent:",
+      "responsible": "Responsable del tractament",
+      "company": "[NOM_EMPRESA]",
+      "nif": "NIF/CIF: [NIF_CIF]",
+      "address": "Adreça: [ADREÇA_POSTAL_COMPLETA]",
+      "email": "Correu electrònic: [EMAIL_CONTACTE]",
+      "website": "Lloc web: [URL_WEB]",
+      "app": "La present Política de Privacitat regula el tractament de dades personals realitzat a través de l'aplicació ChooseEat."
+    },
+    "section2": {
+      "title": "2. Dades Personals que es Tracten",
+      "intro": "A través de ChooseEat podem recollir i tractar les següents categories de dades personals:",
+      "registration": "Dades de registre: nom d'usuari, adreça de correu electrònic, contrasenya (xifrada).",
+      "preferences": "Preferències d'ús: cuines favorites, filtres de cerca, configuració d'usuari.",
+      "location": "Dades d'ubicació: ubicació aproximada utilitzada per mostrar restaurants propers (si l'usuari ho autoritza).",
+      "technical": "Dades tècniques: adreça IP, identificadors de dispositiu, tipus de navegador, sistema operatiu, registres d'accés (logs).",
+      "usage": "Dades derivades de l'ús: sessions creades, vots o desplaçaments sobre restaurants, historial bàsic d'activitat.",
+      "sensitive": "No recollim categories especials de dades personals (dades sensibles) en el sentit de l'article 9 del RGPD, llevat que vostè ens les faciliti voluntàriament i de forma explícita."
+    },
+    "section3": {
+      "title": "3. Finalitats del Tractament",
+      "intro": "Les dades personals seran tractades per a les següents finalitats:",
+      "service": {
+        "title": "3.1. Prestació del servei",
+        "content": "Crear sessions de votació, permetre als usuaris unir-se a sessions, mostrar informació de restaurants, gestionar el compte d'usuari i oferir les funcionalitats de ChooseEat."
+      },
+      "improvement": {
+        "title": "3.2. Millora del servei i analítica interna",
+        "content": "Analitzar l'ús de l'aplicació per millorar l'experiència de l'usuari, optimitzar funcionalitats i desenvolupar noves característiques."
+      },
+      "security": {
+        "title": "3.3. Seguretat i prevenció d'abusos",
+        "content": "Protegir la integritat i seguretat de l'aplicació, prevenir frauds, abusos o usos no autoritzats."
+      },
+      "communications": {
+        "title": "3.4. Comunicacions relacionades amb el servei",
+        "content": "Enviar notificacions tècniques, actualitzacions del servei o informació rellevant sobre l'ús de ChooseEat."
+      },
+      "automated": "No es prenen decisions automatitzades que produeixin efectes jurídics sobre l'usuari o l'afectin significativament de manera similar."
+    },
+    "section4": {
+      "title": "4. Base Jurídica del Tractament (Art. 6 RGPD)",
+      "intro": "La base legal per al tractament de les seves dades personals és:",
+      "contract": {
+        "title": "4.1. Execució d'un contracte (Art. 6.1.b RGPD)",
+        "content": "El tractament de dades necessàries per a la prestació del servei i el funcionament de ChooseEat es basa en l'execució de les condicions d'ús que vostè accepta en utilitzar l'aplicació."
+      },
+      "consent": {
+        "title": "4.2. Consentiment (Art. 6.1.a RGPD)",
+        "content": "Per al tractament de dades d'ubicació, comunicacions comercials opcionals o galetes no necessàries, ens basem en el seu consentiment express. Pot retirar el seu consentiment en qualsevol moment."
+      },
+      "legitimate": {
+        "title": "4.3. Interès legítim (Art. 6.1.f RGPD)",
+        "content": "Alguns tractaments, com la seguretat del servei, prevenció de frauds i analítica bàsica, es fonamenten en el nostre interès legítim a oferir un servei segur i de qualitat."
+      }
+    },
+    "section5": {
+      "title": "5. Terminis de Conservació",
+      "intro": "Les dades personals seran conservades durant els següents períodes:",
+      "account": "Dades de compte: mentre mantingui activa la seva compte d'usuari o fins que sol·liciti la seva supressió.",
+      "sessions": "Dades de sessions i activitat: durant el temps necessari per complir les finalitats indicades o durant un termini raonable (6 mesos des de l'última activitat).",
+      "technical": "Dades tècniques i logs: durant un període limitat necessari per garantir la seguretat del servei i complir amb obligacions legals (màxim 12 mesos).",
+      "anonymization": "Transcorreguts aquests terminis, les dades seran anonimitzades o eliminades de forma segura."
+    },
+    "section6": {
+      "title": "6. Destinataris i Encarregats del Tractament",
+      "intro": "Les seves dades personals podran ser comunicades a:",
+      "hosting": "Proveïdors d'allotjament i serveis tecnològics: per a l'allotjament de l'aplicació i gestió de la infraestructura tècnica.",
+      "analytics": "Eines d'analítica i monitorització: per a l'anàlisi estadístic de l'ús del servei (si aplica).",
+      "contracts": "Amb tots els proveïdors de serveis es subscriuen contractes d'encarregat del tractament d'acord amb l'article 28 del RGPD.",
+      "google": "Ús de Google Places API: ChooseEat utilitza l'API de Google Places per obtenir informació sobre restaurants. No es comparteix amb Google informació personal identifiable dels usuaris més enllà del que és estrictament necessari per a la prestació del servei (ubicació aproximada per a cerques geogràfiques).",
+      "noSale": "No venem ni cedim les seves dades personals a tercers amb finalitats comercials."
+    },
+    "section7": {
+      "title": "7. Transferències Internacionals",
+      "intro": "Alguns dels nostres proveïdors de serveis poden estar ubicats fora de l'Espai Econòmic Europeu (EEE).",
+      "guarantees": "En aquests casos, garantim que s'apliquen mesures de seguretat adequades d'acord amb el RGPD, tals com:",
+      "clauses": "Clàusules Contractuals Tipus aprovades per la Comissió Europea.",
+      "frameworks": "Marcs d'adequació reconeguts (per exemple, decisions d'adequació de la Comissió Europea).",
+      "info": "Per a més informació sobre les garanties aplicades, pot contactar-nos a [EMAIL_CONTACTE]."
+    },
+    "section8": {
+      "title": "8. Drets dels Usuaris",
+      "intro": "D'acord amb el RGPD i la LOPDGDD, vostè té dret a:",
+      "access": "Dret d'accés: obtenir informació sobre si estem tractant les seves dades personals i, en el seu cas, accedir a les mateixes.",
+      "rectification": "Dret de rectificació: sol·licitar la correcció de dades inexactes o incompletes.",
+      "deletion": "Dret de supressió: sol·licitar l'eliminació de les seves dades quan ja no siguin necessàries per a les finalitats per a les quals van ser recollides.",
+      "limitation": "Dret de limitació: sol·licitar la restricció del tractament en determinades circumstàncies.",
+      "opposition": "Dret d'oposició: oposar-se al tractament de les seves dades basat en interès legítim.",
+      "portability": "Dret de portabilitat: rebre les seves dades en un format estructurat i d'ús comú, i transmetre-les a un altre responsable.",
+      "withdraw": "Dret a retirar el consentiment: en qualsevol moment, sense que això afecti la licitud del tractament basat en el consentiment previ a la seva retirada.",
+      "exercise": "Per exercir els seus drets, pot dirigir-se a [EMAIL_CONTACTE], indicant en l'assumpte \"Exercici de Drets RGPD\" i aportant una còpia del seu DNI o document equivalent.",
+      "complaint": "Així mateix, té dret a presentar una reclamació davant l'Agència Espanyola de Protecció de Dades (www.aepd.es) si considera que el tractament de les seves dades personals no s'ajusta a la normativa vigent."
+    },
+    "section9": {
+      "title": "9. Mesures de Seguretat",
+      "content": "Hem adoptat mesures tècniques i organitzatives apropiades per protegir les seves dades personals contra l'accés no autoritzat, la pèrdua, destrucció o alteració, incloent:",
+      "encryption": "Xifrat de dades sensibles (contrasenyes, comunicacions).",
+      "access": "Control d'accés restringit a sistemes i bases de dades.",
+      "monitoring": "Monitorització i registre d'accés per detectar activitats sospitoses.",
+      "updates": "Actualització regular de sistemes i aplicació de pedaços de seguretat.",
+      "note": "No obstant això, cap transmissió per Internet és completament segura. Us recomanem prendre precaucions per protegir les seves dades personals."
+    },
+    "section10": {
+      "title": "10. Menors d'Edat",
+      "content": "ChooseEat no està dirigit a menors de 14 anys. No recollim intencionadament dades personals de menors d'aquesta edat. Si té coneixement que un menor ha facilitat dades personals sense consentiment dels seus pares o tutors, si us plau contacteu amb nosaltres a [EMAIL_CONTACTE] per procedir a la seva eliminació."
+    },
+    "section11": {
+      "title": "11. Modificacions de la Política de Privacitat",
+      "content": "Ens reservem el dret a modificar la present Política de Privacitat en qualsevol moment per adaptar-la a canvis normatius, millores del servei o per altres motius justificats. Qualsevol modificació serà publicada en aquesta pàgina i, en cas de canvis substancials, us ho notificarem mitjançant un avís a l'aplicació o per correu electrònic. Us recomanem revisar periòdicament aquesta política."
+    }
+  },
+  "terms": {
+    "title": "Termes de Servei",
+    "lastUpdated": "Última actualització: {{date}}",
+    "section1": {
+      "title": "1. Objecte i Acceptació",
+      "content": "Els presents Termes de Servei (en endavant, \"Termes\") regulen l'accés i ús de l'aplicació ChooseEat, propietat de [NOM_EMPRESA].",
+      "acceptance": "L'accés i ús de ChooseEat implica l'acceptació plena i sense reserves de tots els Termes aquí establerts. Si no està d'acord amb aquests Termes, us demanem que no utilitzi l'aplicació."
+    },
+    "section2": {
+      "title": "2. Descripció del Servei",
+      "intro": "ChooseEat és una aplicació web que permet als usuaris:",
+      "create": "Crear sessions de votació per decidir quin restaurant visitar.",
+      "join": "Unir-se a sessions creades per altres usuaris mitjançant un enllaç d'invitació.",
+      "vote": "Interactuar amb propostes de restaurants mitjançant votacions tipus \"desplaçament\" (m'agrada / no m'agrada).",
+      "results": "Visualitzar els resultats de les votacions i trobar el restaurant més popular entre els participants.",
+      "api": "La informació de restaurants (nom, ubicació, fotografies, valoracions, etc.) s'obté a través de serveis de tercers, com Google Places API."
+    },
+    "section3": {
+      "title": "3. Registre i Compte d'Usuari",
+      "intro": "Per utilitzar certes funcionalitats de ChooseEat, pot ser necessari crear un compte d'usuari.",
+      "accuracy": "En registrar-se, es compromet a proporcionar informació veritable, exacta i actualitzada.",
+      "confidentiality": "És responsable de mantenir la confidencialitat de les seves credencials d'accés (nom d'usuari i contrasenya) i de totes les activitats realitzades sota el seu compte.",
+      "notification": "Ha de notificar-nos immediatament qualsevol ús no autoritzat del seu compte o qualsevol altra bretxa de seguretat.",
+      "responsibility": "No ens fem responsables de les pèrdues o danys derivats de l'incompliment d'aquesta obligació."
+    },
+    "section4": {
+      "title": "4. Normes d'Ús i Conducta de l'Usuari",
+      "intro": "En utilitzar ChooseEat, l'usuari es compromet a:",
+      "legal": "Utilitzar l'aplicació d'acord amb la llei, la moral, l'ordre públic i els presents Termes.",
+      "respectful": "No introduir, difondre o posar a disposició de tercers continguts il·legals, ofensius, difamatoris, discriminatoris, obscens o que vulnerin drets de tercers.",
+      "integrity": "No manipular, alterar o intentar accedir de forma no autoritzada als sistemes, servidors o bases de dades de ChooseEat.",
+      "misuse": "No realitzar accions que puguin danyar, sobrecarregar o impedir el funcionament normal de l'aplicació.",
+      "bots": "No utilitzar robots, scripts automatitzats o altres mitjans per accedir al servei de forma massiva o automatitzada sense autorització expressa.",
+      "consequences": "L'incompliment d'aquestes normes pot donar lloc a la suspensió o cancel·lació del seu compte."
+    },
+    "section5": {
+      "title": "5. Propietat Intel·lectual i Industrial",
+      "intro": "Tots els drets de propietat intel·lectual i industrial sobre ChooseEat, incloent però no limitant-se a:",
+      "software": "El codi font, disseny, estructura, bases de dades i elements gràfics.",
+      "brand": "Les marques, noms comercials, logotips i signes distintius.",
+      "content": "Els textos, imatges, icones i altres continguts propis.",
+      "ownership": "Són titularitat exclusiva de [NOM_EMPRESA] o dels seus llicenciants.",
+      "license": "L'usuari únicament obté una llicència d'ús limitada, no exclusiva, revocable i intransferible per accedir i utilitzar ChooseEat d'acord amb aquests Termes.",
+      "prohibition": "Queda expressament prohibida la reproducció, distribució, comunicació pública, transformació o qualsevol altra forma d'explotació dels elements de ChooseEat sense autorització prèvia i per escrit de [NOM_EMPRESA]."
+    },
+    "section6": {
+      "title": "6. Contingut de Tercers",
+      "intro": "ChooseEat mostra informació de restaurants obtinguda de serveis de tercers, com Google Places API.",
+      "accuracy": "L'exactitud, veracitat i actualització d'aquesta informació depèn exclusivament d'aquests proveïdors externs.",
+      "responsibility": "[NOM_EMPRESA] no es responsabilitza de:",
+      "errors": "Errors, inexactituds o omissions en la informació de restaurants.",
+      "availability": "La disponibilitat o funcionament dels serveis de tercers.",
+      "changes": "Canvis en horaris, preus, menús o qualsevol altre dada proporcionada pels restaurants.",
+      "verification": "Es recomana a l'usuari verificar la informació directament amb l'establiment abans de prendre decisions."
+    },
+    "section7": {
+      "title": "7. Responsabilitat i Limitació de Responsabilitat",
+      "intro": "[NOM_EMPRESA] no garanteix:",
+      "availability": "La disponibilitat i continuïtat ininterrompuda del servei.",
+      "errors": "L'absència d'errors, defectes o interrupcions en el funcionament de ChooseEat.",
+      "security": "La invulnerabilitat absoluta del sistema davant d'accés no autoritzats.",
+      "limitation": "En la mesura permesa per la llei aplicable, [NOM_EMPRESA] no serà responsable de:",
+      "indirect": "Danys indirectes, lucre cessant, pèrdua d'oportunitats o qualsevol altre perjudici derivat de l'ús o impossibilitat d'ús de ChooseEat.",
+      "decisions": "Decisions preses per l'usuari basant-se en la informació mostrada a l'aplicació.",
+      "thirdParty": "Danys derivats de continguts o serveis de tercers.",
+      "own": "L'usuari utilitza ChooseEat sota la seva pròpia responsabilitat."
+    },
+    "section8": {
+      "title": "8. Suspensió i Terminació del Servei",
+      "intro": "[NOM_EMPRESA] es reserva el dret de suspendre o cancel·lar l'accés d'un usuari a ChooseEat, temporal o definitivament, en cas de:",
+      "breach": "Incompliment dels presents Termes o de la normativa aplicable.",
+      "fraud": "Ús fraudul·lent, abusiu o contrari als interessos de ChooseEat o d'altres usuaris.",
+      "inactivity": "Inactivitat prolongada del compte.",
+      "notice": "La suspensió o cancel·lació podrà realitzar-se sense previ avís, sense perjudici del dret de l'usuari a exercir les accions legals que estimi oportunes.",
+      "deletion": "En cas de cancel·lació del compte, les dades personals seran tractades d'acord amb la nostra Política de Privacitat."
+    },
+    "section9": {
+      "title": "9. Modificacions dels Termes",
+      "content": "Ens reservem el dret a modificar els presents Termes en qualsevol moment. Els canvis entraran en vigor des de la seva publicació en aquesta pàgina. Es notificaran les modificacions substancials mitjançant un avís a l'aplicació o per correu electrònic. L'ús continuat de ChooseEat després de la publicació dels canvis implica l'acceptació dels nous Termes."
+    },
+    "section10": {
+      "title": "10. Llei Aplicable i Jurisdicció",
+      "content": "Els presents Termes es regeixen per la legislació espanyola. Per a la resolució de qualsevol controvèrsia derivada de la interpretació o execució d'aquests Termes, les parts es someten, amb renúncia expressa a qualsevol altre fòrum que pogués correspondre'ls, als jutjats i tribunals de [PAÍS/CIUTAT]."
+    }
+  },
+  "cookies": {
+    "title": "Política de Galetes",
+    "lastUpdated": "Última actualització: {{date}}",
+    "section1": {
+      "title": "1. Què són les Galetes?",
+      "content": "Les galetes són petits arxius de text que s'emmagatzemen al vostre dispositiu (ordinador, tauleta o mòbil) quan visita un lloc web o utilitza una aplicació. Les galetes permeten al lloc web reconèixer el vostre dispositiu i recordar informació sobre la vostra visita, com les vostres preferències o configuració.",
+      "similar": "A més de les galetes, existeixen altres tecnologies similars com l'emmagatzematge local (localStorage, sessionStorage) que compleixen funcions anàlogues."
+    },
+    "section2": {
+      "title": "2. Tipus de Galetes Utilitzades",
+      "intro": "ChooseEat utilitza les següents categories de galetes:",
+      "technical": {
+        "title": "2.1. Galetes tècniques o necessàries",
+        "content": "Són imprescindibles per al funcionament de l'aplicació. Permeten navegar per ChooseEat i utilitzar les seves funcionalitats bàsiques (per exemple, mantenir la sessió iniciada, recordar l'idioma seleccionat)."
+      },
+      "preferences": {
+        "title": "2.2. Galetes de preferències",
+        "content": "Permeten recordar les seves preferències d'usuari, com el tema de color (clar/fosc), idioma o configuracions personalitzades."
+      },
+      "analytics": {
+        "title": "2.3. Galetes d'analítica o estadístiques",
+        "content": "Ens ajuden a entendre com els usuaris interactuen amb ChooseEat, quines pàgines visiten, quant de temps romanen, etc. Aquesta informació s'utilitza de forma agregada i anònima per millorar l'aplicació."
+      },
+      "advertising": {
+        "title": "2.4. Galetes de publicitat o de tercers",
+        "content": "Actualment, ChooseEat no utilitza galetes publicitàries. En cas de fer-ho en el futur, s'actualitzarà aquesta política i se sol·licitarà el seu consentiment."
+      }
+    },
+    "section3": {
+      "title": "3. Detall de Galetes",
+      "intro": "A continuació es detalla la informació sobre les galetes utilitzades:",
+      "table": {
+        "name": "Nom",
+        "type": "Tipus",
+        "purpose": "Finalitat",
+        "duration": "Durada",
+        "owner": "Titular"
+      },
+      "cookies": {
+        "session": {
+          "name": "session_id",
+          "type": "Tècnica",
+          "purpose": "Identificar la sessió de l'usuari",
+          "duration": "Sessió (s'elimina en tancar el navegador)",
+          "owner": "Pròpia"
+        },
+        "theme": {
+          "name": "theme",
+          "type": "Preferències",
+          "purpose": "Recordar el tema seleccionat (clar/fosc)",
+          "duration": "1 any",
+          "owner": "Pròpia"
+        },
+        "language": {
+          "name": "i18nextLng",
+          "type": "Preferències",
+          "purpose": "Recordar l'idioma seleccionat",
+          "duration": "1 any",
+          "owner": "Pròpia"
+        },
+        "analytics": {
+          "name": "_ga, _gid (si aplica)",
+          "type": "Analítica",
+          "purpose": "Analitzar l'ús de l'aplicació (Google Analytics)",
+          "duration": "Variable (2 anys / 24 hores)",
+          "owner": "Tercers (Google)"
+        }
+      }
+    },
+    "section4": {
+      "title": "4. Base Legal i Consentiment",
+      "technical": "Les galetes tècniques o necessàries s'utilitzen en base a l'interès legítim del responsable per garantir el correcte funcionament del servei (Art. 6.1.f RGPD).",
+      "optional": "Les galetes de preferències, analítica o publicitat (si n'hi hagués) s'utilitzen únicament si vostè atorga el seu consentiment express mitjançant el banner de galetes que apareix en accedir a ChooseEat.",
+      "management": "Pot gestionar les seves preferències de galetes en qualsevol moment a través del panell de configuració de galetes disponible a l'aplicació."
+    },
+    "section5": {
+      "title": "5. Com Gestionar o Desactivar les Galetes",
+      "intro": "Vostè pot configurar les seves preferències de galetes de les següents formes:",
+      "panel": "Des del panell de gestió de galetes de ChooseEat: pot accedir-hi fent clic al botó \"Gestionar Galetes\" disponible al peu de pàgina o a la configuració de l'aplicació.",
+      "browser": "Des de la configuració del seu navegador: la majoria de navegadors permeten gestionar les galetes a través de la seva configuració. Pot consultar les instruccions específiques a:",
+      "chrome": "Google Chrome: Configuració > Privacitat i seguretat > Galetes i altres dades de llocs",
+      "firefox": "Mozilla Firefox: Opcions > Privacitat i seguretat > Galetes i dades del lloc",
+      "safari": "Safari: Preferències > Privacitat > Galetes i dades de llocs web",
+      "edge": "Microsoft Edge: Configuració > Privacitat, cerca i serveis > Galetes",
+      "warning": "Tingui en compte que deshabilitar certes galetes tècniques pot afectar el correcte funcionament de ChooseEat."
+    },
+    "section6": {
+      "title": "6. Transferències a Tercers Països",
+      "content": "Algunes galetes de tercers (com les de Google Analytics, si estan actives) poden implicar transferències de dades a països fora de l'Espai Econòmic Europeu (EEE). Aquestes transferències es realitzen amb garanties adequades d'acord amb el RGPD, com les Clàusules Contractuals Tipus o marcs d'adequació reconeguts. Per a més informació, consulti les polítiques de privacitat dels proveïdors corresponents."
+    },
+    "section7": {
+      "title": "7. Actualitzacions de la Política de Galetes",
+      "content": "Podem actualitzar aquesta Política de Galetes periòdicament per reflectir canvis en les tecnologies utilitzades o en la normativa aplicable. Qualsevol modificació serà publicada en aquesta pàgina amb la data d'actualització corresponent. Us recomanem revisar aquesta política de forma regular."
+    }
+  },
+  "legal": {
+    "title": "Avís Legal",
+    "lastUpdated": "Última actualització: {{date}}",
+    "section1": {
+      "title": "1. Dades Identificatives del Titular",
+      "intro": "En compliment de la Llei 34/2002, d'11 de juliol, de Serveis de la Societat de la Informació i de Comerç Electrònic (LSSI-CE), s'informa de les següents dades:",
+      "company": "Titular: [NOM_EMPRESA]",
+      "nif": "NIF/CIF: [NIF_CIF]",
+      "address": "Domicili social: [ADREÇA_POSTAL_COMPLETA]",
+      "email": "Correu electrònic: [EMAIL_CONTACTE]",
+      "website": "Lloc web: [URL_WEB]",
+      "registry": "Inscripció registral: [REGISTRE_MERCANTIL] (si aplica)"
+    },
+    "section2": {
+      "title": "2. Objecte del Lloc o Aplicació",
+      "content": "ChooseEat és una aplicació web l'objecte de la qual és facilitar als usuaris la presa de decisions sobre quin restaurant visitar mitjançant sessions de votació col·laborativa. Els usuaris poden crear sessions, convidar a altres participants i votar sobre propostes de restaurants obtingudes a través de serveis de tercers com Google Places API."
+    },
+    "section3": {
+      "title": "3. Condicions d'Ús",
+      "intro": "L'accés i ús de ChooseEat implica l'acceptació de les següents condicions:",
+      "correct": "L'usuari es compromet a utilitzar l'aplicació de forma correcta, lícita i d'acord amb la legislació vigent, la moral i l'ordre públic.",
+      "prohibited": "Queda prohibit:",
+      "illegal": "Utilitzar ChooseEat per a finalitats il·legals o lesives de drets i interessos de tercers.",
+      "damage": "Realitzar accions que puguin danyar, inutilitzar, sobrecarregar o deteriorar el servei o impedir la seva utilització normal.",
+      "unauthorized": "Accedir de forma no autoritzada a sistemes, servidors o bases de dades.",
+      "disruptive": "Introduir virus, codi maliciós o qualsevol altre element que pugui causar danys.",
+      "consequences": "L'incompliment d'aquestes condicions podrà donar lloc a la suspensió o cancel·lació de l'accés al servei."
+    },
+    "section4": {
+      "title": "4. Propietat Intel·lectual i Industrial",
+      "intro": "Tots els continguts de ChooseEat, incloent però no limitant-se a:",
+      "elements": "Textos, dissenys, gràfics, codi font, bases de dades, logotips, marques, noms comercials i altres elements distintius.",
+      "ownership": "Són propietat de [NOM_EMPRESA] o dels seus legítims titulars i estan protegits per la legislació nacional i internacional sobre propietat intel·lectual i industrial.",
+      "prohibition": "Queda expressament prohibida la reproducció, distribució, comunicació pública, transformació o qualsevol altra forma d'explotació, total o parcial, dels continguts de ChooseEat sense autorització prèvia i per escrit del titular.",
+      "license": "L'usuari disposa únicament d'un dret d'ús limitat, personal, no exclusiu i revocable, exclusivament per a l'accés i utilització de ChooseEat d'acord amb la seva finalitat."
+    },
+    "section5": {
+      "title": "5. Exclusió de Responsabilitat",
+      "intro": "[NOM_EMPRESA] no es responsabilitza de:",
+      "availability": "La disponibilitat contínua i ininterrompuda del servei, podent suspendre's temporal o definitivament per raons tècniques, de manteniment o per causes alienes al seu control.",
+      "errors": "Errors, inexactituds o omissions en els continguts, especialment en la informació de restaurants proporcionada per tercers.",
+      "decisions": "Les decisions preses pels usuaris en base a la informació mostrada a ChooseEat.",
+      "security": "Danys causats per virus, programari maliciós o altres elements danyosos que puguin infectar l'equip de l'usuari com a conseqüència de l'accés o ús de l'aplicació.",
+      "misuse": "L'ús indegut de ChooseEat per part dels usuaris o tercers.",
+      "guarantee": "[NOM_EMPRESA] realitzarà els seus millors esforços per mantenir el servei disponible, però no garanteix l'absència d'interrupcions o errors."
+    },
+    "section6": {
+      "title": "6. Enllaços Externs",
+      "content": "ChooseEat pot contenir enllaços a llocs web de tercers (per exemple, Google Maps, pàgines de restaurants). [NOM_EMPRESA] no controla ni es responsabilitza del contingut, polítiques de privacitat o pràctiques d'aquests llocs de tercers. L'accés a aquests enllaços és responsabilitat exclusiva de l'usuari. La inclusió d'un enllaç no implica aprovació, recomanació ni garantia alguna per part de [NOM_EMPRESA]."
+    },
+    "section7": {
+      "title": "7. Protecció de Dades Personals",
+      "content": "El tractament de dades personals realitzat a través de ChooseEat es regeix pel que s'estableix a la nostra Política de Privacitat, que compleix amb el Reglament (UE) 2016/679 (RGPD) i la Llei Orgànica 3/2018 (LOPDGDD). Us recomanem llegir detingudament aquesta política."
+    },
+    "section8": {
+      "title": "8. Modificacions de l'Avís Legal",
+      "content": "[NOM_EMPRESA] es reserva el dret a modificar el present Avís Legal en qualsevol moment, amb la finalitat d'adaptar-lo a canvis legislatius, jurisprudencials o modificacions en el servei. Les modificacions es publicaran en aquesta mateixa pàgina i es consideraran vigents des de la seva publicació."
+    },
+    "section9": {
+      "title": "9. Llei Aplicable i Jurisdicció",
+      "content": "El present Avís Legal es regeix per la legislació espanyola. Per a la resolució de qualsevol controvèrsia derivada de l'accés o ús de ChooseEat, les parts es someten, amb renúncia expressa a qualsevol altre fòrum que pogués correspondre'ls, als jutjats i tribunals de [PAÍS/CIUTAT]."
+    }
+  }
+}

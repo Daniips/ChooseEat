@@ -12,7 +12,7 @@ i18n
     },
     lng: 'es',
     fallbackLng: 'en',
-    supportedLngs: ['es','en'],
+    supportedLngs: ['es','en','cat'],
     nonExplicitSupportedLngs: true,
     ns: ['translation'],
     defaultNS: 'translation',
