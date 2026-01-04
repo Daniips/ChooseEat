@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -7,6 +7,10 @@ export default function Terms() {
   const { t } = useTranslation('legal');
   const currentDate = new Date().toLocaleDateString();
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div
       className="wrap wrap--scrollable"
@@ -14,8 +18,16 @@ export default function Terms() {
     >
       <Header />
       
-      <main className="legal-page" style={{ flex: 1, maxWidth: 800, margin: '0 auto', padding: '24px 16px' }}>
-        <h1 className="legal-title">{t('terms.title')}</h1>
+      <main className="legal-page" style={{ flex: 1, maxWidth: 800, margin: '0 auto', padding: '32px 16px' }}>
+        <div style={{ 
+          background: 'var(--card)', 
+          padding: 0, 
+          borderRadius: '16px',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+          border: '1px solid var(--border)'
+        }}>
+        <div style={{ padding: '24px 48px 40px 48px' }}>
+        <h1 className="legal-title" style={{ marginTop: 0 }}>{t('terms.title')}</h1>
         <p className="legal-date">{t('terms.lastUpdated', { date: currentDate })}</p>
 
         <section className="legal-section">
@@ -124,6 +136,8 @@ export default function Terms() {
           <h2 className="legal-subtitle">{t('terms.section10.title')}</h2>
           <p>{t('terms.section10.content')}</p>
         </section>
+        </div>
+        </div>
       </main>
 
       <Footer />

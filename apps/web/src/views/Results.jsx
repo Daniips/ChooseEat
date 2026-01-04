@@ -285,7 +285,12 @@ export default function Results() {
         }}
       >
         <div>
-          <h1 style={{ margin: 0 }}>{t("final_results")}</h1>
+          <h1 style={{ margin: 0 }}>
+            {data.sessionName 
+              ? `${data.sessionName}: ${t("final_results")}`
+              : t("final_results")
+            }
+          </h1>
           <div className="muted small" style={{ marginTop: 6 }}>
             {t("final_results_hint")}
           </div>
@@ -409,6 +414,7 @@ export default function Results() {
               data.totalParticipants ?? 1
             )}
             participants={data.participants || {}}
+            sessionName={data.sessionName || null}
             onRestart={() => navigate(`/s/${id}`)}
             showRestart={false}
             showIdentities={true}

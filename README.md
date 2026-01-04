@@ -112,7 +112,13 @@ La aplicación está diseñada para ser rápida, intuitiva y facilitar la toma d
 
 ### Variables de Entorno
 
-Crea un archivo `.env` en la raíz del proyecto o en `apps/api/` con las siguientes variables:
+Crea un archivo `.env` con las siguientes variables:
+
+**Ubicación:**
+- **Desarrollo local:** `apps/api/.env` (donde se ejecuta el código)
+- **Docker Compose:** `.env` en la raíz del proyecto (docker-compose lo lee desde ahí)
+
+
 
 #### Backend (API)
 
@@ -341,11 +347,11 @@ pnpm build
 
 Antes de desplegar a producción:
 
-1. **CORS**: Actualmente está abierto (`origin: true`). Debe limitarse en producción
+1. **CORS**: Debe configurarse con `CORS_ORIGIN` (URL de tu frontend)
 2. **Variables de Entorno**: Configurar todas las variables necesarias
 3. **Redis**: Asegurar que Redis esté disponible y configurado
 4. **API Key**: Configurar `GOOGLE_PLACES_API_KEY` válida
-5. **Build**: Construir ambas aplicaciones antes del despliegue
+5. **Frontend**: El frontend se despliega por separado (CDN, Vercel, Nginx, etc.)
 
 ### Build de Producción
 
@@ -355,8 +361,8 @@ pnpm build
 ```
 
 Los artefactos estarán en:
-- Backend: `apps/api/dist/`
-- Frontend: `apps/web/dist/`
+- Backend: `apps/api/dist/` (se despliega con Docker)
+- Frontend: `apps/web/dist/` (se despliega por separado, ver DEPLOY.md)
 
 ### Variables de Entorno de Producción
 

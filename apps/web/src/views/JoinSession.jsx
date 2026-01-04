@@ -28,6 +28,7 @@ export default function JoinSession() {
 
   const [name, setName] = useState("");
   const [autoJoining, setAutoJoining] = useState(true);
+  const [sessionName, setSessionName] = useState(null);
 
   const [toast, setToast] = useState({ open: false, variant: "warn", msg: "", duration: 5000 });
   const showError = (msg) => setToast({ open: true, variant: "warn", msg, duration: 5000 });
@@ -41,6 +42,18 @@ export default function JoinSession() {
         setAutoJoining(false);
         return;
       }
+      
+      // Obtener información de la sesión para mostrar el nombre
+      try {
+        const sessionInfo = await api(`/api/sessions/${id}`);
+        if (sessionInfo?.name) {
+          setSessionName(sessionInfo.name);
+        }
+      } catch (err) {
+        // Si no se puede obtener, no es crítico, continuamos
+        console.warn("Could not fetch session info:", err);
+      }
+      
       try {
         migrateFromLegacy(id);
         const existingId = getParticipantId(id);
@@ -147,7 +160,12 @@ export default function JoinSession() {
       </div>
 
       <form className="summary" style={{ maxWidth: 520, margin: "12px auto" }} onSubmit={handleJoin}>
-        <h2>{t("join_session")}</h2>
+        <h2>
+          {sessionName 
+            ? `${t("join_session")}: ${sessionName}`
+            : t("join_session")
+          }
+        </h2>
 
         <label htmlFor="name">
           <div className="small">{t("your_name")}</div>

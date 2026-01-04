@@ -537,7 +537,7 @@ export default function Vote() {
           flexDirection: "column",
         }}
       >
-        <InviteBar inviteUrl={inviteUrl} connectedCount={participants.length} />
+        <InviteBar inviteUrl={inviteUrl} connectedCount={participants.length} sessionName={session?.name} />
 
         <div className="vote-progress">
           <div
@@ -644,6 +644,7 @@ export default function Vote() {
               results?.totalParticipants ?? 1
             )}
             participants={results?.participants ?? {}}
+            sessionName={session?.name}
             onRestart={() => {
               setIndex(0);
               setYesIds([]);

@@ -35,7 +35,6 @@ export default function Summary({
   liked = [],
   scores = [],
   winnerIds = [],
-  needed,
   participantsTotal,
   participants = {},
   onRestart,
@@ -182,12 +181,6 @@ export default function Summary({
           </p>
         ) : null}
       </div>
-
-      <p className="muted" style={{ marginTop: -4 }}>
-        {winnerIds?.length
-          ? t("threshold_reached", { needed, count: winnerIds.length })
-          : t("threshold_not_reached", { needed })}
-      </p>
 
       <div
         className="legend small muted"

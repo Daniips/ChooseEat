@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-export default function InviteBar({ inviteUrl }) {
+export default function InviteBar({ inviteUrl, sessionName }) {
     const { t } = useTranslation();
     const [copied, setCopied] = useState(false);
 
@@ -21,9 +21,12 @@ export default function InviteBar({ inviteUrl }) {
             return;
         }
         try {
+            const shareText = sessionName 
+                ? `${t("share_text")}\n\n${t("session_name_label", "Sesión")}: ${sessionName}`
+                : t("share_text");
             await navigator.share({
             title: t("share_title"),
-            text: t("share_text"),
+            text: shareText,
             url: inviteUrl,
             });
         } catch (e) {

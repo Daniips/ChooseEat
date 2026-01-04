@@ -751,6 +751,7 @@ app.get("/api/sessions/:id/results", async (req, reply) => {
 
   return reply.send({
     sessionId: id,
+    sessionName: s.name,
     status: s.status,
     needed,
     totalParticipants,

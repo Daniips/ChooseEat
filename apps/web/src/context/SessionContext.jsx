@@ -6,6 +6,7 @@ const SessionContext = createContext(null);
 
 const INITIAL_SESSION = {
   id: null,
+  name: null,
   status: "lobby",               
   area: { type: "host", center: null, radiusKm: 1.5, label: "" },
   filters: { price: [1,2,3,4], cuisines: [], openNow: false, minRating: 0 },
@@ -23,10 +24,11 @@ export function SessionProvider({ children }) {
   const setWinner = (winner) => setSession(s => ({ ...s, winner }));
 
   function bootSession(payload) {
-    const { id, invitePath, area, filters, threshold, restaurants } = payload;
+    const { id, invitePath, area, filters, threshold, restaurants, name } = payload;
     setSession(s => ({
       ...s,
       id,
+      name: name ?? s.name,
       status: "voting",
       invitePath: invitePath ?? s.invitePath,
       area: area ?? s.area,
@@ -59,6 +61,7 @@ export function SessionProvider({ children }) {
     setSession(prev => ({
       ...prev,
       id: s?.id ?? prev.id,
+      name: s?.name ?? prev.name,
       status: s?.status || "voting",
       area: s?.area ?? prev.area,
       filters: s?.filters ?? prev.filters,
