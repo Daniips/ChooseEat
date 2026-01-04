@@ -25,6 +25,7 @@ import {
 import { api } from "../lib/api";
 import { useTranslation } from "react-i18next";
 import Toast from "../components/Toast";
+import Hint from "../components/Hint";
 import { errorToMessage } from "../lib/errorToMessage";
 import { DEFAULT_ERROR_KEYS } from "../lib/errorKeys";
 
@@ -85,6 +86,8 @@ export default function Vote() {
   const showToast = (variant, msg, duration = 5000) =>
     setToast({ open: true, variant, msg, duration });
 
+  const [showVoteHint, setShowVoteHint] = useState(false);
+  
   const list = useMemo(() => {
     const restaurants = Array.isArray(session?.restaurants)
       ? session.restaurants
@@ -443,6 +446,16 @@ export default function Vote() {
     [index]
   );
 
+  useEffect(() => {
+    // Mostrar hint cuando la página de votación está lista
+    if (deckReady && list.length > 0 && !finished) {
+      const timer = setTimeout(() => setShowVoteHint(true), 1500);
+      return () => clearTimeout(timer);
+    } else {
+      setShowVoteHint(false);
+    }
+  }, [deckReady, list.length, finished]);
+
   const liked = useMemo(
     () => list.filter((x) => yesIds.includes(x.id)),
     [yesIds, list]
@@ -673,6 +686,16 @@ export default function Vote() {
       >
         {toast.msg}
       </Toast>
+
+      <Hint 
+        open={showVoteHint} 
+        onClose={() => setShowVoteHint(false)}
+        duration={10000}
+        position="top"
+        hintId="vote_how_to_vote"
+      >
+        {t("hints.vote_how_to_vote")}
+      </Hint>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../context/SessionContext";
 import Toast from "../components/Toast";
+import Hint from "../components/Hint";
 import { CUISINES, DIETARY_FILTERS } from "../data/cuisines";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -141,6 +142,52 @@ export default function Lobby() {
   const showToast = (variant, msg, duration = 5000, action = null) =>
     setToast({ open: true, variant, msg, duration, action });
 
+  // Hints para cada step
+  const [hintOpen, setHintOpen] = useState(false);
+  // Tooltip para botones (diferente de los hints informativos)
+  const [showHint, setShowHint] = useState(false);
+  const hintIds = {
+    zone: "lobby_step_zone",
+    cuisine: "lobby_step_cuisine",
+    filters: "lobby_step_filters",
+    voters: "lobby_step_voters"
+  };
+  
+  useEffect(() => {
+    // Mostrar hint cuando cambia el step
+    if (step === 1) {
+      // Step de zona
+      setTimeout(() => setHintOpen(true), 500);
+    } else if (step === 2) {
+      // Step de cocina
+      setTimeout(() => setHintOpen(true), 500);
+    } else if (step === 3) {
+      // Step de filtros
+      setTimeout(() => setHintOpen(true), 500);
+    } else if (step === 4) {
+      // Step de votantes
+      setTimeout(() => setHintOpen(true), 500);
+    } else {
+      setHintOpen(false);
+    }
+  }, [step]);
+  
+  function getHintIdForStep(currentStep) {
+    if (currentStep === 1) return hintIds.zone;
+    if (currentStep === 2) return hintIds.cuisine;
+    if (currentStep === 3) return hintIds.filters;
+    if (currentStep === 4) return hintIds.voters;
+    return null;
+  }
+  
+  function getHintTextForStep(currentStep) {
+    if (currentStep === 1) return t("hints.lobby_zone");
+    if (currentStep === 2) return t("hints.lobby_cuisine");
+    if (currentStep === 3) return t("hints.lobby_filters");
+    if (currentStep === 4) return t("hints.lobby_voters");
+    return "";
+  }
+
   const steps = [
     { id: 0, title: t("ur_name"), icon: "user" },
     { id: 1, title: t("zone"), icon: "map-pin" },
@@ -153,7 +200,6 @@ export default function Lobby() {
   const thresholdValid =
     people >= 2 &&
     (people === 2 ? true : requiredYes >= 2 && requiredYes <= people);
-  const [showHint, setShowHint] = useState(false);
 
   const cuisinesValid = useMemo(
     () => selectedCuisines.length > 0 || customCuisines.length > 0,
@@ -1918,6 +1964,18 @@ export default function Lobby() {
       >
         {toast.msg}
       </Toast>
+
+      {(step === 1 || step === 2 || step === 3 || step === 4) && (
+        <Hint 
+          open={hintOpen} 
+          onClose={() => setHintOpen(false)}
+          duration={10000}
+          position="top"
+          hintId={getHintIdForStep(step)}
+        >
+          {getHintTextForStep(step)}
+        </Hint>
+      )}
     </div>
   );
 }

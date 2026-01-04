@@ -323,5 +323,17 @@
     "title": "Página no encontrada",
     "message": "La página que buscas no existe. Serás redirigido a la página principal en 5 segundos...",
     "go_home": "Volver a inicio"
+  },
+  "hints": {
+    "landing_create": "Crea una sesión de votación eligiendo la zona, tipo de cocina y filtros. Luego comparte el enlace con tu grupo.",
+    "landing_join": "Pega el enlace que te han compartido o escribe el ID de sesión para unirte a una votación.",
+    "lobby": "Completa los pasos del wizard para crear tu sesión. Cada paso te guía en la configuración de filtros y preferencias.",
+    "lobby_zone": "Selecciona la ubicación haciendo clic en el mapa y ajusta el radio de búsqueda. Puedes usar tu ubicación actual con el botón correspondiente.",
+    "lobby_cuisine": "Elige al menos un tipo de cocina que te interese. Puedes añadir términos personalizados escribiendo y presionando Enter.",
+    "lobby_filters": "Ajusta filtros opcionales como precio, valoración mínima o si debe estar abierto ahora. También puedes añadir filtros personalizados.",
+    "lobby_voters": "Define cuántas personas participarán y el número mínimo de votos \"Sí\" necesario para que un restaurante sea seleccionado.",
+    "vote": "Desliza o usa los botones SÍ/NO para votar por cada restaurante. Cuando se alcance el umbral, aparecerá como coincidencia.",
+    "vote_how_to_vote": "Puedes votar de tres formas: deslizando la tarjeta a izquierda (NO) o derecha (SÍ), usando las teclas de flecha, o con los botones SÍ/NO.",
+    "join_session": "Introduce tu nombre para unirte a la sesión. Después podrás empezar a votar por los restaurantes."
   }
 }

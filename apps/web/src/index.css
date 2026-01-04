@@ -917,6 +917,78 @@ input[type="checkbox"] {
   opacity: 1;
 }
 
+/* =========================================================
+   HINT (Información contextual)
+   ========================================================= */
+.hint {
+  animation: hintFadeIn 0.3s ease-out;
+}
+
+@keyframes hintFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.hint__content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+[data-theme="dark"] .hint__content {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.hint__icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.hint__msg {
+  flex: 1;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.hint__close {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  margin-top: -2px;
+}
+
+.hint__close:hover {
+  background: var(--ghost-hover-bg);
+  color: var(--text);
+}
+
 /* ===================================================
    INVITE BAR
    ================================================== */

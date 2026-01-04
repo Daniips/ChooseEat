@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import Hint from "../components/Hint";
 import { listRememberedSessions, forgetSession } from "../lib/participant";
 import { useTranslation } from "react-i18next";
 
@@ -17,6 +18,7 @@ export default function Landing() {
   const { t } = useTranslation();
   const [joinValue, setJoinValue] = useState("");
   const [sessions, setSessions] = useState(() => listRememberedSessions());
+  const [showHint, setShowHint] = useState(false);
 
   function goCreate() {
     navigate("/create");
@@ -32,6 +34,12 @@ export default function Landing() {
   function goToSession(id) {
     navigate(`/s/${id}`);
   }
+
+  useEffect(() => {
+    // Mostrar hint después de un pequeño delay
+    const timer = setTimeout(() => setShowHint(true), 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="wrap home-page" style={{ height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -115,6 +123,16 @@ export default function Landing() {
       </main>
 
       <Footer />
+
+      <Hint 
+        open={showHint} 
+        onClose={() => setShowHint(false)}
+        duration={8000}
+        position="top"
+        hintId="landing_create"
+      >
+        {t("hints.landing_create")}
+      </Hint>
     </div>
   );
 }

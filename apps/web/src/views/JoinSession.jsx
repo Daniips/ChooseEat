@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Loader from "../components/Loader";
+import Hint from "../components/Hint";
 import { useSession } from "../context/SessionContext";
 import { api } from "../lib/api";
 import { getParticipantId, setParticipant, migrateFromLegacy, rememberSession } from "../lib/participant";
@@ -29,6 +30,7 @@ export default function JoinSession() {
   const [name, setName] = useState("");
   const [autoJoining, setAutoJoining] = useState(true);
   const [sessionName, setSessionName] = useState(null);
+  const [showHint, setShowHint] = useState(false);
 
   const [toast, setToast] = useState({ open: false, variant: "warn", msg: "", duration: 5000 });
   const showError = (msg) => setToast({ open: true, variant: "warn", msg, duration: 5000 });
@@ -42,7 +44,7 @@ export default function JoinSession() {
         setAutoJoining(false);
         return;
       }
-      
+    
       // Obtener información de la sesión para mostrar el nombre
       try {
         const sessionInfo = await api(`/api/sessions/${id}`);
@@ -53,7 +55,7 @@ export default function JoinSession() {
         // Si no se puede obtener, no es crítico, continuamos
         console.warn("Could not fetch session info:", err);
       }
-      
+
       try {
         migrateFromLegacy(id);
         const existingId = getParticipantId(id);
@@ -87,6 +89,14 @@ export default function JoinSession() {
       setAutoJoining(false);
     })();
   }, [id, hydrateFromJoin, navigate, t]);
+
+  // Mostrar hint cuando autoJoining se desactiva (sesión lista para unirse manualmente)
+  useEffect(() => {
+    if (!autoJoining) {
+      const timer = setTimeout(() => setShowHint(true), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [autoJoining]);
 
   async function handleJoin(e) {
     e.preventDefault();
@@ -195,6 +205,16 @@ export default function JoinSession() {
       >
         {toast.msg}
       </Toast>
+
+      <Hint 
+        open={showHint} 
+        onClose={() => setShowHint(false)}
+        duration={8000}
+        position="top"
+        hintId="join_session"
+      >
+        {t("hints.join_session")}
+      </Hint>
     </div>
   );
 }

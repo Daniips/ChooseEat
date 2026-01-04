@@ -323,5 +323,17 @@
     "title": "Page Not Found",
     "message": "The page you are looking for does not exist. You will be redirected to the home page in 5 seconds...",
     "go_home": "Go to Home"
+  },
+  "hints": {
+    "landing_create": "Create a voting session by choosing the area, cuisine type, and filters. Then share the link with your group.",
+    "landing_join": "Paste the link you were shared or type the session ID to join a voting session.",
+    "lobby": "Complete the wizard steps to create your session. Each step guides you through setting filters and preferences.",
+    "lobby_zone": "Select the location by clicking on the map and adjust the search radius. You can use your current location with the corresponding button.",
+    "lobby_cuisine": "Choose at least one cuisine type you're interested in. You can add custom terms by typing and pressing Enter.",
+    "lobby_filters": "Adjust optional filters such as price, minimum rating, or if it should be open now. You can also add custom filters.",
+    "lobby_voters": "Define how many people will participate and the minimum number of \"Yes\" votes needed for a restaurant to be selected.",
+    "vote": "Swipe or use the YES/NO buttons to vote for each restaurant. When the threshold is reached, it will appear as a match.",
+    "vote_how_to_vote": "You can vote in three ways: by swiping the card left (NO) or right (YES), using arrow keys, or with the YES/NO buttons.",
+    "join_session": "Enter your name to join the session. After that, you can start voting for restaurants."
   }
 }
