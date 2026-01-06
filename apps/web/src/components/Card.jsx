@@ -55,7 +55,13 @@ export default function Card({ r, onNo, onYes, keySwipe, onKeyHandled }) {
   }, [r?.photos, t]);
 
   const [photoIdx, setPhotoIdx] = useState(0);
+  const [imageError, setImageError] = useState(false);
   const currentImg = photos[photoIdx];
+
+  // Resetear error de imagen cuando cambia la foto
+  useEffect(() => {
+    setImageError(false);
+  }, [photoIdx, currentImg]);
   const name = r?.name || "";
   const cuisines = r?.cuisine || r?.cuisines || [];
   const price = typeof r?.price === "number" ? r.price : undefined;
@@ -122,6 +128,7 @@ export default function Card({ r, onNo, onYes, keySwipe, onKeyHandled }) {
     setLeaving(null);
     hasVotedRef.current = false;
     setPhotoIdx(0);
+    setImageError(false);
   }, [r?.id]);
 
   useEffect(() => {
@@ -280,17 +287,36 @@ export default function Card({ r, onNo, onYes, keySwipe, onKeyHandled }) {
       />
 
       <div className="card" ref={ref} style={style}>
-        <img
-          src={currentImg}
-          alt={name}
-          className="card__img"
-          loading="lazy"
-          onError={(e) => {
-            console.error("❌ Error cargando imagen:", e.currentTarget.src);
-            e.currentTarget.src =
-              `https://via.placeholder.com/480x360?text=${encodeURIComponent(t("error.image_load"))}`;
-          }}
-        />
+        {!imageError ? (
+          <img
+            src={currentImg}
+            alt={name}
+            className="card__img"
+            loading="lazy"
+            onError={(e) => {
+              console.error("❌ Error cargando imagen:", e.currentTarget.src);
+              setImageError(true);
+            }}
+          />
+        ) : (
+          <div className="card__img-placeholder" aria-label={t("error.image_load", "Image failed to load")}>
+            <svg
+              width="120"
+              height="120"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
+            </svg>
+          </div>
+        )}
         {Array.isArray(photos) && photos.length > 1 && (
           <>
             <button

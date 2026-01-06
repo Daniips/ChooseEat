@@ -195,6 +195,10 @@
     "vote_failed": "No s'ha pogut registrar el teu vot."
   },
   "queued_vote": "Sense connexió: el teu vot s'enviarà en reconnectar",
+  "votes_pending": "{{count}} vot(s) pendent(s)",
+  "votes_sent": "S'han enviat {{count}} vot(s)",
+  "connection_lost": "Sense connexió. Verifica la teva internet.",
+  "reconnecting": "Reconnectant...",
   "loading": "Carregant...",
   "starting_session": "Iniciant sessió...",
   "progress_label": "Progrés",

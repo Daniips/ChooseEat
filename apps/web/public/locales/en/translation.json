@@ -195,6 +195,10 @@
     "vote_failed": "Could not register your vote."
   },
   "queued_vote": "Offline: your vote will be submitted upon reconnecting",
+  "votes_pending": "{{count}} vote(s) pending",
+  "votes_sent": "{{count}} vote(s) sent",
+  "connection_lost": "No connection. Check your internet.",
+  "reconnecting": "Reconnecting...",
   "loading": "Loading...",
   "starting_session": "Starting session...",
   "progress_label": "Progress",

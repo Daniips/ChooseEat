@@ -195,6 +195,10 @@
     "vote_failed": "No se pudo registrar tu voto."
     },
   "queued_vote": "Sin conexión: tu voto se enviará al reconectar",
+  "votes_pending": "{{count}} voto(s) pendiente(s)",
+  "votes_sent": "Se enviaron {{count}} voto(s)",
+  "connection_lost": "Sin conexión. Verifica tu internet.",
+  "reconnecting": "Reconectando...",
   "loading": "Cargando...",
   "starting_session": "Iniciando sesión...",
   "progress_label": "Progreso",

@@ -26,8 +26,16 @@ import { api } from "../lib/api";
 import { useTranslation } from "react-i18next";
 import Toast from "../components/Toast";
 import Hint from "../components/Hint";
+import ConnectionStatus from "../components/ConnectionStatus";
 import { errorToMessage } from "../lib/errorToMessage";
 import { DEFAULT_ERROR_KEYS } from "../lib/errorKeys";
+import { NetworkError, TimeoutError } from "../lib/errors";
+import {
+  addVoteToQueue,
+  getQueueSize,
+  processQueue,
+  removeVoteFromQueue,
+} from "../lib/offlineQueue";
 
 const AUTOJOIN_ERROR_KEYS = {
   ...DEFAULT_ERROR_KEYS,
@@ -87,6 +95,7 @@ export default function Vote() {
     setToast({ open: true, variant, msg, duration });
 
   const [showVoteHint, setShowVoteHint] = useState(false);
+  const [pendingVotesCount, setPendingVotesCount] = useState(0);
   
   const list = useMemo(() => {
     const restaurants = Array.isArray(session?.restaurants)
@@ -295,6 +304,35 @@ export default function Vote() {
       }
     };
 
+    // Procesar cola de votos offline cuando el socket se conecta
+    const processOfflineQueue = async () => {
+      const queueSize = getQueueSize(session.id);
+      if (queueSize > 0) {
+        try {
+          const processed = await processQueue(session.id, api);
+          if (processed > 0) {
+            setPendingVotesCount(getQueueSize(session.id));
+            showToast(
+              "ok",
+              t("votes_sent", { count: processed }, `Se enviaron ${processed} voto(s)`),
+              3000
+            );
+            // Recargar resultados si ya terminaste
+            if (finishedRef.current) {
+              reloadResults();
+            }
+          }
+        } catch (e) {
+          console.error("Failed to process offline queue:", e);
+        }
+      }
+    };
+
+    const handleSocketConnect = () => {
+      // Procesar cola cuando el socket se conecta
+      processOfflineQueue();
+    };
+
     socket.emit("session:join", { sessionId: session.id });
     socket.on("session:participants", onParticipants);
     socket.on("participant:joined", onParticipants);
@@ -302,6 +340,20 @@ export default function Vote() {
     socket.on("session:matched", onMatched);
     socket.on("session:finished", onFinished);
     socket.on("participant:done", onParticipantDone);
+    socket.on("connect", handleSocketConnect);
+
+    // Procesar inmediatamente si ya está conectado y hay votos pendientes
+    if (socket.connected && getQueueSize(session.id) > 0) {
+      processOfflineQueue();
+    }
+
+    // También escuchar eventos online del navegador
+    const handleOnline = () => {
+      if (socket.connected) {
+        processOfflineQueue();
+      }
+    };
+    window.addEventListener("online", handleOnline);
 
     return () => {
       socket.off("session:participants", onParticipants);
@@ -310,11 +362,19 @@ export default function Vote() {
       socket.off("session:matched", onMatched);
       socket.off("session:finished", onFinished);
       socket.off("participant:done", onParticipantDone);
+      socket.off("connect", handleSocketConnect);
+      window.removeEventListener("online", handleOnline);
       socket.disconnect();
       socketRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.id, setWinner, reloadResults]);
+
+  // 5.5) Inicializar contador de votos pendientes cuando cambia la sesión
+  useEffect(() => {
+    if (!session?.id) return;
+    setPendingVotesCount(getQueueSize(session.id));
+  }, [session?.id]);
 
   // 6) Cuando terminas tu mazo (finishedByDeck), marca "done" en backend y fuerza estado terminado en cliente.
   // + Si hay overlay (match), espera a que termine antes de marcar "done".
@@ -500,6 +560,10 @@ export default function Vote() {
         }),
       });
 
+      // Si el voto se envió exitosamente, eliminarlo de la cola offline si estaba ahí
+      removeVoteFromQueue(session.id, current.id, me.id);
+      setPendingVotesCount(getQueueSize(session.id));
+
       if (
         isLastCard &&
         choice === "yes" &&
@@ -519,6 +583,26 @@ export default function Vote() {
       if (data?.winner) setWinner(data.winner);
     } catch (e) {
       console.error("Vote failed:", e);
+      
+      // Si es un error de red (sin conexión), NO hacer rollback
+      // Mantener el voto localmente y avanzar el índice
+      // Añadir a la cola offline para reenviarlo cuando se recupere la conexión
+      if (e instanceof NetworkError || e instanceof TimeoutError) {
+        // Añadir a la cola offline
+        const me = getParticipant(session.id);
+        if (me?.id) {
+          addVoteToQueue(session.id, me.id, current.id, choice);
+          setPendingVotesCount(getQueueSize(session.id));
+        }
+        
+        // Avanzar el índice normalmente (el voto ya está en yesIds/noIds)
+        setIndex((i) => i + 1);
+        // Mostrar mensaje informativo pero no de error
+        showToast("info", t("queued_vote", "Sin conexión: tu voto se enviará al reconectar"), 4000);
+        return;
+      }
+
+      // Si es un error del servidor (4xx, 5xx), hacer rollback porque el voto fue rechazado
       setIndex((i) => Math.max(0, i - 1));
       if (choice === "yes") {
         setYesIds((s) => s.filter((id) => id !== current.id));
@@ -540,6 +624,7 @@ export default function Vote() {
       }}
     >
       <Header />
+      <ConnectionStatus socket={socketRef.current} />
 
       <div
         style={{
@@ -551,6 +636,20 @@ export default function Vote() {
         }}
       >
         <InviteBar inviteUrl={inviteUrl} connectedCount={participants.length} sessionName={session?.name} />
+        {pendingVotesCount > 0 && (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "8px 16px",
+              fontSize: "13px",
+              color: "var(--muted)",
+              background: "var(--cardSoft)",
+              borderBottom: "1px solid var(--border)",
+            }}
+          >
+            {t("votes_pending", { count: pendingVotesCount }, `${pendingVotesCount} voto(s) pendiente(s)`)}
+          </div>
+        )}
 
         <div className="vote-progress">
           <div
