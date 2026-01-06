@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 const LANGS = [
   { code: "es", label: "Español", short: "ES" },
   { code: "en", label: "English", short: "EN" },
-  { code: "cat", label: "Català", short: "CAT" },
+  { code: "ca", label: "Català", short: "CA" },
 ];
 
 

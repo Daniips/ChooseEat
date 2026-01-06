@@ -43,13 +43,17 @@ export function UiProvider({ children, persist = false }) {
     setTheme(t => (resolveTheme(t) === "dark" ? "light" : "dark"));
 
   // ===== LANGUAGE =====
-  const [lang, setLang] = useState(() => i18n.language || "en");
+  const [lang, setLang] = useState(() => i18n.language || "es");
 
   useEffect(() => {
-    if (!persist) return;
-    const saved = lsGet(LANG_KEY);
-    if (saved) setLang(saved);
-  }, [persist]);
+    const handleLanguageChanged = (lng) => {
+      setLang(lng);
+    };
+    i18n.on('languageChanged', handleLanguageChanged);
+    return () => {
+      i18n.off('languageChanged', handleLanguageChanged);
+    };
+  }, []);
 
   useEffect(() => {
     try { i18n.changeLanguage(lang); } catch (e) {
